@@ -1,2 +1,6 @@
 # 用户指定仅保留在本地，不上传到 GitHub
 /STDB/
+
+# Python test/runtime caches
+__pycache__/
+*.py[cod]
