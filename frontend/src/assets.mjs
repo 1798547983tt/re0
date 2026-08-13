@@ -4,10 +4,12 @@ export const PINNED_GITHUB_ASSET_BASE = `https://raw.githubusercontent.com/17985
 
 function useGithubAssets() {
   try {
-    return window.__RE0_USE_GITHUB_ASSETS__ === true
-      || new URLSearchParams(window.location.search).get('assets') === 'github';
+    const requestedMode = new URLSearchParams(window.location.search).get('assets');
+    if (requestedMode === 'local') return false;
+    if (requestedMode === 'github') return true;
+    return window.__RE0_USE_GITHUB_ASSETS__ !== false;
   } catch {
-    return false;
+    return true;
   }
 }
 

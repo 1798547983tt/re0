@@ -8,7 +8,7 @@
 python -m http.server 4173 --directory frontend
 ```
 
-打开 <http://127.0.0.1:4173/>。页面默认引用本地编辑素材，适合离线预览；打开 `?assets=github` 会切换到固定在素材提交 `a6aeb9cca0f0066bd10aec2aba0fd4b220301788` 的 GitHub raw 链接。
+打开 <http://127.0.0.1:4173/>。页面默认引用固定在素材提交 `a6aeb9cca0f0066bd10aec2aba0fd4b220301788` 的 GitHub raw 链接；使用 `?assets=local` 可切换到本地编辑素材进行离线预览。
 
 ## AI 帮填
 
