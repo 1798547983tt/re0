@@ -1,0 +1,133 @@
+<!-- PROTOTYPE QUESTION: which of five radically different visual languages should become the production five-page creator? Switch with ?variant=A-E. -->
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Re:0 创角向导 · 五种风格原型</title>
+  <script src="re0-story-data.js"></script>
+  <style>
+    :root { color-scheme: dark; --ink:#f7f1e6; --muted:#b9b1a8; --accent:#dcb878; --hot:#e57370; --line:rgba(255,255,255,.16); --panel:rgba(12,15,25,.72); --shadow:0 28px 80px rgba(0,0,0,.36); }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#080a11;color:var(--ink);font-family:Georgia,"Noto Serif SC",serif}
+    body{overflow-x:hidden}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .prototype-note{position:fixed;top:16px;right:18px;z-index:50;padding:6px 10px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(0,0,0,.36);font:11px/1.2 ui-monospace,monospace;letter-spacing:.08em;color:#fff;backdrop-filter:blur(10px)}
+    .scene{min-height:100vh;position:relative;isolation:isolate;overflow:hidden;background:#080a11}
+    .scene:before{content:"";position:absolute;inset:0;z-index:-3;background-image:var(--backdrop);background-size:cover;background-position:center;filter:brightness(.72) saturate(1.05);transform:scale(1.03)}
+    .scene:after{content:"";position:absolute;inset:0;z-index:-2;background:var(--veil);pointer-events:none}
+    .grain{position:absolute;inset:0;z-index:-1;opacity:.24;pointer-events:none;background-image:radial-gradient(circle at 17% 23%,rgba(255,255,255,.18) 0 1px,transparent 1.5px),radial-gradient(circle at 74% 67%,rgba(255,255,255,.13) 0 1px,transparent 1.5px);background-size:87px 93px,131px 117px;mix-blend-mode:screen}
+    .shell{width:min(1180px,calc(100% - 36px));margin:0 auto;padding:56px 0 140px}
+    .masthead{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:26px}
+    .eyebrow{margin:0 0 9px;color:var(--accent);font:11px/1.2 ui-monospace,monospace;letter-spacing:.28em;text-transform:uppercase}
+    h1,h2,h3,p{margin:0}
+    h1{font-size:clamp(40px,7vw,84px);font-weight:400;letter-spacing:.06em;line-height:.98;text-shadow:0 8px 34px rgba(0,0,0,.55)}
+    .subtitle{margin-top:12px;color:var(--muted);font-size:14px;line-height:1.8;max-width:610px}
+    .seal{width:62px;height:62px;display:grid;place-items:center;border:1px solid var(--accent);border-radius:50%;color:var(--accent);font-size:26px;box-shadow:0 0 0 5px rgba(220,184,120,.08),0 0 40px rgba(220,184,120,.2)}
+    .grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.72fr);gap:18px;align-items:start}
+    .panel{border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}
+    .panel-head{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:17px 20px;border-bottom:1px solid var(--line)}
+    .panel-head h2{font-size:18px;font-weight:400;letter-spacing:.08em}
+    .panel-head span{font:10px ui-monospace,monospace;color:var(--muted);letter-spacing:.16em}
+    .panel-body{padding:22px}
+    .field{display:grid;gap:7px;margin-bottom:18px}
+    label{font-size:12px;color:#ece5d9;letter-spacing:.06em}
+    input,select{width:100%;min-height:45px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);background:rgba(0,0,0,.23);outline:none}
+    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(220,184,120,.12)}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{border:1px solid var(--line);border-radius:999px;padding:9px 13px;color:var(--muted);background:rgba(0,0,0,.18);transition:.18s ease}
+    .chip:hover,.chip.is-on{border-color:var(--accent);background:rgba(220,184,120,.14);color:var(--ink);transform:translateY(-1px)}
+    .select-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:12px}
+    .event-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .meta{padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.18)}
+    .meta small{display:block;color:var(--muted);font:10px ui-monospace,monospace;letter-spacing:.14em;margin-bottom:5px}
+    .meta b{display:block;font-size:13px;font-weight:400;line-height:1.55}
+    .preview{position:relative;min-height:520px;display:flex;align-items:flex-end;background-image:var(--portrait);background-size:cover;background-position:center 26%;}
+    .preview:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,6,12,.92),transparent 63%)}
+    .preview-copy{position:relative;z-index:1;width:100%;padding:25px}
+    .preview-kicker{color:var(--accent);font:10px ui-monospace,monospace;letter-spacing:.2em}
+    .preview h2{margin-top:9px;font-size:33px;font-weight:400;letter-spacing:.06em}
+    .preview p{margin-top:10px;color:#d5cfc4;font-size:12px;line-height:1.7}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+    .stat{padding:10px;border-top:1px solid rgba(255,255,255,.3);font-size:12px}.stat small{display:block;color:var(--muted);font:9px ui-monospace,monospace;margin-bottom:4px}
+    .callout{margin-top:16px;padding:14px 16px;border-left:2px solid var(--hot);color:#eadfd1;font-size:12px;line-height:1.7;background:rgba(0,0,0,.18)}
+    .switcher{position:fixed;left:50%;bottom:20px;z-index:60;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(8,10,18,.84);box-shadow:0 18px 48px rgba(0,0,0,.42);backdrop-filter:blur(16px);white-space:nowrap}
+    .switcher button{width:34px;height:34px;border:0;border-radius:50%;color:#fff;background:rgba(255,255,255,.1);font-size:18px}.switcher button:hover{background:rgba(255,255,255,.22)}
+    .switcher-label{min-width:180px;text-align:center;font:11px ui-monospace,monospace;letter-spacing:.08em}.switcher-label b{color:var(--accent);font-weight:500}.switcher-label small{display:block;margin-top:3px;color:var(--muted);font-size:9px}
+    .variant-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 22px}.variant-tabs button{border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:rgba(0,0,0,.18);color:var(--muted);font:10px ui-monospace,monospace}.variant-tabs button.is-on{border-color:var(--accent);color:var(--ink);background:rgba(255,255,255,.12)}
+
+    /* A — moonlit dossier */
+    [data-variant="A"]{--backdrop:url("assets/witch-harp.jpg");--veil:linear-gradient(115deg,rgba(8,12,22,.93),rgba(19,27,49,.4) 52%,rgba(9,9,15,.82));--accent:#d9b673;--hot:#c56a74;--panel:rgba(8,12,23,.72)}
+    [data-variant="A"] .panel{border-radius:2px}.variant-a .grid{grid-template-columns:minmax(0,1.2fr) minmax(280px,.7fr)}.variant-a .panel-head{background:linear-gradient(90deg,rgba(213,170,93,.1),transparent)}
+    /* B — royal election */
+    [data-variant="B"]{color:#2f2933;--backdrop:url("assets/emilia-snow.png");--veil:linear-gradient(115deg,rgba(250,244,237,.92),rgba(249,239,228,.58) 53%,rgba(63,46,58,.55));--accent:#9a5671;--hot:#a64f58;--line:rgba(65,44,55,.2);--panel:rgba(255,250,244,.88);--muted:#776b70}
+    .variant-b .shell{padding-top:42px}.variant-b h1{font-family:Georgia,"Noto Serif SC",serif;color:#3d3040;text-shadow:none}.variant-b .subtitle,.variant-b label,.variant-b .panel-head h2,.variant-b .preview h2{color:#3d3040}.variant-b .seal{border-radius:8px;transform:rotate(45deg);color:#9a5671}.variant-b .seal span{transform:rotate(-45deg)}.variant-b .panel{border-radius:5px;box-shadow:0 24px 70px rgba(91,61,74,.2)}.variant-b .preview{filter:saturate(.86);}.variant-b .chip{color:#776b70}.variant-b .chip.is-on{color:#3d3040}.variant-b .switcher{color:#f7f1e6;background:rgba(53,39,53,.9)}
+    /* C — witch tea party */
+    [data-variant="C"]{--backdrop:url("assets/witch-table.png");--veil:linear-gradient(130deg,rgba(18,5,31,.76),rgba(75,30,68,.44) 50%,rgba(8,12,22,.82));--accent:#f6c6ee;--hot:#f08ba9;--line:rgba(255,220,248,.24);--panel:rgba(53,23,58,.62);--muted:#dbc2d4}
+    .variant-c .shell{width:min(1220px,calc(100% - 30px))}.variant-c .masthead{align-items:center}.variant-c h1{font-size:clamp(35px,6vw,70px);font-weight:700;letter-spacing:-.03em}.variant-c .seal{border:2px solid var(--accent);box-shadow:0 0 30px rgba(246,198,238,.55)}.variant-c .panel{border-radius:28px}.variant-c .panel-head{border-bottom-style:dashed}.variant-c .chip{border-radius:13px}.variant-c .preview{border-radius:21px;min-height:460px}.variant-c .preview-copy{padding:29px}.variant-c .callout{border-left:0;border-radius:15px;background:linear-gradient(90deg,rgba(240,139,169,.25),rgba(246,198,238,.08));}
+    /* D — loop terminal */
+    [data-variant="D"]{--backdrop:url("assets/satella-dark.jpg");--veil:linear-gradient(130deg,rgba(2,8,15,.94),rgba(4,30,39,.7) 52%,rgba(2,5,9,.95));--accent:#6af4db;--hot:#ff6b7b;--line:rgba(106,244,219,.25);--panel:rgba(2,15,22,.75);--muted:#82aaa9}
+    .variant-d .shell{width:min(1260px,calc(100% - 28px));font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.variant-d h1{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:clamp(30px,5vw,64px);letter-spacing:.02em;text-transform:uppercase}.variant-d h1:before{content:"// ";color:var(--accent)}.variant-d .subtitle,.variant-d label,.variant-d .panel-head h2,.variant-d .preview h2{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.variant-d .panel{border-radius:4px}.variant-d .panel-head{background:rgba(106,244,219,.05)}.variant-d .panel-head h2:before{content:"[";color:var(--accent)}.variant-d .panel-head h2:after{content:"]";color:var(--accent)}.variant-d input,.variant-d select{border-radius:3px;font-family:inherit}.variant-d .preview{min-height:500px;filter:grayscale(.25) contrast(1.16)}.variant-d .preview:before{content:"LIVE / LOOP INDEX";position:absolute;z-index:2;top:18px;left:18px;color:var(--accent);font:10px ui-monospace,monospace;letter-spacing:.14em}.variant-d .callout{font-family:inherit;border-color:var(--accent)}
+    /* E — snowbound scroll */
+    [data-variant="E"]{--backdrop:url("assets/rem-tea.png");--veil:linear-gradient(90deg,rgba(18,17,25,.86),rgba(25,40,54,.25) 54%,rgba(15,16,22,.7));--accent:#b8d4e3;--hot:#d18b76;--line:rgba(207,231,242,.28);--panel:rgba(20,27,36,.64);--muted:#c4ccd1}
+    .variant-e .shell{width:min(1000px,calc(100% - 38px));padding-top:70px}.variant-e .masthead{display:block;max-width:650px}.variant-e .seal{margin-top:22px;border-radius:4px;transform:rotate(-8deg)}.variant-e .grid{grid-template-columns:1fr}.variant-e .panel{border-radius:0;border-width:0 0 1px}.variant-e .panel-body{padding:26px 0}.variant-e .panel-head{padding-left:0;padding-right:0;border-top:1px solid var(--line)}.variant-e .preview{min-height:580px;border-radius:2px;background-position:center 30%}.variant-e .preview-copy{padding:34px}.variant-e .preview h2{font-size:42px}.variant-e .select-grid{grid-template-columns:1fr 1fr}.variant-e .switcher{border-radius:6px}
+    @media (max-width:760px){.shell{width:min(100% - 22px,600px);padding-top:48px}.masthead{align-items:flex-start}.seal{width:48px;height:48px;font-size:20px}.grid,.variant-a .grid{grid-template-columns:1fr}.preview{min-height:380px}.select-grid{grid-template-columns:1fr}.variant-e .select-grid{grid-template-columns:1fr}.switcher{bottom:12px}.switcher-label{min-width:145px}.prototype-note{top:auto;bottom:68px;right:10px;font-size:9px}}
+  </style>
+</head>
+<body>
+  <div class="prototype-note">PROTOTYPE · 风格探索</div>
+  <main id="app" class="scene" data-variant="A">
+    <div class="grain"></div>
+    <div class="shell">
+      <div class="variant-tabs" id="variant-tabs" aria-label="风格预览"></div>
+      <header class="masthead">
+        <div><p class="eyebrow" id="eyebrow">RE:ZERO / CHARACTER FORGE</p><h1 id="title">从零开始的创角仪式</h1><p class="subtitle" id="subtitle">在命运尚未写下名字之前，先决定你愿意失去什么。</p></div>
+        <div class="seal" aria-hidden="true"><span>✦</span></div>
+      </header>
+      <section class="grid">
+        <article class="panel form-panel">
+          <div class="panel-head"><h2 id="form-title">建立主角档案</h2><span id="step-label">01 / 05 · ORIGIN</span></div>
+          <div class="panel-body">
+            <div class="field"><label for="name">角色名 / NAME</label><input id="name" value="未命名的旅人" maxlength="30"></div>
+            <div class="field"><label>角色类型 / ARCHETYPE</label><div class="chips" id="type-chips"><button class="chip is-on" data-type="原创角色">原创角色</button><button class="chip" data-type="原作人物">原作人物</button><button class="chip" data-type="异界来客">异界来客</button></div></div>
+            <div class="field"><label>入场卷 / STORY ENTRY</label><div class="select-grid"><select id="volume"></select><select id="event"></select></div><div class="event-meta"><div class="meta"><small>EVENT TITLE</small><b id="event-title">—</b></div><div class="meta"><small>WORLD TIME</small><b id="event-time">—</b></div></div></div>
+            <div class="field"><label for="wish">一句话愿望 / WISH</label><input id="wish" value="让所有重要的人都活下来" maxlength="80"></div>
+            <div class="field"><label for="hook">命运钩子 / HOOK</label><input id="hook" value="我知道某个不该知道的名字" maxlength="100"></div>
+            <div class="callout" id="callout">选择卷数后，事件标题与编辑演算时间会自动同步。这里的“时间”遵循项目规范历，不把轮回记忆误算成世界时间。</div>
+          </div>
+        </article>
+        <aside class="panel preview" id="preview">
+          <div class="preview-copy"><p class="preview-kicker" id="preview-kicker">DRAFT / 00</p><h2 id="preview-name">未命名的旅人</h2><p id="preview-copy">一名尚未决定站在哪一侧的人，正站在事件发生前的薄雾里。</p><div class="stats"><div class="stat"><small>VOLUME</small><span id="stat-volume">第01卷</span></div><div class="stat"><small>EVENT</small><span id="stat-event">事件01</span></div><div class="stat"><small>TYPE</small><span id="stat-type">原创角色</span></div></div></div>
+        </aside>
+      </section>
+    </div>
+  </main>
+  <nav class="switcher" aria-label="切换风格原型"><button id="prev" aria-label="上一个风格">‹</button><div class="switcher-label"><b id="variant-key">A</b> · <span id="variant-name">月蚀档案</span><small>← → 键也可以切换</small></div><button id="next" aria-label="下一个风格">›</button></nav>
+  <script>
+    const variants={
+      A:{name:'月蚀档案',eyebrow:'RE:ZERO / CHARACTER FORGE',title:'从零开始的创角仪式',subtitle:'在命运尚未写下名字之前，先决定你愿意失去什么。',form:'建立主角档案',callout:'选择卷数后，事件标题与编辑演算时间会自动同步。这里的“时间”遵循项目规范历，不把轮回记忆误算成世界时间。'},
+      B:{name:'王选仪典',eyebrow:'ROYAL SELECTION / ENTRY RITE',title:'你的名字，将被记录',subtitle:'像一纸递入王城的申请书：克制、端正，却藏着一处无法撤回的私愿。',form:'填写入场文书',callout:'卷与事件是你的剧情锚点；选择后，右侧预览会显示这个角色被世界“看见”的瞬间。'},
+      C:{name:'魔女茶会',eyebrow:'TEA PARTY / MAKE A WISH',title:'来，给命运加一勺糖',subtitle:'把秘密、愿望和一点点危险搅在一起——茶凉之前，决定你要成为谁。',form:'调制你的角色',callout:'灵感模式会根据当前卷与事件给出可编辑的角色钩子；这是草稿，不会覆盖你的输入。'},
+      D:{name:'死亡回归终端',eyebrow:'LOOP CONSOLE / WRITE STATE',title:'CREATE_NEW_PROTAGONIST',subtitle:'世界状态可回滚，选择不可伪造。写入主角档案前，请确认你的重启点。',form:'写入初始状态',callout:'系统只记录当前轮回的世界时间；跨轮回账本与菜月昴死亡记录属于运行时状态，不在此处臆造。'},
+      E:{name:'雪原绘卷',eyebrow:'SNOWBOUND CHRONICLE / PROLOGUE',title:'在雪落之前，写下名字',subtitle:'一页一页翻过命运的纸面，让角色从朦胧的轮廓走到可以被呼唤的地方。',form:'翻开第一张纸',callout:'这是视觉原型：背景图会成为最终分页创角页的可替换图层，内容面板仍保持清晰可读。'}
+    };
+    const keys=Object.keys(variants); const app=document.getElementById('app');
+    const $=s=>document.querySelector(s); const story=Array.isArray(window.RE0_STORY_DATA)?window.RE0_STORY_DATA:[];
+    let current=new URLSearchParams(location.search).get('variant'); if(!variants[current]) current='A';
+    let selectedType='原创角色';
+    function setUrl(v){const u=new URL(location.href);u.searchParams.set('variant',v);history.replaceState({},'',u);renderVariant();}
+    function renderTabs(){document.getElementById('variant-tabs').innerHTML=keys.map(k=>`<button class="${k===current?'is-on':''}" data-variant-tab="${k}">${k} · ${variants[k].name}</button>`).join('');}
+    function populateVolumes(){const vol=$('#volume');vol.innerHTML=story.map(v=>`<option value="${v.number}">第${String(v.number).padStart(2,'0')}卷 · Re：从零开始的异世界生活</option>`).join('');vol.value=vol.value||'1';populateEvents();}
+    function populateEvents(){const v=story.find(x=>String(x.number)===$('#volume').value)||story[0];const sel=$('#event');sel.innerHTML=(v?.events||[]).map(e=>`<option value="${e.id}">事件${String(e.id).padStart(2,'0')} · ${e.title}</option>`).join('');renderEvent();}
+    function renderEvent(){const v=story.find(x=>String(x.number)===$('#volume').value)||story[0];const e=(v?.events||[]).find(x=>String(x.id)===$('#event').value)||(v?.events||[])[0];if(!e)return;$('#event-title').textContent=e.title;$('#event-time').textContent=e.time;$('#stat-volume').textContent=`第${String(v.number).padStart(2,'0')}卷`;$('#stat-event').textContent=`事件${String(e.id).padStart(2,'0')}`;$('#preview-copy').textContent=`${e.title}。${e.time}。这是角色第一次被卷入主线、轮回分支或历史回溯的切口。`;}
+    function renderVariant(){const cfg=variants[current];app.dataset.variant=current;document.documentElement.dataset.variant=current;Object.assign($('#eyebrow'),{textContent:cfg.eyebrow});$('#title').textContent=cfg.title;$('#subtitle').textContent=cfg.subtitle;$('#form-title').textContent=cfg.form;$('#callout').textContent=cfg.callout;$('#variant-key').textContent=current;$('#variant-name').textContent=cfg.name;renderTabs();syncPreview();}
+    function syncPreview(){$('#preview-name').textContent=$('#name').value||'未命名的旅人';$('#stat-type').textContent=selectedType;$('#preview-kicker').textContent=`DRAFT / ${current} · 00`;}
+    document.addEventListener('click',e=>{const t=e.target.closest('[data-variant-tab]');if(t){current=t.dataset.variantTab;setUrl(current);return}const chip=e.target.closest('[data-type]');if(chip){selectedType=chip.dataset.type;document.querySelectorAll('[data-type]').forEach(x=>x.classList.toggle('is-on',x===chip));syncPreview();}});
+    $('#prev').onclick=()=>{current=keys[(keys.indexOf(current)-1+keys.length)%keys.length];setUrl(current)}; $('#next').onclick=()=>{current=keys[(keys.indexOf(current)+1)%keys.length];setUrl(current)};
+    document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.key==='ArrowLeft')$('#prev').click();if(e.key==='ArrowRight')$('#next').click();});
+    $('#name').addEventListener('input',syncPreview); $('#volume').addEventListener('change',populateEvents); $('#event').addEventListener('change',renderEvent);
+    populateVolumes(); renderVariant();
+  </script>
+</body>
+</html>
