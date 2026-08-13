@@ -56,13 +56,20 @@ const app = appScope.querySelector('#re0-creator-app');
 if (!app) throw new Error('找不到创角向导挂载点 #re0-creator-app');
 
 function escapeHtml(value = '') {
-  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  })[character]);
+  // Build entity values at runtime instead of embedding literal `&...;`
+  // sequences. Tavern Helper serializes message HTML through an intermediate
+  // DOM; that pass decodes entity-looking text inside inline scripts. A
+  // literal `&#039;` therefore becomes a bare quote and can invalidate the
+  // whole script before the message iframe mounts.
+  const amp = String.fromCharCode(38);
+  const entities = {
+    '&': `${amp}amp;`,
+    '<': `${amp}lt;`,
+    '>': `${amp}gt;`,
+    '"': `${amp}quot;`,
+    "'": `${amp}#039;`,
+  };
+  return String(value ?? '').replace(/[&<>"']/g, (character) => entities[character]);
 }
 
 function getAt(target, path) {

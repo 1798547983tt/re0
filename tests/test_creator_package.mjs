@@ -59,3 +59,21 @@ test('creator regex artifact is a complete importable self-contained package', (
   assert.ok(scriptMatch, '完整产物必须内嵌可执行脚本');
   assert.doesNotThrow(() => new vm.Script(scriptMatch[1]));
 });
+
+test('creator script stays valid after Tavern Helper normalizes HTML entities', () => {
+  const artifact = JSON.parse(readFileSync(ARTIFACT, 'utf8'));
+  const scriptMatch = artifact.replaceString.match(/<script>\n([\s\S]*?)\n<\/script>/);
+  assert.ok(scriptMatch, '包内必须存在可执行脚本');
+
+  // The message iframe path serializes the body through HTML before srcdoc
+  // execution. Reproduce the observed entity normalization that broke the
+  // previous escapeHtml string literals in the live SillyTavern runtime.
+  const normalizedByMessageIframe = scriptMatch[1]
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#039;', "'");
+
+  assert.doesNotThrow(() => new vm.Script(normalizedByMessageIframe));
+});
