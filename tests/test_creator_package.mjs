@@ -31,6 +31,8 @@ test('creator regex artifact is a complete importable self-contained package', (
   assert.ok(artifact.replaceString.endsWith('\n```'));
   assert.match(artifact.replaceString, /战力等阶/);
   assert.match(artifact.replaceString, /id="re0-creator-app"/);
+  assert.match(artifact.replaceString, /data-re0-creator-mount/);
+  assert.match(artifact.replaceString, /document\.currentScript/);
   assert.doesNotMatch(artifact.replaceString, /id="app"/);
   assert.match(artifact.replaceString, /1阶（基础）到7阶（顶点）/);
   assert.doesNotMatch(artifact.replaceString, /1阶（顶点）到7阶（基础）/);

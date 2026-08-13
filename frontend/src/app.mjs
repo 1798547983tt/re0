@@ -50,7 +50,8 @@ const DEFAULT_SETTINGS = {
   reducedMotion: false,
 };
 
-const app = document.querySelector('#re0-creator-app');
+const appScope = document.currentScript?.closest('[data-re0-creator-mount]') ?? document;
+const app = appScope.querySelector('#re0-creator-app');
 
 if (!app) throw new Error('找不到创角向导挂载点 #re0-creator-app');
 

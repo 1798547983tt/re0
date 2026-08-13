@@ -75,11 +75,13 @@ ${css}
 </style>
 </head>
 <body>
+<div data-re0-creator-mount>
 <main id="re0-creator-app" aria-live="polite"></main>
 <noscript>此创角向导需要启用 JavaScript。</noscript>
 <script>
 ${buildJavascript()}
 </script>
+</div>
 </body>
 </html>`;
 }
