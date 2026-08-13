@@ -1,5 +1,6 @@
 # 用户指定仅保留在本地，不上传到 GitHub
 /STDB/
+/战力参考.txt
 
 # Python test/runtime caches
 __pycache__/

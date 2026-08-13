@@ -1,0 +1,42 @@
+{
+  "type": "script",
+  "enabled": true,
+  "name": "MVU",
+  "id": "bcf2ba69-20d6-49c1-a355-9a99d52257b7",
+  "content": "import 'https://testingcf.jsdelivr.net/gh/NLKASHEI/MVU-offline@v1.0.1/mvu_bundle_full.js'",
+  "info": "",
+  "button": {
+    "enabled": true,
+    "buttons": [
+      {
+        "name": "重新处理变量",
+        "visible": true
+      },
+      {
+        "name": "重新读取初始变量",
+        "visible": false
+      },
+      {
+        "name": "快照楼层",
+        "visible": false
+      },
+      {
+        "name": "重演楼层",
+        "visible": false
+      },
+      {
+        "name": "重试额外模型解析",
+        "visible": true
+      },
+      {
+        "name": "清除旧楼层变量",
+        "visible": false
+      }
+    ]
+  },
+  "data": {},
+  "export_with": {
+    "data": true,
+    "button": true
+  }
+}
