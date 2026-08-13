@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE_DIR = ROOT / "人物人设"
 REPORT = ROOT / "reports" / "character-profile-validation.json"
+EVIDENCE_INDEX = ROOT / "data" / "character_evidence.json"
 REQUIRED = (
     "姓名：",
     "性别：",
@@ -27,10 +28,37 @@ REQUIRED = (
     "阶段性人设：",
     "阶段切换条件：",
     "行为指导：",
+    "互动决策：",
+    "情绪变化：",
+    "关系推进：",
+    "危险禁区：",
+    "优先级与代价：",
     "口吻示例：",
+)
+FORBIDDEN = (
+    "年龄阶段：原文未给出绝对年龄",
+    "装备与战斗方式：以原文明确",
+    "原文行为锚点：",
+    "同场人物线索：",
+    "原文事实层：",
     "原文依据：",
     "证据类型：",
     "资料置信度：",
+    "存疑项：",
+    "战力口径：",
+    "战力依据：",
+    "扮演协议：",
+    "阶段索引：",
+    "项目资料不足",
+    "来源定位：",
+    "原文",
+    "资料置信度",
+    "证据",
+    "待核验",
+    "战力参考",
+    "个人观点",
+    "总结索引",
+    "审计",
 )
 
 
@@ -45,6 +73,7 @@ def body_chars(text: str) -> int:
 
 def validate() -> dict:
     files = sorted(path for path in PROFILE_DIR.glob("*.txt") if path.name != "README.txt")
+    evidence = json.loads(EVIDENCE_INDEX.read_text(encoding="utf-8")) if EVIDENCE_INDEX.exists() else {}
     errors: list[str] = []
     warnings: list[str] = []
     stats: list[dict] = []
@@ -69,13 +98,20 @@ def validate() -> dict:
             errors.append(f"{path.name}: body length {chars} outside 2000-3500")
         if "None" in text or "????" in text:
             errors.append(f"{path.name}: template/encoding leakage")
+        for marker in FORBIDDEN:
+            if marker in text:
+                errors.append(f"{path.name}: audit metadata retained ({marker})")
         rank_line = next((line for line in lines if line.startswith("战力等阶：")), "")
         if not re.search(r"[1-7]阶·(?:上位|下位)", rank_line):
             errors.append(f"{path.name}: invalid rank")
-        confidence = next((line.split("：", 1)[1] for line in lines if line.startswith("资料置信度：")), "")
-        if confidence.startswith("低"):
+        # Evidence provenance lives in data/character_evidence.json, not in the
+        # roleplay-facing TXT.  Keep it in the machine-readable report only.
+        entry = evidence.get(name, {})
+        confidence = str(entry.get("confidence", "unknown"))
+        if confidence == "low":
             low_confidence.append(name)
-        kind = next((line.split("：", 1)[1] for line in lines if line.startswith("证据类型：")), "未知")
+        kinds = sorted({str(item.get("source_kind", "未分类")) for item in entry.get("sources", [])})
+        kind = "、".join(kinds) if kinds else "未建立索引"
         evidence_kinds[kind] += 1
         for line in lines:
             if line and not line.startswith("<"):

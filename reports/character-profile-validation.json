@@ -1,9 +1,9 @@
 {
   "profile_count": 153,
   "character_count": {
-    "min": 2302,
-    "max": 3414,
-    "average": 2923.8
+    "min": 2051,
+    "max": 2747,
+    "average": 2236.3
   },
   "low_confidence": [
     "亨克尔·阿斯特雷亚",
@@ -27,7 +27,6 @@
     "格拉希丝·雷玫迪斯",
     "格林·法先",
     "梅拉奎拉",
-    "欧德·拉格纳",
     "欧德古勒斯",
     "法尔加尔",
     "波尔德",
@@ -42,939 +41,936 @@
     "黑白魔女"
   ],
   "evidence_types": {
-    "正传原文": 127,
-    "战力表孤证（不可据此扩写人物事实）": 10,
-    "总结索引（待正传核验）": 13,
-    "未检出原文证据": 3
+    "总结索引、正传原文": 57,
+    "总结索引、战力参考、正传原文": 63,
+    "战力参考": 10,
+    "总结索引": 12,
+    "未建立索引": 3,
+    "正传原文": 1,
+    "战力参考、正传原文": 6,
+    "总结索引、战力参考": 1
   },
-  "template_line_warnings": {
-    "年龄阶段：原文未给出绝对年龄时不擅自换算；以下阶段以身份、记忆、身体或能力变化为准。": 153,
-    "装备与战斗方式：以原文明确武器、魔法、种族能力或组织资源为准；不把称号自动等同新技能。": 153,
-    "战力口径：1阶为最低，7阶为最高；同阶分上位/下位。T0→7阶、T1→6阶、T2→5阶、T3→4阶、T4→3阶、T5→2阶、T6→1阶；相性可使下位在特定条件下胜过上位。": 153,
-    "存疑项：若本档案使用‘推定/资料薄/原文未明’，该项不是原作定论；后续应以卷文本或作者明确资料复核。": 153
-  },
-  "warnings": [
-    "4 lines appear in at least 140 profiles; review for non-actionable template text"
-  ],
+  "template_line_warnings": {},
+  "warnings": [],
   "errors": [],
   "profiles": [
     {
       "name": "一百八十四号",
-      "chars": 3128,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2525,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "丝琵卡",
-      "chars": 2950,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "乌比克",
-      "chars": 2947,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "亚兽",
-      "chars": 2958,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "亚拉基亚",
-      "chars": 3114,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2444,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "亨克尔·阿斯特雷亚",
-      "chars": 2532,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2527,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "伊多拉",
-      "chars": 2894,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "伊斯梅尔",
-      "chars": 2323,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "佛尔图娜",
-      "chars": 2364,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2111,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "佩特拉",
-      "chars": 2973,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "依亚",
-      "chars": 3008,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "八重·天膳",
-      "chars": 2352,
-      "confidence": "低",
-      "evidence_type": "未检出原文证据"
+      "chars": 2135,
+      "confidence": "low",
+      "evidence_type": "未建立索引"
     },
     {
       "name": "加斯顿",
-      "chars": 2973,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "加菲尔·汀泽尔",
-      "chars": 3236,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2661,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "半人马魔兽",
-      "chars": 2348,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2132,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "卡佩拉·艾美拉达·露格尼卡",
-      "chars": 3203,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2581,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "卡利尤",
-      "chars": 3091,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "卡夫马·依鲁鲁库斯",
-      "chars": 3179,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2527,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "卡德蒙",
-      "chars": 2968,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "卡萝尔·雷玫迪斯",
-      "chars": 2406,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2204,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "卡蜜拉",
-      "chars": 3174,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2269,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "古打",
-      "chars": 2815,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "low",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "古斯塔夫",
-      "chars": 2974,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2119,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "哥兹·拉尔冯",
-      "chars": 3213,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
+      "chars": 2449,
+      "confidence": "high",
       "evidence_type": "正传原文"
     },
     {
       "name": "坦萨",
-      "chars": 2944,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "培提尔其乌斯·罗曼尼康帝",
-      "chars": 3276,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2627,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "基尔提拉乌",
-      "chars": 2512,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2132,
+      "confidence": "low",
+      "evidence_type": "战力参考、正传原文"
     },
     {
       "name": "堤比",
-      "chars": 2962,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "塔莉塔",
-      "chars": 2960,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "塞蕾丝缇亚",
-      "chars": 2355,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2135,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "塞西鲁斯·赛格蒙特",
-      "chars": 3249,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2224,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "塞赫麦特",
-      "chars": 3121,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2296,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "夏乌拉",
-      "chars": 3093,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2421,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "多兔",
-      "chars": 2556,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2161,
+      "confidence": "low",
+      "evidence_type": "战力参考、正传原文"
     },
     {
       "name": "奇利塔卡",
-      "chars": 2989,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2119,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "奇夏·哥尔特",
-      "chars": 2824,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2167,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "奥尔巴特·丹克肯",
-      "chars": 3195,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2222,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "奥托·苏文",
-      "chars": 3034,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2329,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "威尔海姆·范·阿斯特雷亚",
-      "chars": 3322,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2747,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "安娜塔西亚·合辛",
-      "chars": 3176,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2373,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "密涅瓦",
-      "chars": 3088,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2244,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "少年文森·亚伯克斯",
-      "chars": 2416,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2224,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "尤加尔德·佛拉基亚",
-      "chars": 3362,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2527,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "尤尔娜·米希格蕾",
-      "chars": 2946,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2173,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "尤里乌斯·尤克历乌斯",
-      "chars": 3240,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2626,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "岩豚",
-      "chars": 2912,
-      "confidence": "中",
-      "evidence_type": "正传原文"
+      "chars": 2161,
+      "confidence": "medium",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "巨蛇魔兽",
-      "chars": 2331,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "巫塔卡塔",
-      "chars": 2319,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "巫它卡它",
-      "chars": 2882,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "巴尔加·克罗姆威尔",
-      "chars": 3414,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2224,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "巴尔罗伊·特梅格里夫",
-      "chars": 3218,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2247,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "希尔菲",
-      "chars": 2811,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "low",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "希艾因",
-      "chars": 2825,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "帕克",
-      "chars": 2887,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2122,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "帕拉迪欧",
-      "chars": 3063,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "帕特拉修",
-      "chars": 2918,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2067,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "幼犬魔兽",
-      "chars": 2858,
-      "confidence": "中",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "medium",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "库尔刚",
-      "chars": 3258,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2371,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "库珥修·卡尔斯腾",
-      "chars": 3247,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2325,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "异形魔兽",
-      "chars": 2571,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "弗洛普",
-      "chars": 2958,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2148,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "慕斯佩鲁",
-      "chars": 2333,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "戴纳斯",
-      "chars": 3048,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "托德·芬格",
-      "chars": 3013,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2423,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "拉塞尔",
-      "chars": 2594,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "low",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "拉姆",
-      "chars": 3012,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2196,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "拉珍斯",
-      "chars": 3097,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "拉米亚",
-      "chars": 2960,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "文森·亚伯克斯",
-      "chars": 3068,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2288,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "文森·佛拉基亚",
-      "chars": 3078,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2178,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "斯芬克斯",
-      "chars": 3062,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2417,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "无名女剑士",
-      "chars": 2348,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2132,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "普莉希拉·跋利耶尔",
-      "chars": 3130,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2341,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "枯纳",
-      "chars": 2894,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "格拉希丝·雷玫迪斯",
-      "chars": 2563,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2577,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "格林·法先",
-      "chars": 2348,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2132,
+      "confidence": "low",
+      "evidence_type": "总结索引、战力参考"
     },
     {
       "name": "格鲁比·加姆雷特",
-      "chars": 3211,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2201,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "梅佐里亚",
-      "chars": 3172,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2182,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "梅拉奎拉",
-      "chars": 2583,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2296,
+      "confidence": "low",
+      "evidence_type": "战力参考、正传原文"
     },
     {
       "name": "梅莉·波特鲁特",
-      "chars": 2943,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2254,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "欧德·拉格纳",
-      "chars": 2937,
-      "confidence": "低",
-      "evidence_type": "正传原文"
+      "chars": 2119,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "欧德古勒斯",
-      "chars": 2410,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2208,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "沃尔加姆",
-      "chars": 3022,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2175,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "沙蚯蚓",
-      "chars": 2977,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "法兰德丽卡·鲍曼",
-      "chars": 3280,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2551,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "法尔加尔",
-      "chars": 2393,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2185,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "波尔德",
-      "chars": 2319,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2096,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "波尔肯尼卡",
-      "chars": 2957,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2110,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "海因格",
-      "chars": 3290,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "潘朵拉",
-      "chars": 2971,
-      "confidence": "中",
-      "evidence_type": "正传原文"
+      "chars": 2325,
+      "confidence": "medium",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "特蕾西亚·范·阿斯特雷亚",
-      "chars": 3386,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2605,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "玛德琳·恩夏尔德",
-      "chars": 3292,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2541,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "琉兹·梅耶尔",
-      "chars": 3049,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2244,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "瑟希鲁斯·塞格姆多",
-      "chars": 3293,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2224,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "瑟莉娜",
-      "chars": 2975,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "瓦尔格伦",
-      "chars": 2388,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2182,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "白鲸",
-      "chars": 3064,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2161,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "神秘杀手",
-      "chars": 2331,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "神秘猎人",
-      "chars": 2331,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "禾力",
-      "chars": 2843,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "米杰耳怛",
-      "chars": 2948,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "米蒂安",
-      "chars": 2946,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "米迪安",
-      "chars": 2316,
-      "confidence": "低",
-      "evidence_type": "未检出原文证据"
+      "chars": 2096,
+      "confidence": "low",
+      "evidence_type": "未建立索引"
     },
     {
       "name": "约书亚·尤克历乌斯",
-      "chars": 2901,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2224,
+      "confidence": "high",
+      "evidence_type": "战力参考、正传原文"
     },
     {
       "name": "约瑟夫",
-      "chars": 2961,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "维格·阿德加德",
-      "chars": 2372,
-      "confidence": "低",
-      "evidence_type": "未检出原文证据"
+      "chars": 2181,
+      "confidence": "low",
+      "evidence_type": "未建立索引"
     },
     {
       "name": "缇丰",
-      "chars": 3161,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2242,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "罗伊·阿尔法鲁多",
-      "chars": 3108,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2201,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "罗兹瓦尔·L·梅扎斯",
-      "chars": 2938,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2358,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "罗姆",
-      "chars": 2848,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2051,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "罗安·赛格蒙特",
-      "chars": 3041,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2178,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "舒尔特",
-      "chars": 3368,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "艾佐",
-      "chars": 2908,
-      "confidence": "中",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "medium",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "艾姬多娜",
-      "chars": 2842,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2218,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "艾尔莎·葛兰希尔特",
-      "chars": 3285,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2634,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "艾米莉亚",
-      "chars": 3005,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2362,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "芙拉姆·雷玫迪斯",
-      "chars": 2543,
-      "confidence": "低",
-      "evidence_type": "战力表孤证（不可据此扩写人物事实）"
+      "chars": 2551,
+      "confidence": "low",
+      "evidence_type": "战力参考"
     },
     {
       "name": "花魁熊",
-      "chars": 2926,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2185,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "莉莉安娜",
-      "chars": 2945,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2264,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "莎提拉",
-      "chars": 3028,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2417,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "莫古洛·哈葛内",
-      "chars": 3166,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2178,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "莱伊·巴登凯托斯",
-      "chars": 3086,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2433,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "莱茵哈鲁特·范·阿斯特雷亚",
-      "chars": 2990,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2458,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "菜月昴",
-      "chars": 3208,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2493,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "菲利克斯·阿盖尔",
-      "chars": 3265,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2697,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "菲鲁特",
-      "chars": 2991,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2235,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "蜜蜜·帕尔巴顿",
-      "chars": 3144,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2525,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "裘斯",
-      "chars": 2999,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "西里乌斯·罗曼尼康帝",
-      "chars": 3137,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2502,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "贝亚特丽丝",
-      "chars": 2791,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2096,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "贝尔斯特兹",
-      "chars": 3116,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2132,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "贾马尔·奥雷利",
-      "chars": 3083,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2475,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "赫克托尔",
-      "chars": 2935,
-      "confidence": "中",
-      "evidence_type": "正传原文"
+      "chars": 2296,
+      "confidence": "medium",
+      "evidence_type": "战力参考、正传原文"
     },
     {
       "name": "赫利贝尔",
-      "chars": 3120,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2422,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "达芙妮",
-      "chars": 3099,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2269,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "迪克尔·奥斯曼",
-      "chars": 3180,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2178,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "里卡多·威尔金",
-      "chars": 3007,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2178,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "阿尔·迪巴兰",
-      "chars": 2978,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2387,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "阿贝尔",
-      "chars": 3008,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2245,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "阿齐",
-      "chars": 2302,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2073,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "雷古勒斯·柯尔尼亚斯",
-      "chars": 3239,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2564,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "雷姆",
-      "chars": 2992,
-      "confidence": "高",
-      "evidence_type": "正传原文"
+      "chars": 2213,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "雷德·阿斯特雷亚",
-      "chars": 3077,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2241,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "露伊·亚尔聂博",
-      "chars": 3037,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2191,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "饿马王",
-      "chars": 2884,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2185,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "马可仕·吉尔达库",
-      "chars": 3248,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2501,
+      "confidence": "high",
+      "evidence_type": "总结索引、战力参考、正传原文"
     },
     {
       "name": "马李巫李",
-      "chars": 2941,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "魏兹",
-      "chars": 2829,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2063,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "鲁伊·阿鲁奈布",
-      "chars": 2391,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2178,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "鲁斯贝尔",
-      "chars": 3170,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2109,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "黑塔洛",
-      "chars": 2968,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2086,
+      "confidence": "high",
+      "evidence_type": "总结索引、正传原文"
     },
     {
       "name": "黑白魔女",
-      "chars": 2327,
-      "confidence": "低",
-      "evidence_type": "总结索引（待正传核验）"
+      "chars": 2109,
+      "confidence": "low",
+      "evidence_type": "总结索引"
     },
     {
       "name": "黑蛇",
-      "chars": 3057,
-      "confidence": "中（原文词形命中充分，人物字段仍需逐章人工复核）",
-      "evidence_type": "正传原文"
+      "chars": 2161,
+      "confidence": "high",
+      "evidence_type": "战力参考、正传原文"
     }
   ]
 }

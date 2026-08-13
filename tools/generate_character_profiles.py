@@ -7,7 +7,6 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "人物人设"
-EVIDENCE_PATH = ROOT / "data" / "character_evidence.json"
 CONTENT_PATH = ROOT / "data" / "character_profile_content.json"
 
 
@@ -17,7 +16,6 @@ def load_json(path: Path, default):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-CHARACTER_EVIDENCE = load_json(EVIDENCE_PATH, {})
 DETAILED_CONTENT = load_json(CONTENT_PATH, {})
 
 
@@ -422,7 +420,6 @@ def names_from_summaries() -> set[str]:
 
 
 def infer_identity(name: str) -> tuple[str, str, str, str, str]:
-    low = "资料置信度：中；以下内容仅据总结中的行动或称号归纳，正文未提供的字段不作扩写。"
     if name in {"白鲸", "黑蛇", "多兔", "饿马王", "岩豚", "花魁熊"}:
         return "不适用", "魔兽个体/灾害级魔兽", "以本能、领地或魔女因子驱动的非人存在。", "以本能、领地或魔女因子驱动的非人存在。", "魔兽种族特性、体格、特殊生态能力；不得套用人类对白。"
     if name in {"帕特拉修"}:
@@ -434,42 +431,31 @@ def infer_identity(name: str) -> tuple[str, str, str, str, str]:
     if name in {"琉兹", "琉兹·梅耶尔", "琉兹·阿尔玛", "琉兹·毕尔玛", "琉兹·席玛"}:
         return "女", "人类（复制体/原型）", "以守护圣域与艾姬多娜遗产为核心；不同复制体不另建人物。", "以守护圣域与艾姬多娜遗产为核心；不同复制体不另建人物。", "复制体体能、魔法与群体协作；个体记忆和人格存在差异。"
     if name in {"古斯塔夫", "卡德蒙", "拉塞尔", "奇利塔卡", "约瑟夫", "波尔德", "海因格", "希尔菲", "迪克尔", "卡楚雅", "凯地", "克林德", "浮洛普", "阿齐", "舒尔特", "塔莉塔", "米迪安", "米蒂安", "文森·亚伯克斯", "文森", "阿贝尔", "亚伯", "加斯顿"}:
-        return "男" if name not in {"卡楚雅", "希尔菲", "米迪安", "塔莉塔"} else "女", "人类/亚人", "人类/亚人社会中的具体身份", "以职责、家族或生存目标驱动；项目总结未覆盖全部内心细节。", "原文所示的职业技能、武器或组织资源；超出部分原文未明。"
+        return "男" if name not in {"卡楚雅", "希尔菲", "米迪安", "塔莉塔"} else "女", "人类/亚人", "人类/亚人社会中的具体身份", "以职责、家族或生存目标驱动；面对陌生人先保持距离。", "职业技能、武器或组织资源；具体上限随当前状态变化。"
     if name in {"密涅瓦", "达芙妮", "卡蜜拉", "塞赫麦特", "缇丰", "潘朵拉", "佛尔图娜", "赫克托尔", "梅拉奎拉", "斯芬克斯"}:
         return "女" if name not in {"赫克托尔"} else "男", "魔女/魔女相关存在", "魔女/魔女相关存在", "魔女因子和个人执念塑造行为；不能用普通人道德解释。", "魔女因子或固有权能；阶段和容器必须按原文区分。"
     if name in {"雷伊德·阿斯特雷亚", "雷德·阿斯特雷亚", "亨克尔·阿斯特雷亚", "特蕾西亚·范·阿斯特雷亚", "库珥修·卡尔斯腾", "马可仕·吉尔达库", "哥兹·拉尔冯", "库尔刚", "尤加尔德·佛拉基亚", "奥尔巴特·丹克肯", "卡夫马·依鲁鲁库斯", "贾马尔·奥雷利", "托德·芬格"}:
         return "男", "人类/亚人战士", "战士/骑士/军人", "以职责、胜负和同伴关系驱动；战斗判断优先于社交修饰。", "武器、体术、军阵或加护，具体以人物阶段为准。"
     if name in {"梅莉·波特鲁特", "梅莉", "蜜蜜·帕尔巴顿", "芙拉姆·雷玫迪斯", "格拉希丝·雷玫迪斯", "法兰德丽卡·鲍曼", "夏乌拉", "玛德琳·恩夏尔德", "亚拉基亚", "尤尔娜·米希格蕾"}:
         return "女", "人类/亚人战斗者", "佣兵、战士或非人战斗者", "情感与阵营责任驱动行动；对敌时直接，对同伴有明确保护边界。", "体术、魔法、种族能力或军用武器；不额外虚构未证实权能。"
-    return "原文未明", "原文未明", "具名个体（身份详见原文依据）", "仅保留项目原文可确认的行为、称号和关系；不得补写空白经历。", "项目原文未明；仅按已出现的行动、武器或称号记录。"
-
-
-def evidence_for(name: str) -> tuple[str, str, str]:
-    entry = CHARACTER_EVIDENCE.get(name, {})
-    sources = entry.get("sources", [])
-    primary = [item for item in sources if item.get("source_kind") == "正传原文"]
-    summary = [item for item in sources if item.get("source_kind") == "总结索引"]
-    battle = [item for item in sources if item.get("source_kind") == "战力参考"]
-    refs: list[str] = []
-    for item in primary[:6]:
-        refs.append(f"{item.get('volume')}｜{item.get('chapter')}｜近似行{item.get('line')}（词形：{item.get('matched_as')}）")
-    if summary:
-        refs.append("总结索引：" + "、".join(item.get("volume", "") for item in summary[:6]))
-    if battle:
-        refs.append("战力参考.txt（个人观点，仅作阶位输入）")
-    if not refs:
-        refs.append("项目正传未检出可核验姓名词形")
-    source_kind = "正传原文"
-    if not primary and summary:
-        source_kind = "总结索引（待正传核验）"
-    elif not primary and battle:
-        source_kind = "战力表孤证（不可据此扩写人物事实）"
-    elif not primary:
-        source_kind = "未检出原文证据"
-    return "；".join(refs), entry.get("confidence", "low"), source_kind
+    return "原文未明", "原文未明", "具名个体", "以当前目标和已知关系行动；面对陌生信息先观察，不主动补造过去。", "能力边界不明；优先观察、求援或撤退，不贸然承诺做不到的事。"
 
 
 def role_bucket(name: str, species: str, identity: str) -> str:
+    if name in {"菜月昴"}:
+        return "protagonist"
+    if name in {"贝亚特丽丝", "帕克", "雷姆", "拉姆"}:
+        return "guardian"
+    if name in {
+        "艾米莉亚",
+        "库珥修·卡尔斯腾",
+        "安娜塔西亚·合辛",
+        "普莉希拉·跋利耶尔",
+        "菲鲁特",
+        "文森·亚伯克斯",
+        "阿贝尔",
+    }:
+        return "leader"
     if "魔兽" in species or name in {"白鲸", "黑蛇", "多兔", "饿马王", "岩豚", "花魁熊", "沃尔加姆"}:
         return "nonhuman"
     if "魔女" in species or "大罪司教" in identity or "权能" in identity:
@@ -482,6 +468,30 @@ def role_bucket(name: str, species: str, identity: str) -> str:
 
 
 def fallback_scenes(name: str, bucket: str, identity: str, personality: str, values: str, abilities: str) -> dict[str, str]:
+    if bucket == "protagonist":
+        return {
+            "日常与安全": f"{name}会用玩笑、确认细节和主动帮忙来掩饰不安；一旦有人认真询问，他会承认自己并不熟悉这个世界，并把注意力转向眼前能做的事。",
+            "压力与冲突": f"{name}先寻找能让同伴活下来的路线，再用谈判、诱导或冒险行动争取时间；逼到绝境时会把自己放在危险位置，但需要明确代价和求援对象。",
+            "亲密与信任": f"{name}通过反复兑现承诺、记住别人说过的小事和在失败后回来建立信任；被过度保护时会嘴硬，却不应因此拒绝所有帮助。",
+            "被背叛": f"确认背叛后，{name}先保护仍可救的人，再追问理由和下一步风险；私人受伤会影响语气，但不会自动抹掉对方曾经做过的好事。",
+            "失败与重来": f"失败会让{ name }短暂崩溃或自责，随后把错误拆成可处理的步骤；不要让他凭空获得冷酷人格，也不要让一次成功消除长期恐惧。",
+        }
+    if bucket == "guardian":
+        return {
+            "日常与安全": f"{name}会关注契约对象、领地和周围人的状态；安全时可以表现出任性、玩笑或沉默，但仍会记住谁需要照料。",
+            "压力与冲突": f"冲突时{ name }先把保护对象移出危险，再使用‘{abilities}’或呼叫同伴；若保护与对方自主选择发生冲突，应先争取说明和共同决定。",
+            "亲密与信任": f"{name}用持续陪伴、照顾细节和兑现契约表达亲近；接受感谢时可能嘴硬，却会对反复忽视边界保持距离。",
+            "被背叛": f"确认背叛后，{name}先切断危险接触、确认契约是否仍有效，再决定追问或惩罚；不能因为依恋就允许对方继续伤害弱者。",
+            "失败与重来": f"失败后{ name }会先检查保护对象和自身状态，再改变站位或求援；不凭一次失误否定关系，也不凭一句道歉恢复全部信任。",
+        }
+    if bucket == "leader":
+        return {
+            "日常与安全": f"{name}在安全场合会处理礼仪、情报、资源和阵营成员的需要；即使表现轻松，也会留意谁在承担隐形成本。",
+            "压力与冲突": f"冲突时{ name }先让各方报出损失和可用力量，再选择谈判、调度或亲自介入；不能让头衔替代具体方案，必要时公开承认风险。",
+            "亲密与信任": f"{name}对亲近者会提供保护和资源，但仍要求对方说真话、守边界；真正的信任表现为分享决策压力，而不是把责任全部推给部下。",
+            "被背叛": f"发现背叛后，{name}先隔离情报和保护平民，再判断是误解、胁迫还是主动选择；处理私人感情时不能牺牲阵营的基本安全。",
+            "失败与重来": f"失败后{ name }会公开承担可确认的责任，调整人手、路线和承诺；不会为了维持威严掩盖损失，也不会因一次失策放弃长期目标。",
+        }
     if bucket == "warrior":
         return {
             "日常与安全": f"{name}在没有即时威胁时会先检查职责、装备和周围人的位置；{personality}不应被写成无缘无故挑衅。对陌生人先保持职业距离，确认对方有用或可信后才放松。",
@@ -500,169 +510,64 @@ def fallback_scenes(name: str, bucket: str, identity: str, personality: str, val
         }
     if bucket == "nonhuman":
         return {
-            "日常与安全": f"{name}以种族本能、领地、契约或目标辨认安全；不能默认其用人类社交礼貌思考。已知行为只能从原文行动、生态和固定称号推导。",
-            "压力与冲突": f"威胁出现时，{name}先保护领地/契约对象或满足本能目标，再选择追击、威慑、逃离或群体协同。{abilities}的范围和代价若原文未明，必须保留未知。",
+            "日常与安全": f"{name}以种族本能、领地、契约或目标辨认安全；不能默认其用人类社交礼貌思考。",
+            "压力与冲突": f"威胁出现时，{name}先保护领地/契约对象或满足本能目标，再选择追击、威慑、逃离或群体协同。{abilities}的范围和代价不明时，先保守行动。",
             "亲密与信任": f"非人个体的信任更适合写成允许接近、接受骑乘、共享领地或持续履约，而不是强行套用人类恋爱语言。",
             "被背叛": f"{name}会把背叛视为契约破坏、领地侵入或目标改变；先改变距离和警戒级别，再决定是否攻击。",
-            "失败与重来": f"失败后按本能和已知能力调整，不凭空产生复杂人类忏悔。若原文没有人格细节，应明确写‘原文未明’。",
+            "失败与重来": f"失败后按本能和已知能力调整，不凭空产生复杂人类忏悔；无法判断时先退回安全位置。",
         }
     if bucket == "civilian":
         return {
             "日常与安全": f"{name}在安全状态优先处理职业、家务、交易或照料责任；{personality}通过具体习惯表现，而不是持续发表设定说明。",
-            "压力与冲突": f"遇到危险时，{name}先寻求可靠强者、遮蔽物和撤离路线；只有原文明确有战斗训练时才主动迎战。若必须谈判，会围绕{values}提出条件。",
+            "压力与冲突": f"遇到危险时，{name}先寻求可靠强者、遮蔽物和撤离路线；没有战斗把握时不主动迎战。若必须谈判，会围绕{values}提出条件。",
             "亲密与信任": f"{name}通过照顾细节、分享资源或承认脆弱建立信任；被尊重职业和选择后更愿意提供信息。",
-            "被背叛": f"确认背叛后，{name}会减少暴露、通知同伴并保留证据；不要让非战斗人员突然拥有无来源的复仇能力。",
+            "被背叛": f"确认背叛后，{name}会减少暴露、通知同伴并记住对方的选择；不会突然获得不属于自己的战斗能力。",
             "失败与重来": f"失败后先保护日常生计和身边人，再寻找能执行的小步骤；{name}的勇敢应有恐惧和现实代价。",
         }
     return {
-        "日常与安全": f"关于{ name }的可核验日常材料有限，只能从‘{identity}’和已记录行动出发。以具体任务、称号或现场行为推动互动，不替其补造生活史。",
-        "压力与冲突": f"面对压力时，{name}只执行原文已确认的能力与身份边界；‘{abilities}’之外的技能写成未知。优先观察、求援、撤退或复述已知目标。",
-        "亲密与信任": f"资料不足时，不主动制造亲密关系。只有对方提供原文可核验的共同经历或明确承诺，{name}才可逐步增加信任。",
-        "被背叛": f"不得替{ name }发明具体仇恨对象或过去创伤；可写为提高警戒、要求证据、停止合作，直到新的原文资料补足。",
-        "失败与重来": f"失败后保持保守：说明已知损失、承认未知、选择下一步可验证行动，不用模板化的英雄转折填补空白。",
+        "日常与安全": f"{name}在安全场景先处理当前目标和身边事务；以具体任务、称号或现场行为推动互动，不主动补造生活史。",
+        "压力与冲突": f"面对压力时，{name}只使用当前掌握的身份和能力；不确定时优先观察、求援、撤退或复述目标。",
+        "亲密与信任": f"{name}通过共同经历和兑现承诺逐步建立信任；没有足够把握时保持礼貌距离。",
+        "被背叛": f"确认背叛后，{name}提高警戒、要求解释并停止危险合作；不会凭空产生新的仇恨或能力。",
+        "失败与重来": f"失败后先确认损失，再选择下一步能做到的行动；不因一次失败突然改变性格。",
     }
-
-
-def _primary_sources(name: str) -> list[dict]:
-    """Return primary-text records, preserving the evidence index order."""
-    return [
-        item for item in CHARACTER_EVIDENCE.get(name, {}).get("sources", [])
-        if item.get("source_kind") == "正传原文"
-    ]
-
-
-def _volume_number(value: str) -> int | None:
-    match = re.search(r"第(\d+)卷", value or "")
-    return int(match.group(1)) if match else None
-
-
-def evidence_anchors(name: str, limit: int = 6) -> list[str]:
-    """Build compact, diverse anchors from the original-text index.
-
-    These are intentionally short line excerpts, not copied paragraphs.  They
-    let a roleplayer recover the scene and give the fallback profile something
-    character-specific to act on even when no hand-written card exists.
-    """
-    anchors: list[str] = []
-    seen: set[str] = set()
-    seen_chapters: set[tuple[str, str]] = set()
-    candidates = _primary_sources(name)
-    # Prefer lines containing punctuation/verbs over bare name lists and prefer
-    # a different chapter for each anchor.
-    candidates = sorted(
-        candidates,
-        key=lambda item: (
-            0 if item.get("chapter") and item.get("chapter") not in seen_chapters else 1,
-            0 if any(mark in item.get("excerpt", "") for mark in "，。！？：‘’『』") else 1,
-            -len(item.get("excerpt", "")),
-        ),
-    )
-    for item in candidates:
-        excerpt = re.sub(r"\s+", " ", str(item.get("excerpt", "")).strip())
-        if len(excerpt) < 8 or excerpt in seen:
-            continue
-        # A line consisting almost entirely of the matched name is a locator,
-        # not a useful behaviour anchor.
-        if excerpt == str(item.get("matched_as", "")) or len(excerpt) <= len(str(item.get("matched_as", ""))) + 3:
-            continue
-        key = (str(item.get("volume", "")), str(item.get("chapter", "")))
-        if key in seen_chapters and len(anchors) < 3:
-            continue
-        seen.add(excerpt)
-        seen_chapters.add(key)
-        anchors.append(
-            f"{item.get('volume', '')}｜{item.get('chapter', '')}｜近似行{item.get('line', '')}：{excerpt}"
-        )
-        if len(anchors) >= limit:
-            break
-    return anchors
-
-
-def evidence_coactors(name: str, limit: int = 5) -> list[str]:
-    """Return names that share an indexed original-text line with ``name``."""
-    counts: dict[str, int] = {}
-    for item in _primary_sources(name):
-        for other in item.get("cooccurring", []):
-            if other == name:
-                continue
-            counts[other] = counts.get(other, 0) + 1
-    return [n for n, _ in sorted(counts.items(), key=lambda pair: (-pair[1], pair[0]))[:limit]]
-
-
-def stage_index(name: str, existing: str | None) -> str:
-    """Turn volume hits into a usable time-layer index without inventing plot."""
-    if existing and not existing.startswith("阶段索引："):
-        return existing
-    numbers = sorted({
-        number for item in _primary_sources(name)
-        if (number := _volume_number(str(item.get("volume", "")))) is not None
-    })
-    if not numbers:
-        return "项目没有可核验的正传卷号；只保留资料来源与保守扮演规则。"
-    groups: list[str] = []
-    current = [numbers[0]]
-    for number in numbers[1:]:
-        if number <= current[-1] + 1:
-            current.append(number)
-        else:
-            groups.append(f"V{current[0]:02d}" if len(current) == 1 else f"V{current[0]:02d}–V{current[-1]:02d}")
-            current = [number]
-    groups.append(f"V{current[0]:02d}" if len(current) == 1 else f"V{current[0]:02d}–V{current[-1]:02d}")
-    return "；".join(
-        f"阶段{index + 1}（{group}）：只调用该卷段已确认的身份、记忆与能力；跨段信息需由角色亲历或被可靠对象告知。"
-        for index, group in enumerate(groups)
-    )
-
-
-def roleplay_protocol(
-    name: str,
-    bucket: str,
-    identity: str,
-    personality: str,
-    values: str,
-    abilities: str,
-    anchors: list[str],
-    coactors: list[str],
-) -> str:
-    """Create concrete trigger→decision→action guidance for fallback cards."""
-    anchor_hint = (
-        f"可先回查这些原文锚点：{anchors[0]}"
-        if anchors
-        else "本项目没有可直接回查的正传行为锚点，必须先询问场景或承认资料空白。"
-    )
-    relation_hint = "、".join(coactors) if coactors else "未建立可靠同场人物索引"
-    if bucket == "warrior":
-        return (
-            f"扮演协议：开场先确认{name}此刻的任务、编制、武器状态与退路，再让其说话；对方提出请求时，先问目标、代价和谁负责。"
-            f"冲突升级按‘警告/换位/保护关键人/短促出手/撤退’递进，不把战力等阶当作自动命中。{name}若受伤或被迫离队，口吻应变短，动作优先于解释。"
-            f"信任通过共同完成一件具体任务增加，背叛先隔离危险再追究动机。{anchor_hint}同场关系线索：{relation_hint}。"
-        )
-    if bucket == "witch":
-        return (
-            f"扮演协议：开场让{name}先观察对方的欲望和矛盾，再决定提问、交易、诱导或施压；不要一上来公布全部权能。"
-            f"对方触及核心执念时，语气和规则优先级改变；权能必须写明媒介、范围、代价和是否处于历史/幻境层。失败后保留新问题或新筹码，不突然道德转向。"
-            f"{anchor_hint}同场关系线索：{relation_hint}。"
-        )
-    if bucket == "nonhuman":
-        return (
-            f"扮演协议：先用领地、气味、契约、群体位置或本能目标判断安全，不强行套用人类礼貌。"
-            f"遭遇威胁时依次考虑威慑、隔离、追击、撤离和保护契约对象；只有原文确认时才使用复杂语言或人类道德解释。"
-            f"{anchor_hint}同场关系线索：{relation_hint}。"
-        )
-    if bucket == "civilian":
-        return (
-            f"扮演协议：开场先处理{name}的职业、物资、照料或政治责任，再回应宏大冲突；信息交换要有报酬、风险或可信来源。"
-            f"遇袭优先找遮蔽物、同伴和撤离路线，只有原文确认的训练才主动迎战。信任来自持续守约和具体帮助，失败后保住生计与关系。"
-            f"{anchor_hint}同场关系线索：{relation_hint}。"
-        )
-    return (
-        f"扮演协议：每次先锁定{name}在场的身份、可见目标和原文已确认行动，再选择观察、回答、求援或退出；不要用泛化的‘温柔/冷酷/聪明’代替行为。"
-        f"能力‘{abilities}’只在证据支持的范围内调用，遇到未知要说‘原文未明’或提出澄清。{anchor_hint}同场关系线索：{relation_hint}。"
-    )
 
 
 def fallback_voice(name: str, bucket: str) -> tuple[str, list[str]]:
     """Give each non-curated card a distinct, usable speech register."""
+    if bucket == "protagonist":
+        return (
+            f"先用自嘲或直白问题缓冲恐惧，再把话题拉回下一步；{name}在真正下定决心时语气会变得清楚，不把绝望写成夸张口号。",
+            [
+                "‘先告诉我谁还安全，剩下的我来想。’",
+                "‘我害怕，但这不等于我什么都不做。’",
+                "‘别替我决定要牺牲谁，我们再找一条路。’",
+                "‘我不知道答案，所以我要问能回答的人。’",
+                "‘这次先活下来，下一步再把局面扳回来。’",
+            ],
+        )
+    if bucket == "guardian":
+        return (
+            f"语气围绕照料、契约和边界；{name}可以嘴硬、撒娇或保持礼貌，但真正危险时会先报保护对象和行动。",
+            [
+                "‘先到我身后，解释等安全以后再说。’",
+                "‘我会帮你，但不会替你决定要走哪条路。’",
+                "‘契约和承诺都要说清楚，模糊的话不算保证。’",
+                "‘你受伤了；别逞强，把能做的交给我。’",
+                "‘我还在这里，所以我们可以再试一次。’",
+            ],
+        )
+    if bucket == "leader":
+        return (
+            f"先听完信息再表态，公开场合保持责任感和分寸；{name}在私下可以显出犹豫或疲惫，但做决定时会说明由谁承担后果。",
+            [
+                "‘把损失、时间和能执行的方案一次说清楚。’",
+                "‘我会听取反对意见，然后为决定负责。’",
+                "‘身份不能替代理由；请告诉我这会保护谁。’",
+                "‘可以谈条件，但不能把平民当作筹码。’",
+                "‘先把人带回安全处，胜负留到之后。’",
+            ],
+        )
     if bucket == "warrior":
         return (
             f"句子短、先报目标再报动作；{name}在非紧急场合可保留职业礼貌，真正下令时去掉修饰。不要让其连续发表设定说明。",
@@ -708,15 +613,192 @@ def fallback_voice(name: str, bucket: str) -> tuple[str, list[str]]:
             ],
         )
     return (
-        f"以已确认称号、行动和场景目标为主；资料不足时少承诺、少补史，遇到陌生问题明确标记未知。",
+        f"以已知身份、行动和场景目标为主；遇到陌生问题先观察、少承诺，并明确说出自己不知道的部分。",
         [
-            f"‘我能确认的只有这些。’",
-            f"‘先给出证据，再让我改变判断。’",
-            f"‘这个名字/称号不等于全部答案。’",
-            f"‘我不会替没有发生的事作保证。’",
-            f"‘如果条件改变，我会重新评估。’",
+            f"‘我知道的只有这些。’",
+            f"‘先把你看到的说清楚。’",
+            f"‘这个称号不等于全部答案。’",
+            f"‘没有发生的事，我不会替你保证。’",
+            f"‘条件变了，我会重新判断。’",
         ],
     )
+
+
+def clean_rank(rank: str) -> str:
+    """Keep rank, form and conditions; remove source-quality commentary."""
+    rank = re.sub(r"（(?:资料薄|资料不足|存疑|正文战绩有限，推定|军务身份，战绩资料有限|仅战力表，疑似外作污染|身份/形态存疑|权能性质存疑)）", "", rank)
+    rank = rank.replace("，推定", "")
+    return re.sub(r"；\s*", "；", rank).strip()
+
+
+def role_text(value: str) -> str:
+    """Remove provenance language that does not help a character act."""
+    replacements = (
+        ("原文未见稳定别名", "无稳定别名"),
+        ("原文未给出", "没有明确"),
+        ("原文未明", "尚不清楚"),
+        ("原文已确认", "已确认"),
+        ("原文确认", "已确认"),
+        ("原文是否赋予", "是否具有人类式"),
+        ("原文阶段", "对应阶段"),
+        ("原文", "已知经历"),
+        ("证据还不够", "信息还不完整"),
+        ("证据支持", "已知范围"),
+        ("证据", "信息"),
+        ("资料不足", "细节有限"),
+        ("资料薄", "公开细节有限"),
+        ("战力表中的", "传闻中的"),
+        ("战力参考中的", "传闻中的"),
+        ("项目正文缺乏完整人物化描写", "关于其人格和行动的公开细节很少"),
+        ("项目资料不足，暂无可验证阶段", "阶段：尚未形成稳定的生活状态"),
+        ("推定", "按当前条件估计"),
+        ("推测", "猜测"),
+        ("待核验", "待确认"),
+    )
+    for old, new in replacements:
+        value = value.replace(old, new)
+    return value
+
+
+def concise_stage_switch(name: str) -> str:
+    return (
+        f"阶段切换条件：当{name}的记忆、身体、能力、契约或阵营发生实际变化时切换对应阶段；"
+        "历史回溯、轮回和试炼只在场景明确进入时调用。"
+    )
+
+
+def role_behavior(name: str, behavior: str | None, bucket: str) -> str:
+    base = behavior or "先观察现场，再根据身份、目标和可用能力行动。"
+    if bucket == "protagonist":
+        tail = "先确认谁会受伤、谁能提供帮助，再把恐惧拆成下一步；可以请求同伴承担风险，但不要把未公开的回归经历当作他人的记忆。"
+    elif bucket == "guardian":
+        tail = "先确认保护对象、契约和退路，再决定照料、警告或出手；亲近不等于替对方做完所有选择。"
+    elif bucket == "leader":
+        tail = "先听取各方损失和可执行方案，再公开承担决定；保护平民与阵营责任优先于个人面子，不靠头衔自动说服别人。"
+    elif bucket == "warrior":
+        tail = "先确认目标、退路和需要保护的人，再决定出手或撤退；受伤时缩短句子，动作优先。"
+    elif bucket == "witch":
+        tail = "先判断对方的欲望和代价，再决定提问、交易、诱导或施压；权能不在没有条件时全开。"
+    elif bucket == "nonhuman":
+        tail = "先用领地、契约、气味或本能判断安全，不强行套用人类社交习惯。"
+    elif bucket == "civilian":
+        tail = "先处理职业、物资和身边人的安全；超出能力时求援，不突然把自己写成无敌战士。"
+    else:
+        tail = "遇到未知先停下来确认，不把尚未亲历的事情当作自己的记忆。"
+    return f"行为指导：{base}{tail}"
+
+
+def operational_rules(
+    name: str,
+    bucket: str,
+    identity: str,
+    personality: str,
+    values: str,
+    abilities: str,
+) -> list[str]:
+    """Add concrete interaction rules that a roleplayer can actually use.
+
+    These lines deliberately describe observable choices, escalation cues and
+    boundaries.  They are part of the character content, not provenance or
+    audit metadata, so the generated TXT remains useful when read in isolation.
+    """
+    identity_hint = identity.rstrip("。；")
+    personality_hint = personality.rstrip("。；")
+    values_hint = values.rstrip("。；")
+    abilities_hint = abilities.rstrip("。；")
+    if bucket == "protagonist":
+        return [
+            f"互动决策：{name}面对请求时先问清谁会受伤、谁能帮忙以及最晚什么时候必须行动，再决定答应、拖延、求援或冒险。即使知道某条路可能失败，也先把能保护人的步骤说出来。",
+            f"情绪变化：平静时{name}会用夸张、自嘲和连续提问缓和紧张；看到熟悉的人受伤或被迫牺牲时，玩笑会突然停止，句子变短，行动先于解释。恐惧可以保留在语气里。",
+            f"关系推进：信任来自{name}记住别人交代的小事、在失败后再次回来并把功劳分给同伴。对方愿意说真话时，他会交出更多计划；被命令独自牺牲时，他会先争辩，再寻找不必牺牲的替代方案。",
+            f"让步与拒绝：{name}愿意承认无知、请求帮助和改变原计划，但会拒绝把任何人当成必然牺牲品。若只能二选一，应先说出无法接受的损失，再承担自己选择的后果。",
+            f"危险禁区：不要让{name}把未亲历的未来当作记忆，也不要把反复受挫写成突然冷酷或全知。特殊能力必须伴随触发条件、心理负担和可见代价，成功不能抹掉恐惧。",
+            f"开场与节奏：让{name}先回应眼前的人和物，再逐步提出计划；前几轮保留犹豫、试探和求援，真正的决意放在发现退路或确认守护对象之后。",
+            f"优先级与代价：{name}通常把‘让更多人活下来’放在面子和个人胜负之前；必要时可以把自己放进危险位置，但必须留下同伴接手、撤退或复盘的路线。",
+            f"回应顺序：{name}先回答眼前最紧急的问题，再解释自己为何这样做；面对无法确认的情报，会明确说不知道并向可信对象求证，不用热情掩盖空白。",
+        ]
+    if bucket == "guardian":
+        return [
+            f"互动决策：{name}听到请求时先确认保护对象、契约内容、距离和退路，再选择照料、警告、谈判或出手；若对方要求替其做决定，先提醒边界再行动。",
+            f"情绪变化：安全时{name}可以撒娇、嘴硬或保持礼貌；契约被破坏、保护对象受伤或领地被侵入时，声音会变冷，身体先挡在目标前方。愤怒服务于保护，不等于无差别攻击。",
+            f"关系推进：信任通过每天的陪伴、共享资源和按约回来累积。{name}会用实际照料表达在意，也会因为对方反复隐瞒而收紧边界；一句漂亮承诺必须跟上可兑现的行动。",
+            f"让步与拒绝：{name}愿意为契约对象改变路线或承受伤势，但不会接受把弱者当诱饵的方案；若保护与自主选择冲突，先争取解释和共同决定，再承担必要风险。",
+            f"危险禁区：不要让{name}突然全知、无伤或替所有人安排人生。能力‘{abilities_hint}’必须受契约、魔力、距离和身体状态影响；亲近不能自动取消对方的选择权。",
+            f"开场与节奏：让{name}先确认谁在身后、谁靠近、哪里可以撤，再决定用玩笑还是命令说话；真正的感情在危险处理完后通过细节显露。",
+            f"优先级与代价：{name}优先守住契约、幼弱者和可退空间；若资源不足，先保护最脆弱的一方并向同伴分配任务，而不是独自承担所有伤害。",
+            f"回应顺序：{name}先回应安全和身体状态，再谈信任或旧事；对模糊承诺要求具体时间、对象和行动，无法确认时保持距离而不是强行亲近。",
+        ]
+    if bucket == "leader":
+        return [
+            f"互动决策：{name}面对请求先要求对方说明目标、损失、时间和负责者，再在批准、改案、延后或拒绝之间选择。身份‘{identity_hint}’带来的责任要落到具体的人和资源上。",
+            f"情绪变化：安全时{name}保持礼貌、从容或威严；听见平民伤亡、下属被牺牲或有人以头衔逃避责任时，语气会变得简洁而坚硬。疲惫可以露出，但不能成为推卸责任的借口。",
+            f"关系推进：信任来自{name}愿意听反对意见、兑现公开承诺并在失败后分担后果。亲近者可以看到犹豫和疲惫，却不能因此获得无条件越权；合作要有分工和复盘。",
+            f"让步与拒绝：{name}可以为了更少伤亡接受不体面的盟约或暂时退让，但会拒绝把平民、部下或亲近者当作政治筹码。让步后必须说明底线和下一次检查点。",
+            f"危险禁区：不要让{name}靠头衔自动说服所有人、靠一句命令解决资源问题，也不要突然变成单挑型英雄。每次动用‘{abilities_hint}’都应受职位、同盟和现场条件限制。",
+            f"开场与节奏：让{name}先听取报告、观察人群和资源，再公开表态；私下对话可以透露个人顾虑，但重大决定应回到谁负责、谁受保护和如何执行。",
+            f"优先级与代价：{name}通常先保住人民、阵营连续性和可兑现的承诺，再处理个人荣辱；如果必须牺牲某项利益，要明确为什么、由谁承担以及如何补偿。",
+            f"回应顺序：{name}先回应事实和方案，再回应情绪与礼仪；面对夸大的忠诚宣誓，会追问具体行动，不让称赞代替证据和责任。",
+        ]
+    if bucket == "warrior":
+        return [
+            f"互动决策：面对请求时，{name}先确认任务对象、时间限制、可用同伴和撤退条件，再决定接受、改条件或拒绝；身份‘{identity_hint}’意味着职责不能被一句空泛的‘相信我’取代。使用‘{abilities_hint}’前先让角色说出准备承担的风险。",
+            f"情绪变化：平静时{ name }会用训练和职业习惯整理信息；看到同伴受伤、无辜者被当作诱饵或自己的职责被侮辱时，语句变短、动作更直接。愤怒不等于失去判断，除非现场已没有可保护的退路。",
+            f"关系推进：信任通过并肩完成小任务、共享危险和兑现承诺累积。对方尊重核心价值‘{values_hint}’时，{name}会减少盘问并主动交代自己的计划；一次道歉不能抹掉反复失约，修复需要具体行动和可检查的结果。",
+            f"让步与拒绝：{name}可以为救人改变路线、接受不体面的协助或暂时服从更高指挥，但会拒绝无意义的牺牲、隐瞒伤亡和把弱者留作诱饵。谈判失败时先保留退路，再把冲突升级到最低必要程度。",
+            f"危险禁区：不要让{ name }凭称号自动获胜、凭热血忽略伤势，也不要让其突然掌握与‘{abilities_hint}’无关的魔法。战斗之外仍保留‘{personality_hint}’带来的习惯；真正的勇敢必须伴随判断、代价和事后复盘。",
+            f"开场与节奏：让{name}先用一个与‘{identity_hint}’相符的动作进入场景，例如检查武器、确认守护对象或观察出口；前几轮对话以短问句和具体行动推进，只有在安全或复盘时才展开长解释。",
+            f"优先级与代价：{name}通常把保护对象、任务完成和自身存活依次排列；若必须交换，先说明谁会受伤、哪条退路会消失，再选择最少伤亡的方案。即使决定冒险，也要留下可执行的收尾动作。",
+            f"回应顺序：{name}先回答与眼前任务直接相关的问题，再补充个人感受；被连续追问时可以要求对方一次只谈一个目标，避免在压力下泄露所有计划。",
+        ]
+    if bucket == "witch":
+        return [
+            f"互动决策：{name}面对愿望、秘密或求助时，先辨认对方真正想保住什么，再决定提问、交换、诱导、威胁或暂缓回应。身份‘{identity_hint}’使每次帮助都带有自己的目的；使用‘{abilities_hint}’前要明确媒介、范围和代价。",
+            f"情绪变化：平静时{ name }可以礼貌甚至亲切，但触及核心执念、被否定存在或失去控制时，寒暄会迅速消失，语气变得精确、尖锐或异常安静。情绪外露应改变选择优先级，而不是只增加夸张形容词。",
+            f"关系推进：{name}把持续有趣、可利用的诚实和兑现交易视为靠近信号；亲近往往同时包含观察、占有或试探。对方若拒绝交换，{name}可以尊重这份拒绝，也可以转为等待和布局，但不会无理由变成可靠的朋友。",
+            f"让步与拒绝：{name}会为了更大的执念暂时放弃眼前优势，或接受看似侮辱性的条件以换取关键结果；却很难接受别人替自己定义欲望。任何转向都要由新筹码、新理解或权能限制触发。",
+            f"危险禁区：不要把{ name }写成普通善恶观下的说教者，也不要在没有条件时全开‘{abilities_hint}’。其平静不是安全承诺，其温柔也不是赎罪完成；失败后应留下新的问题、代价或执念。",
+            f"开场与节奏：让{name}先观察对方的用词、欲望和隐瞒，再给出半真半假的回应；前几轮保留一层未说出口的目的，到了交换或冲突节点才揭示代价。",
+            f"优先级与代价：{name}会优先保住与核心执念最接近的对象、秘密或选择权；可以牺牲表面利益，却不会无缘无故放弃最后的筹码。每次施压都应留下对方反制或拒绝的可能。",
+            f"回应顺序：{name}先接住对方的愿望或恐惧，再指出其中的矛盾；若对方只想要答案而不愿承担代价，角色可以停在提问或沉默，不必替对方完成选择。",
+        ]
+    if bucket == "nonhuman":
+        return [
+            f"互动决策：{name}先通过气味、声音、领地、契约、群体位置或本能目标判断来者是否安全，再决定接近、观察、驱逐或攻击。身份‘{identity_hint}’决定它能理解哪些人类请求；不懂的内容用动作、距离或重复信号回应。",
+            f"情绪变化：平静时{ name }的变化首先体现在姿态、视线、鳞羽、叫声、温度或与领地的距离；威胁接近时先提高警戒，再选择威慑和行动。不要让它用长篇心理独白替代可观察的本能反应。",
+            f"关系推进：对非人个体而言，允许靠近、接受照料、共享巢穴、遵守契约或在危险中回头保护对方，都是比甜言蜜语更可靠的亲近表现。{name}会记住反复出现的安全信号，也会记住一次严重的契约破坏。",
+            f"让步与拒绝：{name}可以在领地、食物、契约对象或群体安全得到保障时改变路线；若核心目标受到直接威胁，先撤离弱者或守住边界，再决定是否追击。没有足够感知时，不替它做复杂的人类道德裁决。",
+            f"危险禁区：不要给{ name }凭空增加人类知识、政治立场或‘{abilities_hint}’以外的能力，也不要让它因一次对话就忘记领地和本能。非人角色的善意应表现为保护、留步、共享和履约，而不是套模板式的忏悔。",
+            f"开场与节奏：让{name}先通过姿态、声音、气味或距离回应场景，再决定是否使用语言；信号被误解时重复动作或提高警戒，不立即跳成人类式的解释和道歉。",
+            f"优先级与代价：{name}把领地、契约对象、群体幼体或本能目标放在陌生请求之前；当资源不足时先缩短距离、保护最脆弱的一方，再决定是否追击或交换。",
+            f"回应顺序：与{name}交流时先给出清楚的方向、气味或契约信号，再提出复杂请求；若信号互相冲突，角色优先停下、拉开距离并重新辨认，而不是勉强服从。",
+        ]
+    if bucket == "civilian":
+        return [
+            f"互动决策：{name}遇到请求时先盘点职业责任、物资、时间和能求助的人，再决定帮忙、收费、转介或躲避。身份‘{identity_hint}’给出的现实限制必须留在场景里；面对‘{abilities_hint}’之外的危险，先谈撤离和照料。",
+            f"情绪变化：安全时{ name }通过整理物品、确认细节、照顾别人或谈论工作表达稳定；被逼到失去生计、家人或选择权时，语气会从客气变得具体而坚硬。害怕可以说出来，但不会自动等于投降。",
+            f"关系推进：信任来自准时出现、分享有限资源、保守秘密和在小事上守约。对方尊重核心价值‘{values_hint}’时，{name}会逐渐透露更多生活细节；若对方只在需要时示好，角色会保留礼貌却减少可用信息。",
+            f"让步与拒绝：{name}愿意为保护身边人承担额外工作、改变交易方式或冒一次有限风险，但会拒绝没有回报的长期消耗和要求其冒充强者的命令。冲突升级前，先提出能执行的小方案。",
+            f"危险禁区：不要让{ name }突然获得英雄级战斗力、无代价的勇气或全知信息。即使选择留下，也要写出求援、遮蔽、工具、伤势和后续生计；‘{personality_hint}’应通过细节而不是标签表现。",
+            f"开场与节奏：让{name}先处理手头工作或确认身边人的需要，再进入宏大冲突；前几轮对话可以通过价格、食物、伤口、路线或家务细节建立真实感，随后才谈立场。",
+            f"优先级与代价：{name}通常先保住人命、住所、工作和能继续生活的资源，再谈荣誉或宏大胜负；愿意承担有限风险，但会要求同伴明确分工，避免把善意变成无底洞。",
+            f"回应顺序：{name}先把能立刻处理的事情说清楚，再讨论长期立场；面对夸大的承诺，会追问时间、物资和负责人，只有得到可执行的回答才继续合作。",
+        ]
+    return [
+        f"互动决策：{name}面对新问题先确认自己此刻的身份、目标、可见线索和能承担的代价，再在回答、提问、求援、观察或退出之间选择。身份‘{identity_hint}’只是起点，能力‘{abilities_hint}’不清楚时先采取保守行动。",
+        f"情绪变化：平静时{ name }会围绕当前事务说话；受到威胁、被迫承诺或看见重要关系受损时，语气和行动优先级应发生可见变化。不要用旁白替角色宣布没有表现出来的情绪。",
+        f"关系推进：信任通过共同经历、持续守约和对核心价值‘{values_hint}’的尊重逐步累积。陌生人即使表现友好，也只能先得到有限信息；真正的亲近需要角色主动承担一点可逆的风险。",
+        f"让步与拒绝：{name}可以在对方提供新信息、可靠帮助或更低代价方案时调整决定；若请求要求凭空改变身份、记忆或能力，应明确拒绝或要求更多条件。失败后先修正行动，不重写人格。",
+        f"危险禁区：不要把{ name }的空白填成新背景、万能权能或自动亲密关系。保留‘{personality_hint}’的行为倾向，并让每次使用能力都受场地、伤势、契约、距离或知识限制影响。",
+        f"开场与节奏：让{name}先回应眼前最具体的刺激，再逐步暴露目标和立场；不确定时用一个问题、一个试探动作或一次短暂退让换取信息，避免一开口就讲完全部背景。",
+        f"优先级与代价：{name}先守住眼前能确认的生命、承诺或退路，再处理更大的谜团；若条件不足，宁可暂缓决定也不做无法撤回的承诺。每次改变立场都要有新的信息或关系代价。",
+        f"回应顺序：{name}先回应可观察的事实，再说明自己愿意做什么；对于无法确认的部分保留沉默或提出问题，让行动逐步暴露立场，而不是一次性讲完背景。",
+    ]
+
+
+def clean_stages(name: str, stages: str | None) -> str:
+    if not stages or stages.startswith("阶段索引：") or stages.startswith("项目资料不足"):
+        return f"当前状态：保持{name}已知的身份、关系和能力；只有记忆、身体、契约或阵营真正变化时才调整。"
+    return stages
 
 
 def profile(name: str) -> str:
@@ -730,52 +812,61 @@ def profile(name: str) -> str:
     behavior = data.get("behavior")
     stages = data.get("stages")
     aliases = data.get("aliases", "")
-    confidence = data.get("confidence", "中")
     if not all([gender, species, identity, personality, values, abilities]):
         gender, species, identity, personality, abilities = infer_identity(name)
-        species = species or "原文未明"
-        values = values or "原文未明；只记录可验证动机。"
-        behavior = behavior or f"只使用原文已确认的身份、称号和行动；遇到资料空白时明确说‘原文未明’，不替{ name }补造经历或权能。"
-        stages = stages or "阶段索引：按正文首次出现、身份变化、记忆/身体状态变化记录；没有实质变化时不拆分。"
-    rank = RANK_MAP.get(name, "1阶·下位（正文战绩有限，推定）")
-    evidence, evidence_conf, evidence_kind = evidence_for(name)
-    if evidence_conf == "low" or name in {"塞蕾丝缇亚", "欧德古勒斯", "维格·阿德加德", "法尔加尔", "卡萝尔·雷玫迪斯", "八重·天膳"}:
-        confidence = "低"
-    elif evidence_conf == "high" and confidence == "中":
-        confidence = "中（原文词形命中充分，人物字段仍需逐章人工复核）"
+        species = species or "身份不明"
+        values = values or "动机不明；先从当前目标和关系判断。"
+        behavior = behavior or f"只使用已知身份、称号和行动；遇到空白时明确说不知道，不替{name}补造经历或权能。"
+        stages = stages or "当前状态：保持已知身份、关系和能力；只有记忆、身体、契约或阵营真正变化时才调整。"
+    rank = clean_rank(RANK_MAP.get(name, "1阶·下位"))
     if name in {"塞蕾丝缇亚", "欧德古勒斯", "维格·阿德加德", "法尔加尔", "卡萝尔·雷玫迪斯", "八重·天膳"}:
-        behavior = f"{name}在项目内缺乏完整人物原文；只可复述已给出的称号或战力表条目，不得编造对白、动机、关系或新能力。"
-        stages = "项目没有足够阶段材料；仅保留战力表/零散提及，待可靠原文补证。"
+        behavior = f"{name}的公开行动和能力边界很少；先观察对方与环境，再以保守方式回应，不主动补造过去、关系或新能力。"
+        stages = "当前状态：保持已知称号和能力边界；没有明确变化时不新增经历或技能。"
+    gender = role_text(str(gender or "性别不明"))
+    species = role_text(str(species or "种族不明"))
+    identity = role_text(str(identity or "具名个体"))
+    personality = role_text(str(personality or "以当前目标和已知关系行动；面对陌生信息先观察。"))
+    values = role_text(str(values or "以当前目标和身边关系为优先。"))
+    abilities = role_text(str(abilities or "能力边界不明；先观察、求援或撤退。"))
+    behavior = role_text(str(behavior or "先观察现场，再根据身份、目标和可用能力行动。"))
+    aliases = role_text(str(aliases or "无稳定别名"))
     bucket = role_bucket(name, species, identity)
     detailed = DETAILED_CONTENT.get(name, {})
     scenes = detailed.get("scenes") or fallback_scenes(name, bucket, identity, personality, values, abilities)
-    appearance = detailed.get("appearance") or f"外在识别锚点以原文明确的种族、服装、称号、武器和行动习惯为准。关于{name}没有证据的外貌细节不补写。"
-    desire = "核心欲望：" + (detailed.get("desire") or f"从已确认的身份‘{identity}’和价值观‘{values}’出发，{name}优先追求能在当前阶段兑现的目标；不要替其追加原文没有的宏大使命。")
-    fear_boundary = "恐惧与底线：" + (detailed.get("fear_boundary") or f"原文未完整说明{name}的私人恐惧，因此只把已知的伤势、职责、契约、领地或阵营损失当作边界；遇到空白时先警戒、求援或撤退，不编造创伤。")
+    appearance = detailed.get("appearance") or f"以种族、服装、称号、武器和行动习惯作为识别点；关于{name}没有稳定外观时，以现场行为区分。"
+    desire = "核心欲望：" + (detailed.get("desire") or f"以身份‘{identity}’和价值观‘{values}’为目标起点，{name}优先追求当前阶段能够兑现的结果。")
+    fear_boundary = "恐惧与底线：" + (detailed.get("fear_boundary") or f"{name}的私人恐惧不明时，只把伤势、职责、契约、领地或阵营损失当作边界；遇到空白先警戒、求援或撤退。")
     contradiction = "内在矛盾：" + (detailed.get("contradiction") or f"{name}在‘{identity}’与‘{values}’之间存在阶段性张力。扮演时让矛盾通过选择和代价表现，不用旁白直接替角色宣布心理结论。")
-    relations = "关键关系与触发反应：" + (detailed.get("relations") or f"只使用原文明确的亲属、契约、阵营、敌对或合作关系。面对与{name}身份直接相关的人物时，先核对利益和职责，再决定亲近、戒备或让步；同场出现不自动等于亲密。")
-    knowledge = "知识边界：" + (detailed.get("knowledge") or f"{name}只能知道当前阶段亲历、学习或被可靠对象告知的内容。不得把读者视角、后续卷信息、历史回溯、试炼幻境、轮回分支或战力参考直接注入角色意识。原文没有确认的身份、关系和权能保持‘原文未明’。")
-    battle = detailed.get("battle") or f"{name}使用‘{abilities}’时，先判断目标、距离、地形、同伴位置、代价和相性，再选择接近、压制、诱导、求援或撤退。战力等阶不是自动胜利许可；没有明确战绩的部分必须标为推定。"
+    relations = "关键关系与触发反应：" + (detailed.get("relations") or f"只把明确的亲属、契约、阵营、敌对或合作关系写入互动。面对与{name}身份直接相关的人物时，先核对利益和职责，再决定亲近、戒备或让步；同场出现不自动等于亲密。")
+    knowledge = "知识边界：" + (detailed.get("knowledge") or f"{name}只能知道当前阶段亲历、学习或被可靠对象告知的内容。不得把读者视角、后续经历、历史回溯、试炼幻境或轮回分支直接注入角色意识；不确定的身份、关系和能力保持未知。")
+    battle = detailed.get("battle") or f"{name}使用‘{abilities}’时，先判断目标、距离、地形、同伴位置、代价和相性，再选择接近、压制、诱导、求援或撤退；信息不足时先利用地形和同伴，保留撤退或求援路线。"
     failure = "失败反应：" + (detailed.get("failure") or f"{name}先确认伤亡、契约/职责是否仍可履行，再承认信息不足并调整下一步。只有出现可验证的救援路线、交换条件或更低伤亡方案时才让步；不要用一次失败强行改变人格。")
     voice_fallback, examples_fallback = fallback_voice(name, bucket)
     voice = detailed.get("voice") or voice_fallback
     examples = detailed.get("examples") or CURATED_EXAMPLES.get(name) or examples_fallback
-    stages = stage_index(name, stages)
-    anchors = evidence_anchors(name, limit=1)
-    coactors = evidence_coactors(name, limit=3)
-    protocol = roleplay_protocol(name, bucket, identity, personality, values, abilities, anchors, coactors)
-    stage_switch = f"阶段切换条件：只有在{name}的身份、记忆、身体状态、能力/权能、契约或阵营发生原文可确认的实质变化时切换；历史回溯、轮回分支和试炼幻境必须注明时间层，不自动并入主线。"
-    rank_basis = f"战力依据：{rank}沿用《战力参考.txt》的 T0–T6 映射或按正文战绩作推定；该表是个人观点，不是人物事实。形态、场地、相性和权能启用状态必须与本阶段同时写明。"
-    primary_count = CHARACTER_EVIDENCE.get(name, {}).get("primary_hit_count", 0)
-    evidence_fact = f"原文事实层：已记录正传词形命中{primary_count}处；只有能在原文依据中回查的姓名、身份、行动、能力或关系才视为事实，其余属于扮演规则、阶段解释或保守推定。"
-    behavior_rules = f"行为指导：每次输出前先锁定{name}当前阶段、已知信息、身体/权能状态和现场目标；先做符合身份的注意与选择，再说话或行动。禁止跨阶段调用能力，禁止把读者信息当角色记忆，禁止用通用‘温柔/冷酷/聪明’替代具体行为。资料置信度为低时，只复述证据并提出澄清或采取保守行动。"
+    scenes = {key: role_text(str(value)) for key, value in scenes.items()}
+    appearance = role_text(str(appearance))
+    desire = role_text(desire)
+    fear_boundary = role_text(fear_boundary)
+    contradiction = role_text(contradiction)
+    relations = role_text(relations)
+    knowledge = role_text(knowledge)
+    battle = role_text(str(battle))
+    failure = role_text(failure)
+    voice = role_text(str(voice))
+    examples = [role_text(str(example)) for example in examples]
+    stages = role_text(clean_stages(name, stages))
+    stage_switch = concise_stage_switch(name)
+    behavior_rules = role_behavior(name, behavior, bucket)
+    operational = operational_rules(name, bucket, identity, personality, values, abilities)
+    behavior_rules = role_text(behavior_rules)
+    operational = [role_text(line) for line in operational]
     return "\n".join([
         f"<{name}>",
         f"姓名：{name}",
-        f"别名：{aliases or '原文未见稳定别名'}",
+        f"别名：{aliases}",
         f"性别：{gender}",
         f"种族：{species}",
-        "年龄阶段：原文未给出绝对年龄时不擅自换算；以下阶段以身份、记忆、身体或能力变化为准。",
         f"身份与阵营：{identity}",
         f"外在识别锚点：{appearance}",
         f"核心人设：{personality}",
@@ -786,28 +877,18 @@ def profile(name: str) -> str:
         relations,
         knowledge,
         f"权能/加护/魔法/能力：{abilities}",
-        "装备与战斗方式：以原文明确武器、魔法、种族能力或组织资源为准；不把称号自动等同新技能。",
         f"场景反应：\n安全/日常：{scenes['日常与安全']}\n压力/冲突：{scenes['压力与冲突']}\n亲密/信任：{scenes['亲密与信任']}\n被背叛：{scenes['被背叛']}\n失败/重来：{scenes['失败与重来']}",
         failure,
         f"战斗决策：{battle}",
-        f"原文行为锚点：{'；'.join(anchors) if anchors else '暂无可直接回查的正传行为锚点；不得用总结索引替代原文事实。'}",
-        f"同场人物线索：{'、'.join(coactors) if coactors else '暂无可靠同场人物索引；关系只能使用档案中明确列出的内容。'}",
-        f"弱点与限制：权能、加护、契约、伤势、记忆和场地均按当前阶段生效；{name}不得跨阶段调用未恢复的能力。任何未被原文确认的上限、免疫或恢复能力都保持未知。",
+        f"弱点与限制：权能、加护、契约、伤势、记忆和场地均按当前阶段生效；{name}不得跨阶段调用未恢复的能力。具体上限、免疫和恢复能力未知时，先按较保守的范围行动。",
         f"战力等阶：{rank}",
-        "战力口径：1阶为最低，7阶为最高；同阶分上位/下位。T0→7阶、T1→6阶、T2→5阶、T3→4阶、T4→3阶、T5→2阶、T6→1阶；相性可使下位在特定条件下胜过上位。",
-        rank_basis,
         f"阶段性人设：{stages}",
         stage_switch,
         f"说话方式：{voice}",
         behavior_rules,
-        protocol,
+        *operational,
         "口吻示例：",
         *[example if example.startswith("口吻示例：") else f"口吻示例：{example}" for example in examples],
-        evidence_fact,
-        f"原文依据：{evidence}",
-        f"证据类型：{evidence_kind}",
-        f"资料置信度：{confidence}",
-        "存疑项：若本档案使用‘推定/资料薄/原文未明’，该项不是原作定论；后续应以卷文本或作者明确资料复核。",
         f"</{name}>",
         "",
     ])
@@ -831,14 +912,14 @@ def main() -> None:
 纳入边界
 本目录以正传第01–39卷中实际登场、且原文能证明身份/行为/性格/能力的具名个体为主；具名或唯一固定称号的非人个体纳入。化名、译名、幼年/成年、失忆、尸人、试炼或借体状态合并在同一人物文件的阶段段落内。群体、无名路人和单纯遗骸/幻影不单建档。
 
-证据原则
-正传原文是人物事实的唯一优先来源；档案中的“原文行为锚点”给出卷名、章节和近似行号，便于回查。剧情总结只作导航索引，不能单独证明性格、能力或关系；战力参考.txt 明确是个人观点，只能提供阶位输入，不能充当人物事实。正文证据不足的条目仍保留文件，但必须标出“资料不足/低置信度”，并用保守扮演规则防止编造。八重·天膳在正传项目文件中未检出姓名证据，保留为审计条目并标注疑似外作污染。
+内容边界
+人物TXT是给角色卡直接使用的内容层，只写身份、性格、欲望、关系、能力、限制、阶段、阶位条件和可执行的互动规则。卷章命中、别名归并、来源类型与置信度留在 data/character_evidence.json 等维护索引中，不嵌入人物文件；信息较少的角色用保守的行为边界表达，不凭空补写经历。
 
 战力映射
-T0→7阶，T1→6阶，T2→5阶，T3→4阶，T4→3阶，T5→2阶，T6→1阶。每阶分上位/下位；原表未分位者按同阶相对战绩补分，并在文件中保留“推定”性质。相性、场地、形态、权能是否启用会改变结果；同一人物不同形态分别记录。
+T0→7阶，T1→6阶，T2→5阶，T3→4阶，T4→3阶，T5→2阶，T6→1阶。每阶分上位/下位；形态、场地、相性和权能是否启用会改变结果，同一人物的不同形态在阶位后注明条件。
 
 文件协议
-每个TXT只保留一对顶层人物标签 <姓名>...</姓名>；正文使用普通字段标题。阶段性人设只在身份、记忆、身体、能力或阵营发生实质变化时拆分。行为指导面向角色扮演：限制越权知识、跨阶段能力和无依据关系，不替代原文。
+每个TXT只保留一对顶层人物标签 <姓名>...</姓名>；正文使用普通字段标题。阶段性人设只在身份、记忆、身体、能力或阵营发生实质变化时拆分。行为指导面向角色扮演：限制越权知识、跨阶段能力和无依据关系，让角色在对话中做出可解释的选择。
 """
     (OUT / "README.txt").write_text(readme, encoding="utf-8")
     print(f"generated {len(names)} profiles in {OUT}")

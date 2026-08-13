@@ -28,14 +28,55 @@ class DetailedProfileContractTests(unittest.TestCase):
             "失败反应：",
             "口吻示例：",
             "阶段切换条件：",
-            "证据类型：",
         ]
         for name in names:
             text = (PROFILE_DIR / f"{name}.txt").read_text(encoding="utf-8")
             body = re.sub(r"^<[^>]+>\r?\n|\r?\n</[^>]+>\s*$", "", text)
-            self.assertGreaterEqual(len(body.replace("\n", "")), 1800, name)
+            self.assertGreaterEqual(len(body.replace("\n", "")), 2000, name)
+            self.assertLessEqual(len(body.replace("\n", "")), 3500, name)
             for field in required:
                 self.assertIn(field, text, f"{name} missing {field}")
+
+    def test_profiles_contain_roleplay_content_not_audit_metadata(self) -> None:
+        forbidden = (
+            "年龄阶段：原文未给出绝对年龄",
+            "装备与战斗方式：以原文明确",
+            "原文行为锚点：",
+            "同场人物线索：",
+            "原文事实层：",
+            "原文依据：",
+            "证据类型：",
+            "资料置信度：",
+            "存疑项：",
+            "战力口径：",
+            "战力依据：",
+            "扮演协议：",
+            "阶段索引：",
+            "项目资料不足",
+            "来源定位：",
+            "原文",
+            "资料置信度",
+            "证据",
+            "待核验",
+            "战力参考",
+            "个人观点",
+            "总结索引",
+            "审计",
+        )
+        files = [p for p in PROFILE_DIR.glob("*.txt") if p.name != "README.txt"]
+        self.assertEqual(len(files), 153)
+        for path in files:
+            text = path.read_text(encoding="utf-8")
+            for marker in forbidden:
+                self.assertNotIn(marker, text, f"{path.name} retained audit marker {marker}")
+
+    def test_profiles_keep_operational_roleplay_rules(self) -> None:
+        required = ("互动决策：", "情绪变化：", "关系推进：", "危险禁区：", "优先级与代价：")
+        files = [p for p in PROFILE_DIR.glob("*.txt") if p.name != "README.txt"]
+        for path in files:
+            text = path.read_text(encoding="utf-8")
+            for marker in required:
+                self.assertIn(marker, text, f"{path.name} missing actionable rule {marker}")
 
     def test_every_profile_has_single_matching_outer_tag(self) -> None:
         files = [p for p in PROFILE_DIR.glob("*.txt") if p.name != "README.txt"]
