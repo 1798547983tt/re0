@@ -8,3 +8,11 @@ __pycache__/
 
 # Isolated implementation worktrees
 .worktrees/
+
+# Local unedited copies; the committed frontend uses the Witch's Tea Party derivatives.
+/frontend/assets/emilia-blue.png
+/frontend/assets/emilia-snow.png
+/frontend/assets/rem-tea.png
+/frontend/assets/satella-dark.jpg
+/frontend/assets/witch-harp.jpg
+/frontend/assets/witch-table.png
