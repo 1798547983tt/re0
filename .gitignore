@@ -5,3 +5,6 @@
 # Python test/runtime caches
 __pycache__/
 *.py[cod]
+
+# Isolated implementation worktrees
+.worktrees/
