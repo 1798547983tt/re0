@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as creatorCore from '../frontend/src/creator-core.mjs';
 import {
   buildOpeningMessage,
   buildStatePayload,
@@ -8,11 +9,14 @@ import {
   getStoryVolume,
   mergeAiPatch,
   normalizeStoryIndex,
+  parseDraft,
   serializeDraft,
   suggestOffline,
   validateAiPatch,
   validateDraft,
 } from '../frontend/src/creator-core.mjs';
+
+const { COMBAT_TIER_LEVELS, COMBAT_TIER_POSITIONS } = creatorCore;
 
 const storyFixture = normalizeStoryIndex([
   {
@@ -51,6 +55,10 @@ function completeDraft() {
   draft.personality.wish = '让重要的人活着走到明天';
   draft.personality.boundary = '不以无辜者换取胜利';
   draft.protagonist.currentGoal = '找到能改变结局的第一条线索';
+  draft.combatTier.level = '3阶';
+  draft.combatTier.position = '上位';
+  draft.combatTier.combatStatus = '可战';
+  draft.combatTier.condition = '常态即可发挥';
   draft.storyAnchor = {
     volumeNumber: 1,
     volumeTitle: storyFixture[0].title,
@@ -83,7 +91,22 @@ test('draft validation rejects missing required identity and story anchor fields
     'storyAnchor.volumeNumber',
     'storyAnchor.eventId',
     'personality.wish',
+    'combatTier.level',
+    'combatTier.position',
   ]);
+});
+
+test('combat tier exposes exactly seven levels with upper and lower positions', () => {
+  const draft = createDefaultDraft();
+
+  assert.deepEqual(COMBAT_TIER_LEVELS, ['1阶', '2阶', '3阶', '4阶', '5阶', '6阶', '7阶']);
+  assert.deepEqual(COMBAT_TIER_POSITIONS, ['上位', '下位']);
+  assert.deepEqual(draft.combatTier, {
+    level: '',
+    position: '',
+    combatStatus: '未知',
+    condition: '',
+  });
 });
 
 test('state payload maps the creator draft to the ZOD-aligned Chinese state concepts', () => {
@@ -97,6 +120,12 @@ test('state payload maps the creator draft to the ZOD-aligned Chinese state conc
   assert.equal(payload.世界.当前时间.轮回分支, 'B00');
   assert.equal(payload.规则.初始化完成, false);
   assert.equal(payload.事件.进行中['1'].标题, '异世界召唤与银发少女的相遇');
+  assert.deepEqual(payload.主角档案.战力等阶, {
+    阶数: '3阶',
+    位阶: '上位',
+    可战状态: '可战',
+    生效条件: '常态即可发挥',
+  });
 });
 
 test('state payload normalizes creator-only choices to strict ZOD enums and assets', () => {
@@ -127,6 +156,50 @@ test('opening message includes the story anchor and preserves the character voic
   assert.match(opening, /异世界召唤与银发少女的相遇/);
   assert.match(opening, /魔女历1000年01月01日/);
   assert.match(opening, /不以无辜者换取胜利/);
+  assert.match(opening, /3阶上位/);
+  assert.match(opening, /常态即可发挥/);
+});
+
+test('opening message keeps an incomplete combat tier readable instead of concatenating fallback labels', () => {
+  const draft = createDefaultDraft();
+  const opening = buildOpeningMessage(draft);
+
+  assert.match(opening, /战力等阶是未定/);
+  assert.doesNotMatch(opening, /未定未定/);
+});
+
+test('legacy drafts gain an empty combat tier without losing existing data', () => {
+  const legacy = completeDraft();
+  delete legacy.combatTier;
+
+  const parsed = parseDraft(JSON.stringify(legacy));
+
+  assert.equal(parsed.protagonist.name, '星见澪');
+  assert.deepEqual(parsed.combatTier, {
+    level: '',
+    position: '',
+    combatStatus: '未知',
+    condition: '',
+  });
+});
+
+test('AI patches can fill an empty combat tier but cannot overwrite a chosen level', () => {
+  const draft = createDefaultDraft();
+  draft.combatTier.level = '2阶';
+
+  const result = mergeAiPatch(draft, {
+    combatTier: {
+      level: '5阶',
+      position: '下位',
+      condition: '仅在月光下生效',
+    },
+  });
+
+  assert.equal(result.draft.combatTier.level, '2阶');
+  assert.equal(result.draft.combatTier.position, '下位');
+  assert.equal(result.draft.combatTier.condition, '仅在月光下生效');
+  assert.ok(result.skippedPaths.includes('combatTier.level'));
+  assert.ok(result.appliedPaths.includes('combatTier.position'));
 });
 
 test('offline suggestions fill empty fields without overwriting explicit user choices', () => {

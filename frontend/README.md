@@ -19,3 +19,12 @@ python -m http.server 4173 --directory frontend
 ## 导出与酒馆
 
 最终页提供草稿 JSON、ZOD 对齐状态、开场文本的复制/下载/导入，以及本机自动保存。酒馆适配器只在能找到输入框、且输入框为空时写入；无法确认宿主或发送状态时会回退到剪贴板并明确提示。
+
+## 封装为酒馆 regex JSON
+
+```powershell
+node tools/package_creator_regex.mjs
+node tools/package_creator_regex.mjs --check
+```
+
+完整产物写入 `dist/regex-Re0·魔女茶会创角向导.json`。它沿用参考脚本的 `<start>…</start>` 触发格式，并直接内嵌页面样式、交互脚本、39 卷剧情索引；六张背景图使用固定素材提交的 GitHub raw 链接。

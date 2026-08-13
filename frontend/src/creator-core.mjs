@@ -11,6 +11,16 @@ export const STEP_DEFINITIONS = [
 export const ROLE_TYPES = ['原创角色', '原作人物', '异界来客'];
 export const FACTIONS = ['中立', '爱蜜莉雅阵营', '库珥修阵营', '安娜塔西亚阵营', '普莉希拉阵营', '露格尼卡王国', '沃拉基亚帝国', '魔女教', '其他'];
 export const RELATION_STANCES = ['友方', '中立', '戒备', '敌对', '未知'];
+export const COMBAT_TIER_LEVELS = ['1阶', '2阶', '3阶', '4阶', '5阶', '6阶', '7阶'];
+export const COMBAT_TIER_POSITIONS = ['上位', '下位'];
+export const COMBAT_STATUSES = ['可战', '受限', '无法战斗', '未知'];
+
+const EMPTY_COMBAT_TIER = {
+  level: '',
+  position: '',
+  combatStatus: '未知',
+  condition: '',
+};
 
 const EMPTY_ANCHOR = {
   volumeNumber: null,
@@ -41,6 +51,7 @@ export function createDefaultDraft() {
       currentGoal: '',
     },
     storyAnchor: { ...EMPTY_ANCHOR },
+    combatTier: { ...EMPTY_COMBAT_TIER },
     personality: {
       traits: [],
       wish: '',
@@ -129,7 +140,21 @@ export function validateDraft(draft) {
   if (value.storyAnchor?.volumeNumber == null || value.storyAnchor.volumeNumber === '' || !Number.isFinite(Number(value.storyAnchor.volumeNumber))) errors.push(error('storyAnchor.volumeNumber', '请选择剧情卷数'));
   if (value.storyAnchor?.eventId == null || value.storyAnchor.eventId === '' || !Number.isFinite(Number(value.storyAnchor.eventId))) errors.push(error('storyAnchor.eventId', '请选择剧情事件'));
   if (!asText(value.personality?.wish)) errors.push(error('personality.wish', '请写下一句话愿望'));
+  if (!COMBAT_TIER_LEVELS.includes(asText(value.combatTier?.level))) errors.push(error('combatTier.level', '请选择1至7阶战力'));
+  if (!COMBAT_TIER_POSITIONS.includes(asText(value.combatTier?.position))) errors.push(error('combatTier.position', '请选择上位或下位'));
   return { ok: errors.length === 0, errors };
+}
+
+function normalizeCombatTier(combatTier) {
+  const level = asText(combatTier?.level);
+  const position = asText(combatTier?.position);
+  const combatStatus = asText(combatTier?.combatStatus);
+  return {
+    level: COMBAT_TIER_LEVELS.includes(level) ? level : '未定',
+    position: COMBAT_TIER_POSITIONS.includes(position) ? position : '未定',
+    combatStatus: COMBAT_STATUSES.includes(combatStatus) ? combatStatus : '未知',
+    condition: asText(combatTier?.condition) || '无',
+  };
 }
 
 function normalizeAbility(ability) {
@@ -201,6 +226,7 @@ function normalizeAvailability(status) {
 export function buildStatePayload(draft) {
   const value = draft ?? createDefaultDraft();
   const anchor = value.storyAnchor ?? EMPTY_ANCHOR;
+  const combatTier = normalizeCombatTier(value.combatTier);
   const eventTimeParts = asText(anchor.eventTime).split(' · ');
   const rawPeriod = asText(anchor.period) || eventTimeParts[1];
   const rawLayer = asText(anchor.layer) || eventTimeParts[2];
@@ -298,7 +324,7 @@ export function buildStatePayload(draft) {
       魔力: 100,
       精神稳定: 100,
       当前形态: '正常',
-      战力等阶: { 阶数: '未定', 位阶: '未定', 可战状态: '未知', 生效条件: '' },
+      战力等阶: { 阶数: combatTier.level, 位阶: combatTier.position, 可战状态: combatTier.combatStatus, 生效条件: combatTier.condition },
       能力: {
         加护: {},
         权能: {},
@@ -331,6 +357,10 @@ export function buildOpeningMessage(draft) {
   const protagonist = value.protagonist ?? {};
   const anchor = value.storyAnchor ?? EMPTY_ANCHOR;
   const personality = value.personality ?? {};
+  const combatTier = normalizeCombatTier(value.combatTier);
+  const combatLabel = combatTier.level === '未定' || combatTier.position === '未定'
+    ? '未定'
+    : `${combatTier.level}${combatTier.position}`;
   const traits = asArray(personality.traits).filter(Boolean).join('、') || '尚未定型';
   const abilities = asArray(value.abilities).filter((ability) => asText(ability?.name)).map((ability) => `${ability.name}（${ability.description || '效果未详'}）`).join('、') || '尚未记录';
   return [
@@ -338,6 +368,7 @@ export function buildOpeningMessage(draft) {
     `我的名字是${asText(protagonist.name) || '未命名的旅人'}。我是${asText(protagonist.identity) || '一个尚未找到归处的人'}，以${asText(protagonist.roleType) || '原创角色'}的身份进入这个世界。`,
     `我会从「${asText(anchor.volumeTitle) || '未选择卷数'}」的「${asText(anchor.eventTitle) || '未选择事件'}」开始；事件时间为${asText(anchor.eventTime) || '时间未详'}。`,
     `我的外在身份是：${asText(protagonist.gender) || '未详'}、${asText(protagonist.ageStage) || '年龄未详'}、${asText(protagonist.race) || '种族未详'}，站在${asText(protagonist.faction) || '中立'}一侧。`,
+    `我的战力等阶是${combatLabel}，当前${combatTier.combatStatus}；生效条件为：${combatTier.condition}。`,
     `我希望${asText(personality.wish) || '找到一个值得坚持的愿望'}；我害怕${asText(personality.fear) || '失去无法挽回的东西'}。我的底线是：${asText(personality.boundary) || '不让重要的选择被别人替我做出'}。`,
     `我的性格关键词是：${traits}。我当前的目标是：${asText(protagonist.currentGoal) || '确认自己在这个世界的位置'}。`,
     `我拥有的能力：${abilities}。`,
@@ -364,11 +395,12 @@ export function suggestOffline(draft, stepId = 'identity') {
     abilities: [
       { name: '事件回声', category: '一般技能', status: '可用', cost: '精神稳定下降', description: '从现场残留的情绪中捕捉一段不完整的过去。', limits: '只能得到片段，不能直接确认真相。' },
     ],
+    combatTier: { level: '6阶', position: '上位', combatStatus: '可战', condition: '常态即可发挥' },
   };
   if (stepId === 'identity') return { protagonist: base.protagonist };
   if (stepId === 'origin') return { protagonist: { identity: base.protagonist.identity, currentGoal: base.protagonist.currentGoal }, world: { currentLocation: '王都外缘', entryContext: '一条尚未被地图标记的小巷' } };
   if (stepId === 'heart') return { personality: base.personality };
-  if (stepId === 'arsenal') return { abilities: base.abilities, relationships: [{ name: '银发少女', relation: '尚未确认的救命之人', stance: '中立', trust: 10, notes: '相遇由一个遗失的徽章开始。' }] };
+  if (stepId === 'arsenal') return { combatTier: base.combatTier, abilities: base.abilities, relationships: [{ name: '银发少女', relation: '尚未确认的救命之人', stance: '中立', trust: 10, notes: '相遇由一个遗失的徽章开始。' }] };
   return base;
 }
 
@@ -379,6 +411,7 @@ const PATCH_FIELDS = {
   abilities: new Set(['name', 'category', 'status', 'cost', 'description', 'limits']),
   relationships: new Set(['name', 'relation', 'stance', 'trust', 'notes']),
   assets: new Set(['currency', 'items', 'equipment']),
+  combatTier: new Set(['level', 'position', 'combatStatus', 'condition']),
 };
 
 const UNSAFE_PATCH_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
@@ -509,5 +542,6 @@ export function parseDraft(serialized) {
   const value = typeof serialized === 'string' ? JSON.parse(serialized) : structuredClone(serialized);
   if (!value || typeof value !== 'object') throw new Error('草稿不是对象');
   if (value.version !== DRAFT_VERSION) throw new Error('不支持的草稿版本');
+  value.combatTier = { ...EMPTY_COMBAT_TIER, ...(isRecord(value.combatTier) ? value.combatTier : {}) };
   return value;
 }

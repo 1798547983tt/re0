@@ -1,4 +1,7 @@
 import {
+  COMBAT_STATUSES,
+  COMBAT_TIER_LEVELS,
+  COMBAT_TIER_POSITIONS,
   FACTIONS,
   RELATION_STANCES,
   ROLE_TYPES,
@@ -47,9 +50,9 @@ const DEFAULT_SETTINGS = {
   reducedMotion: false,
 };
 
-const app = document.querySelector('#app');
+const app = document.querySelector('#re0-creator-app');
 
-if (!app) throw new Error('找不到创角向导挂载点 #app');
+if (!app) throw new Error('找不到创角向导挂载点 #re0-creator-app');
 
 function escapeHtml(value = '') {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -407,6 +410,16 @@ function renderAssetList(section, label) {
 
 function renderArsenalPage() {
   return `<div class="page" data-page="arsenal">
+    <section class="section combat-tier-panel">
+      <div class="section-head"><div><h3>战力等阶</h3><p>同阶上、下位描述综合战斗表现；相性、环境与代价仍可能逆转结果。</p></div><span class="tier-sigil">TIER</span></div>
+      <div class="field-grid">
+        ${choiceField({ path: 'combatTier.level', label: '战力阶数＊', hint: '1—7', options: COMBAT_TIER_LEVELS })}
+        ${choiceField({ path: 'combatTier.position', label: '阶内位次＊', hint: 'UPPER / LOWER', options: COMBAT_TIER_POSITIONS })}
+        ${selectField({ path: 'combatTier.combatStatus', label: '当前可战状态', hint: 'COMBAT STATUS', options: COMBAT_STATUSES })}
+        ${inputField({ path: 'combatTier.condition', label: '战力生效条件', hint: 'CONDITION', placeholder: '常态、持有武器、月光下、解除封印后……' })}
+      </div>
+      <p class="field-note">等阶从1阶（基础）到7阶（顶点）。上位 / 下位仅表示同阶内部参考，不代表必然胜负；请把关键前提写进生效条件。</p>
+    </section>
     <section class="section">
       <div class="section-head"><div><h3>能力</h3><p>能力越强，越应该写清代价与限制。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="abilities">＋ 新增能力</button></div>
       ${renderAbilityList()}
@@ -455,6 +468,7 @@ function renderReviewPage() {
     { ok: ROLE_TYPES.includes(state.draft.protagonist.roleType), text: '角色类型已确定' },
     { ok: Boolean(anchor.volumeNumber && anchor.eventId), text: '卷数、事件与时间已经联动' },
     { ok: Boolean(state.draft.personality.wish), text: '一句话愿望已写下' },
+    { ok: COMBAT_TIER_LEVELS.includes(state.draft.combatTier?.level) && COMBAT_TIER_POSITIONS.includes(state.draft.combatTier?.position), text: '战力阶数与上/下位已确定' },
   ];
   return `<div class="page" data-page="review">
     <section class="section">
@@ -495,7 +509,7 @@ function stepIsComplete(index) {
   if (index === 0) return Boolean(state.draft.protagonist.name && ROLE_TYPES.includes(state.draft.protagonist.roleType));
   if (index === 1) return Boolean(state.draft.storyAnchor.volumeNumber && state.draft.storyAnchor.eventId);
   if (index === 2) return Boolean(state.draft.personality.wish);
-  if (index === 3) return state.ui.highestVisitedStep >= 3;
+  if (index === 3) return state.ui.highestVisitedStep >= 3 && COMBAT_TIER_LEVELS.includes(state.draft.combatTier?.level) && COMBAT_TIER_POSITIONS.includes(state.draft.combatTier?.position);
   return state.ui.highestVisitedStep >= 4 && validateDraft(state.draft).ok;
 }
 
@@ -520,6 +534,7 @@ function renderRail() {
         <div class="mini-grid">
           <div class="mini-stat"><small>PROGRESS</small><b data-live-progress>${completion} / 5 页完整</b></div>
           <div class="mini-stat"><small>TYPE</small><b>${escapeHtml(state.draft.protagonist.roleType || '未选择')}</b></div>
+          <div class="mini-stat"><small>POWER</small><b>${escapeHtml(state.draft.combatTier?.level && state.draft.combatTier?.position ? `${state.draft.combatTier.level}${state.draft.combatTier.position}` : '未选择')}</b></div>
           <div class="mini-stat"><small>VOLUME</small><b>${state.draft.storyAnchor.volumeNumber ? `第 ${String(state.draft.storyAnchor.volumeNumber).padStart(2, '0')} 卷` : '未选择'}</b></div>
           <div class="mini-stat"><small>STEP</small><b>${escapeHtml(step.label)}</b></div>
         </div>
@@ -899,7 +914,7 @@ async function handleAction(action, element) {
   }
   if (action === 'confirm-start') return confirmStart();
   if (action === 'focus-error') {
-    const stepMap = { 'protagonist.name': 0, 'protagonist.roleType': 0, 'storyAnchor.volumeNumber': 1, 'storyAnchor.eventId': 1, 'personality.wish': 2 };
+    const stepMap = { 'protagonist.name': 0, 'protagonist.roleType': 0, 'storyAnchor.volumeNumber': 1, 'storyAnchor.eventId': 1, 'personality.wish': 2, 'combatTier.level': 3, 'combatTier.position': 3 };
     return goToStep(stepMap[element.dataset.errorPath] ?? 0);
   }
 }

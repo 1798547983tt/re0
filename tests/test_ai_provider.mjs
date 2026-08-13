@@ -8,6 +8,8 @@ test('AI prompt asks for a JSON patch and keeps the creator draft authoritative'
   assert.match(prompt, /JSON/);
   assert.match(prompt, /不得覆盖用户已有内容/);
   assert.match(prompt, /更克制一点/);
+  assert.match(prompt, /1阶到7阶/);
+  assert.match(prompt, /上位或下位/);
 });
 
 test('AI response parser extracts fenced JSON and rejects non-object output', () => {

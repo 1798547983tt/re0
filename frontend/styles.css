@@ -143,6 +143,10 @@ select.control { appearance: none; background-image: linear-gradient(45deg, tran
 .remove-btn { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: transparent; }
 .remove-btn:hover { border-color: var(--danger); color: var(--danger); }
 .empty-state { padding: 25px 15px; border: 1px dashed var(--line-strong); border-radius: 15px; color: var(--muted); text-align: center; font-size: 11px; }
+.combat-tier-panel { position: relative; padding: 19px; border: 1px solid rgba(230,189,122,.3); border-radius: 18px; background: radial-gradient(circle at 88% 8%, rgba(232,135,172,.14), transparent 34%), linear-gradient(135deg, rgba(67,27,63,.5), rgba(9,4,14,.38)); overflow: hidden; }
+.combat-tier-panel:first-child { padding-top: 19px; }
+.combat-tier-panel::after { content: 'Ⅰ · Ⅱ · Ⅲ · Ⅳ · Ⅴ · Ⅵ · Ⅶ'; position: absolute; right: 16px; bottom: 8px; color: rgba(230,189,122,.12); font: 20px var(--display); letter-spacing: .12em; pointer-events: none; }
+.tier-sigil { display: inline-grid; place-items: center; min-width: 54px; height: 30px; border: 1px solid rgba(230,189,122,.42); border-radius: 999px; color: var(--gold-bright); font: 9px var(--mono); letter-spacing: .18em; background: rgba(10,4,14,.4); }
 
 .rail { display: grid; gap: 14px; min-width: 0; }
 .rail-card { border: 1px solid var(--line); border-radius: 20px; background: var(--glass); box-shadow: var(--shadow-lg); backdrop-filter: blur(16px); overflow: hidden; }
