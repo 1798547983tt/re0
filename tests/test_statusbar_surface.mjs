@@ -54,6 +54,21 @@ test('status bar source exposes the complete read-only accessible surface', () =
   assert.match(css, /min-(?:inline-)?size:\s*44px|min-height:\s*44px/);
   assert.match(
     css,
+    /\.re0-statusbar\s*\{[^}]*isolation:\s*isolate/s,
+    'the status bar must own the artwork stacking context',
+  );
+  assert.match(
+    css,
+    /\.re0-statusbar::before\s*\{[^}]*z-index:\s*0[^}]*pointer-events:\s*none/s,
+    'scene artwork must paint above the opaque shell background without intercepting input',
+  );
+  assert.doesNotMatch(
+    css,
+    /\.re0-statusbar::(?:before|after)\s*\{[^}]*z-index:\s*-/s,
+    'status-bar artwork and ornaments must not sit behind the opaque shell background',
+  );
+  assert.match(
+    css,
     /#re0-statusbar-overlay-root\s*\{[^}]*--re0-panel-strong:/s,
     'overlay must own theme tokens because it is a sibling of the app root',
   );
