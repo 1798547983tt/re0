@@ -342,7 +342,7 @@ git commit -m "feat: add read only MVU runtime bridge"
 - Create: `tests/test_statusbar_portraits.mjs`
 - Create: `statusbar/src/portraits.mjs`
 
-- [ ] **Step 1: Write the failing portrait tests**
+- [x] **Step 1: Write the failing portrait tests**
 
 ```js
 import test from 'node:test';
@@ -369,23 +369,23 @@ test('portrait resolution prefers chat override, then shared, then initial', () 
 });
 ```
 
-- [ ] **Step 2: Run the portrait tests and verify RED**
+- [x] **Step 2: Run the portrait tests and verify RED**
 
 Run: `node --test tests/test_statusbar_portraits.mjs`
 
 Expected: FAIL with module-not-found for `statusbar/src/portraits.mjs`.
 
-- [ ] **Step 3: Implement the portrait core and browser repository**
+- [x] **Step 3: Implement the portrait core and browser repository**
 
 Export the tested pure functions plus `createPortraitRepository({ indexedDB, databaseName })` and `cropPortrait({ source, zoom, offsetX, offsetY, size, document })`. The repository creates one `portraits` object store keyed by the strings from `portraitKeys`, stores blobs or validated URLs with crop metadata, and exposes `get`, `put`, and `remove`. `cropPortrait` draws a centered square to Canvas and resolves a bounded WebP blob; it rejects non-image inputs and preserves the previous record on failure.
 
-- [ ] **Step 4: Run the portrait tests and verify GREEN**
+- [x] **Step 4: Run the portrait tests and verify GREEN**
 
 Run: `node --test tests/test_statusbar_portraits.mjs`
 
 Expected: 3 passing tests, 0 failures.
 
-- [ ] **Step 5: Commit the portrait domain**
+- [x] **Step 5: Commit the portrait domain**
 
 ```powershell
 git add tests/test_statusbar_portraits.mjs statusbar/src/portraits.mjs
