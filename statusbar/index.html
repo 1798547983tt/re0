@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Re:Zero 全变量状态栏</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div data-re0-statusbar-mount data-sample-url="./data/sample-state.json">
+      <main id="re0-statusbar-app" aria-live="polite" aria-busy="true">
+        <div class="re0-statusbar__boot" role="status">
+          <span class="re0-statusbar__boot-mark" aria-hidden="true">✦</span>
+          <span>正在读取当前轮回……</span>
+        </div>
+      </main>
+      <div id="re0-statusbar-overlay-root" hidden></div>
+      <noscript>此状态栏需要 JavaScript 才能读取并展示变量。</noscript>
+    </div>
+    <script type="module" src="./src/app.mjs"></script>
+  </body>
+</html>
