@@ -16,7 +16,9 @@ const ASSET_NAMES = [
 ];
 
 function read(relativePath) {
-  return readFileSync(resolve(ROOT, relativePath), 'utf8').replace(/^\uFEFF/, '');
+  return readFileSync(resolve(ROOT, relativePath), 'utf8')
+    .replace(/^\uFEFF/, '')
+    .replaceAll('\r\n', '\n');
 }
 
 function stripModuleSyntax(source) {
