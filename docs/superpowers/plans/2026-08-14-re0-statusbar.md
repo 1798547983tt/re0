@@ -63,7 +63,7 @@ git commit -m "docs: record status bar architecture"
 - Create: `statusbar/src/status-core.mjs`
 - Create: `statusbar/data/sample-state.json`
 
-- [ ] **Step 1: Write the failing core tests**
+- [x] **Step 1: Write the failing core tests**
 
 Create tests that import the planned public functions before their modules exist:
 
@@ -111,13 +111,13 @@ test('first grapheme supports CJK and emoji sequences', () => {
 });
 ```
 
-- [ ] **Step 2: Run the core tests and verify RED**
+- [x] **Step 2: Run the core tests and verify RED**
 
 Run: `node --test tests/test_statusbar_core.mjs`
 
 Expected: FAIL with module-not-found for `statusbar/src/schema-map.mjs`.
 
-- [ ] **Step 3: Implement the declarative registry**
+- [x] **Step 3: Implement the declarative registry**
 
 Export `FIELD_GROUPS`, `DECLARED_DOMAIN_COUNTS`, `expandDeclaredPaths()`, and `isDeclaredPath(path)`. Represent repeated fields with explicit variants so seven ability categories expand to 28 leaves. Treat checkpoint snapshot descendants as declared through a terminal deep wildcard while keeping its six explicit domain roots in the 172 count.
 
@@ -161,7 +161,7 @@ export const FIELD_GROUPS = Object.freeze([
 ]);
 ```
 
-- [ ] **Step 4: Implement normalization and the HUD model**
+- [x] **Step 4: Implement normalization and the HUD model**
 
 Export these stable interfaces:
 
@@ -214,17 +214,17 @@ export function buildHudModel(statData, uiState = {}) {
 
 `buildOverview` returns the formatted world strip, protagonist identity, six clamped instruments, target, loop identity, restart count, and at most three injury/abnormal/event alerts. `flattenLeaves` treats arrays as one inert leaf and recursively walks plain objects. `NAV_SECTIONS` is the frozen nine-entry array asserted by the test.
 
-- [ ] **Step 5: Add a representative full fixture**
+- [x] **Step 5: Add a representative full fixture**
 
 Create `{ "stat_data": { ... } }` with all eight domains, at least one entry in every dynamic record category, one item in each ability category, three relationship categories, one death record, one active and recent event, one clue, one unresolved question, each asset type, and a passthrough value under a dedicated test-only branch.
 
-- [ ] **Step 6: Run the core tests and verify GREEN**
+- [x] **Step 6: Run the core tests and verify GREEN**
 
 Run: `node --test tests/test_statusbar_core.mjs`
 
 Expected: 5 passing tests, 0 failures.
 
-- [ ] **Step 7: Commit the core**
+- [x] **Step 7: Commit the core**
 
 ```powershell
 git add tests/test_statusbar_core.mjs statusbar/src/schema-map.mjs statusbar/src/status-core.mjs statusbar/data/sample-state.json
