@@ -520,17 +520,17 @@ git commit -m "feat: pin status bar artwork"
 - Create: `dist/regex-Re0·全变量状态栏.json`
 - Modify: `statusbar/README.md`
 
-- [ ] **Step 1: Write the failing package contract**
+- [x] **Step 1: Write the failing package contract**
 
 Assert the artifact has `disabled=false`, `findRegex='/(?![\\s\\S])/g'`, `placement=[2]`, `markdownOnly=true`, `promptOnly=false`, `runOnEdit=true`, and a namespaced script name. Assert its replacement is one complete HTML code block, includes every maintained module in dependency order, contains the pinned asset URLs, contains no module syntax, has no state-writing APIs, and leaves a sentinel `<UpdateVariable>[]</UpdateVariable>` unchanged when the regex replacement is simulated.
 
-- [ ] **Step 2: Run the package test and verify RED**
+- [x] **Step 2: Run the package test and verify RED**
 
 Run: `node --test tests/test_statusbar_package.mjs`
 
 Expected: FAIL because the packaged artifact does not exist.
 
-- [ ] **Step 3: Implement the packager**
+- [x] **Step 3: Implement the packager**
 
 Read CSS and modules in this order: schema map, status core, portraits, runtime, assets, app. Strip `import` and `export`, serialize pinned data safely, reject `</script` and `</style` in sources, and write one JSON object. `--check` builds in memory and performs exact byte comparison without writing.
 
@@ -552,7 +552,7 @@ const artifact = {
 };
 ```
 
-- [ ] **Step 4: Generate and validate the artifact**
+- [x] **Step 4: Generate and validate the artifact**
 
 Run: `node tools/package_statusbar_regex.mjs`
 
@@ -562,13 +562,13 @@ Run: `node tools/package_statusbar_regex.mjs --check`
 
 Expected: `statusbar-regex package is current:` followed by the same path.
 
-- [ ] **Step 5: Run package and existing creator regression tests**
+- [x] **Step 5: Run package and existing creator regression tests**
 
 Run: `node --test tests/test_statusbar_package.mjs tests/test_creator_package.mjs tests/test_assets.mjs`
 
 Expected: all tests pass; creator artifact and creator asset revision remain unchanged.
 
-- [ ] **Step 6: Commit the importable artifact**
+- [x] **Step 6: Commit the importable artifact**
 
 ```powershell
 git add tests/test_statusbar_package.mjs tools/package_statusbar_regex.mjs dist/regex-Re0·全变量状态栏.json statusbar/README.md
