@@ -1580,6 +1580,14 @@ button {
 }
 
 @container (max-width: 700px) {
+  #re0-statusbar-app[data-theme="day"] {
+    --re0-scene: var(--re0-day-art-mobile, none);
+  }
+
+  #re0-statusbar-app[data-theme="night"] {
+    --re0-scene: var(--re0-night-art-mobile, none);
+  }
+
   .re0-statusbar {
     border-radius: 18px;
   }

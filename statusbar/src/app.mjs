@@ -14,6 +14,7 @@ import {
   validatePortraitUrl,
 } from './portraits.mjs';
 import { createRuntimeBridge, discoverRuntimeScope } from './runtime.mjs';
+import { artworkUrls } from './assets.mjs';
 
 const SECTION_IDS = Object.freeze([
   'overview',
@@ -862,6 +863,12 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     probe: runtimeBridge.probe(),
   };
   const chatId = readChatId(runtimeScope);
+  const artwork = artworkUrls();
+  const asCssUrl = (value) => `url("${String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"')}")`;
+  app.style.setProperty('--re0-day-art', asCssUrl(artwork.day.wide));
+  app.style.setProperty('--re0-day-art-mobile', asCssUrl(artwork.day.mobile));
+  app.style.setProperty('--re0-night-art', asCssUrl(artwork.night.wide));
+  app.style.setProperty('--re0-night-art-mobile', asCssUrl(artwork.night.mobile));
   let portraitRepository = null;
   try {
     portraitRepository = createPortraitRepository();

@@ -471,21 +471,21 @@ git commit -m "feat: build Re Zero status bar interface"
 - Create: `statusbar/src/assets.mjs`
 - Create: `statusbar/assets/README.md`
 
-- [ ] **Step 1: Write the failing asset contract**
+- [x] **Step 1: Write the failing asset contract**
 
 Assert that all four files exist, decode as non-empty images, the manifest lists matching local paths and fallbacks, every production URL targets `1798547983tt/re0` at a 40-character commit, and `assetUrl(name)` switches to local mode when `?assets=local` is present.
 
-- [ ] **Step 2: Run the asset test and verify RED**
+- [x] **Step 2: Run the asset test and verify RED**
 
 Run: `node --test tests/test_statusbar_assets.mjs`
 
 Expected: FAIL because the four generated assets and manifest do not exist.
 
-- [ ] **Step 3: Generate four project-bound assets with built-in ImageGen**
+- [x] **Step 3: Generate four project-bound assets with built-in ImageGen**
 
 Use four distinct calls. Wide day: 3:1 sunlit mansion archive, frosted arches, silver tea service, restrained Emilia and Rem cameos at the far right, at least 55% quiet data space, no text or watermark. Mobile day: portrait mansion window and tea table, characters in the upper third, quiet lower-middle data space. Wide night: 3:1 ice forest and Witch's Tea Party observatory, restrained Emilia and Echidna cameos at the far right, luminous butterflies and chess motifs, 55% quiet data space. Mobile night: portrait moonlit tea observatory with upper-edge cameos and quiet center. Save each selected final into `statusbar/assets/` and inspect it before use.
 
-- [ ] **Step 4: Commit and push the binary asset checkpoint**
+- [x] **Step 4: Commit and push the binary asset checkpoint**
 
 ```powershell
 git add statusbar/assets/day-archive-wide.webp statusbar/assets/day-archive-mobile.webp statusbar/assets/night-tea-wide.webp statusbar/assets/night-tea-mobile.webp
@@ -495,17 +495,17 @@ git push -u origin codex/re0-statusbar
 
 Record the resulting 40-character commit as the immutable asset revision.
 
-- [ ] **Step 5: Add the asset manifest and resolver**
+- [x] **Step 5: Add the asset manifest and resolver**
 
 Use the recorded commit in four raw GitHub URLs. `assetUrl` returns a local `../assets/<name>` URL only when the preview query explicitly requests local assets; otherwise it returns the manifest's pinned URL. CSS retains its gradient fallback when an image fails.
 
-- [ ] **Step 6: Run the asset test and verify GREEN**
+- [x] **Step 6: Run the asset test and verify GREEN**
 
 Run: `node --test tests/test_statusbar_assets.mjs`
 
 Expected: 1 passing asset contract test, 0 failures.
 
-- [ ] **Step 7: Commit the pinned manifest**
+- [x] **Step 7: Commit the pinned manifest**
 
 ```powershell
 git add tests/test_statusbar_assets.mjs statusbar/assets/manifest.json statusbar/src/assets.mjs statusbar/assets/README.md statusbar/styles.css

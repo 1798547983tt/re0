@@ -10,7 +10,7 @@
 python -m http.server 4174 --directory statusbar
 ```
 
-打开 `http://127.0.0.1:4174/`。本地页面在未检测到 Tavern Helper/MVU 时会显式标记为“离线预览”，并加载 `data/sample-state.json`；打包版本不会携带这个样例入口。
+打开 `http://127.0.0.1:4174/?assets=local`。本地页面在未检测到 Tavern Helper/MVU 时会显式标记为“离线预览”，并加载 `data/sample-state.json`；打包版本不会携带这个样例入口。省略 `assets=local` 时会验证固定提交的 GitHub 生产 URL。
 
 ## 交互
 
