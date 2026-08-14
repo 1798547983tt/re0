@@ -35,7 +35,12 @@ test('status bar source exposes the complete read-only accessible surface', () =
   assert.match(app, /edit-portrait/);
   assert.match(app, /toggle-snapshot/);
   assert.match(app, /toggle-details/);
+  assert.match(app, /toggle-group/);
+  assert.match(app, /show-more/);
+  assert.match(app, /collapse-list/);
   assert.match(app, /restore-auto-theme/);
+  assert.match(app, /re0-detail-toolbar/);
+  assert.match(app, /re0-compact-theme/);
   assert.match(app, /aria-modal/);
   assert.match(app, /Escape/);
   assert.doesNotMatch(app, /replaceVariables|updateVariablesWith|insertOrAssignVariables|replaceMvuData/);
@@ -43,7 +48,7 @@ test('status bar source exposes the complete read-only accessible surface', () =
 
   assert.match(css, /container-type:\s*inline-size/);
   assert.match(css, /@container[^\{]*\(max-width:\s*700px\)/);
-  assert.match(css, /@container[^\{]*\(max-width:\s*420px\)[\s\S]*?\.re0-navigation\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(3,[^}]*overflow-x:\s*clip/s);
+  assert.match(css, /@container[^\{]*\(max-width:\s*420px\)[\s\S]*?\.re0-navigation\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto/s);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.re0-navigation::\-webkit-scrollbar\s*\{[^}]*display:\s*none/s);
   assert.match(css, /\.re0-navigation::\-webkit-scrollbar\s*\{[^}]*block-size:\s*0/s);
@@ -59,7 +64,7 @@ test('status bar source exposes the complete read-only accessible surface', () =
   );
   assert.match(
     css,
-    /\.re0-statusbar::before\s*\{[^}]*z-index:\s*0[^}]*pointer-events:\s*none/s,
+    /\.re0-statusbar::before\s*\{[^}]*z-index:\s*0[^}]*opacity:\s*1[^}]*pointer-events:\s*none/s,
     'scene artwork must paint above the opaque shell background without intercepting input',
   );
   assert.doesNotMatch(
@@ -72,6 +77,11 @@ test('status bar source exposes the complete read-only accessible surface', () =
     /#re0-statusbar-overlay-root\s*\{[^}]*--re0-panel-strong:/s,
     'overlay must own theme tokens because it is a sibling of the app root',
   );
+
+  const headerSource = app.match(/const renderHeader\s*=\s*\(model\)\s*=>\s*\{[\s\S]*?return header;\s*\};/)?.[0] || '';
+  assert.doesNotMatch(headerSource, /re0-header-controls|re0-theme-button/, 'large theme controls belong in the detail heading');
+  assert.doesNotMatch(css, /\.re0-details\s*\{[^}]*min-block-size:\s*480px/s, 'expanded details must size to their visible group');
+  assert.match(css, /\.re0-section-panel\s*\{[^}]*--re0-panel-alpha:\s*58%/s, 'the detail scene should remain plainly visible');
 });
 
 test('the nine sections expose every declared state domain and sensitive folds', () => {

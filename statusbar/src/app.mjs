@@ -17,6 +17,15 @@ import {
 import { createRuntimeBridge, discoverRuntimeScope } from './runtime.mjs';
 import { artworkUrls } from './assets.mjs';
 import { selectPreviewFixture } from './preview.mjs';
+import {
+  growListLimit,
+  normalizeUiPreferences,
+  resetListLimit,
+  resolveOpenGroup,
+  toggleOpenGroup,
+  uiStorageKey,
+  visibleListLimit,
+} from './ui-state.mjs';
 
 const SECTION_IDS = Object.freeze([
   'overview',
@@ -29,13 +38,24 @@ const SECTION_IDS = Object.freeze([
   'assets',
   'diagnostics',
 ]);
-const STORAGE_KEY = 're0-statusbar:ui:v1';
 const RELATION_FILTERS = Object.freeze([
   ['all', '全部'],
   ['伴侣', '伴侣'],
   ['契约伙伴', '契约'],
   ['人物', '人物'],
 ]);
+const DEFAULT_GROUPS = Object.freeze({
+  overview: 'pulse',
+  protagonist: 'profile',
+  world: 'position',
+  relations: 'people',
+  loop: 'summary',
+  events: 'active',
+  clues: 'current',
+  assets: 'items',
+  diagnostics: 'coverage',
+});
+let instanceSequence = 0;
 
 function element(tagName, className = '', text = '') {
   const node = document.createElement(tagName);
@@ -68,24 +88,16 @@ function safeStorage() {
   }
 }
 
-function loadPreferences(storage) {
-  const fallback = {
-    activeSection: 'overview',
-    detailsOpen: false,
-    relationFilter: 'all',
-    themePreference: 'auto',
+function loadPreferences(storage, storageKey) {
+  const options = {
+    sectionIds: SECTION_IDS,
+    relationFilterIds: RELATION_FILTERS.map(([id]) => id),
   };
-  if (!storage) return fallback;
+  if (!storage) return normalizeUiPreferences({}, options);
   try {
-    const parsed = JSON.parse(storage.getItem(STORAGE_KEY) || '{}');
-    return {
-      activeSection: SECTION_IDS.includes(parsed.activeSection) ? parsed.activeSection : fallback.activeSection,
-      detailsOpen: parsed.detailsOpen === true,
-      relationFilter: RELATION_FILTERS.some(([id]) => id === parsed.relationFilter) ? parsed.relationFilter : 'all',
-      themePreference: ['auto', 'day', 'night'].includes(parsed.themePreference) ? parsed.themePreference : 'auto',
-    };
+    return normalizeUiPreferences(JSON.parse(storage.getItem(storageKey) || '{}'), options);
   } catch {
-    return fallback;
+    return normalizeUiPreferences({}, options);
   }
 }
 
@@ -98,12 +110,104 @@ function displayValue(value, fallback = '未记录') {
   return String(value);
 }
 
-function sectionHeading(eyebrow, title, description = '') {
+function sectionHeading(eyebrow, title, description = '', actions = null) {
   const header = element('header', 're0-section-heading');
-  header.append(element('span', 're0-section-heading__eyebrow', eyebrow));
-  header.append(element('h2', 're0-section-heading__title', title));
-  if (description) header.append(element('p', 're0-section-heading__description', description));
+  const copy = element('div', 're0-section-heading__copy');
+  copy.append(element('span', 're0-section-heading__eyebrow', eyebrow));
+  copy.append(element('h2', 're0-section-heading__title', title));
+  if (description) copy.append(element('p', 're0-section-heading__description', description));
+  header.append(copy);
+  if (actions) header.append(actions);
   return header;
+}
+
+function themeLabel(model, state) {
+  if (state.themePreference === 'auto') return `自动 · ${model.theme.mode === 'day' ? '日间' : '夜间'}`;
+  return state.themePreference === 'day' ? '日间模式' : '夜间模式';
+}
+
+function themeButton(model, state, { compact = false } = {}) {
+  const label = themeLabel(model, state);
+  const button = actionButton(compact ? '' : label, 'cycle-theme', compact ? 're0-compact-theme' : 're0-theme-button', {
+    title: '切换日间或夜间模式',
+    'aria-label': `当前${label}，点击切换`,
+  });
+  button.prepend(element('span', 're0-theme-button__icon', model.theme.mode === 'day' ? '☼' : '☾'));
+  if (compact) button.append(element('span', 're0-sr-only', label));
+  return button;
+}
+
+function renderDetailToolbar(model, context) {
+  const toolbar = element('div', 're0-detail-toolbar');
+  toolbar.setAttribute('aria-label', '界面模式');
+  toolbar.append(themeButton(model, context.state));
+  if (context.state.themePreference !== 'auto') {
+    toolbar.append(actionButton('恢复自动', 'restore-auto-theme', 're0-auto-button'));
+  } else {
+    const automatic = element('span', 're0-auto-indicator', '自动跟随');
+    automatic.setAttribute('aria-label', '当前跟随世界时段自动切换');
+    toolbar.append(automatic);
+  }
+  return toolbar;
+}
+
+function sectionIntro(model, context, eyebrow, title, description) {
+  return sectionHeading(eyebrow, title, description, renderDetailToolbar(model, context));
+}
+
+function groupSummary(value, fallback = '点击查看详细记录') {
+  const text = displayValue(value, fallback).replace(/\s+/g, ' ').trim();
+  return text.length > 72 ? `${text.slice(0, 70)}…` : text;
+}
+
+function accordionGroup(context, { id, title, summary, count = null, render }) {
+  const sectionId = context.state.activeSection;
+  const open = context.openGroup(id);
+  const group = element('section', 're0-accordion-group');
+  group.dataset.group = id;
+  group.dataset.open = open ? 'true' : 'false';
+  const bodyId = `re0-${context.instanceId}-${sectionId}-${id}`;
+  const trigger = actionButton('', 'toggle-group', 're0-accordion-group__trigger', {
+    'aria-expanded': open,
+    'aria-controls': bodyId,
+  });
+  trigger.dataset.group = id;
+  const heading = element('span', 're0-accordion-group__heading');
+  heading.append(element('strong', '', title));
+  if (count !== null) heading.append(element('span', 're0-count', String(count)));
+  trigger.append(heading, element('span', 're0-accordion-group__summary', groupSummary(summary)));
+  trigger.append(element('span', 're0-accordion-group__chevron', '⌄'));
+  group.append(trigger);
+  if (open) {
+    const body = element('div', 're0-accordion-group__body');
+    body.id = bodyId;
+    const content = render();
+    if (Array.isArray(content)) body.append(...content);
+    else if (content) body.append(content);
+    group.append(body);
+  }
+  return group;
+}
+
+function paginationControls(total, listKey, context) {
+  const limit = visibleListLimit(context.state.listLimits, listKey, total);
+  if (total <= 3) return null;
+  const controls = element('div', 're0-pagination');
+  controls.append(element('span', '', `已显示 ${limit} / ${total}`));
+  const actions = element('div', 're0-pagination__actions');
+  if (limit < total) {
+    const more = actionButton(`再显示 ${Math.min(5, total - limit)} 条`, 'show-more', 're0-text-button');
+    more.dataset.listKey = listKey;
+    more.dataset.total = String(total);
+    actions.append(more);
+  }
+  if (limit > 3) {
+    const collapse = actionButton('收起列表', 'collapse-list', 're0-text-button');
+    collapse.dataset.listKey = listKey;
+    actions.append(collapse);
+  }
+  controls.append(actions);
+  return controls;
 }
 
 function emptyState(title, description = '当前没有可展示的记录。') {
@@ -188,8 +292,11 @@ function recordCards(title, entries, options = {}) {
     section.append(emptyState(`暂无${title}`));
     return section;
   }
+  const listKey = options.listKey || '';
+  const context = options.context;
+  const limit = listKey && context ? visibleListLimit(context.state.listLimits, listKey, entries.length) : entries.length;
   const grid = element('div', `re0-record-grid ${options.className || ''}`.trim());
-  for (const entry of entries) {
+  for (const entry of entries.slice(0, limit)) {
     const card = element('article', 're0-record-card');
     const top = element('div', 're0-record-card__top');
     top.append(element('span', 're0-record-card__type', entry.category || options.label || '记录'));
@@ -206,6 +313,8 @@ function recordCards(title, entries, options = {}) {
     grid.append(card);
   }
   section.append(grid);
+  const pagination = listKey && context ? paginationControls(entries.length, listKey, context) : null;
+  if (pagination) section.append(pagination);
   return section;
 }
 
@@ -231,56 +340,74 @@ function createAvatarButton(identity, className = '') {
 
 function renderOverview(model, context) {
   const section = element('section', 're0-overview-panel');
-  section.append(sectionHeading('Current State', '轮回概览', '高频状态、当前位置与紧急信号。'));
+  section.append(sectionIntro(model, context, 'Current State', '轮回概览', '高频状态、当前位置与紧急信号。'));
 
-  const grid = element('div', 're0-overview-panel__grid');
-  grid.append(fieldList('世界坐标', {
-    日期: model.overview.time.date,
-    时段: model.overview.time.period,
-    时间层: model.overview.time.layer,
-    分支: model.overview.time.branch,
-    位置: model.overview.location.join(' · '),
-    天气: model.overview.environment.weather,
-    光照: model.overview.environment.light,
-    危机: model.overview.crisis,
-  }, ['日期', '时段', '时间层', '分支', '位置', '天气', '光照', '危机']));
+  section.append(accordionGroup(context, {
+    id: 'pulse',
+    title: '状态脉搏',
+    summary: `${model.overview.protagonist.name} · ${model.overview.protagonist.status} · ${model.overview.location.at(-1) || '地点未详'}`,
+    count: model.overview.instruments.length,
+    render: () => {
+      const grid = element('div', 're0-overview-panel__grid');
+      grid.append(fieldList('世界坐标', {
+        日期: model.overview.time.date,
+        时段: model.overview.time.period,
+        时间层: model.overview.time.layer,
+        分支: model.overview.time.branch,
+        位置: model.overview.location.join(' · '),
+        天气: model.overview.environment.weather,
+        光照: model.overview.environment.light,
+        危机: model.overview.crisis,
+      }, ['日期', '时段', '时间层', '分支', '位置', '天气', '光照', '危机']));
 
-  const protagonist = element('section', 're0-card re0-overview-protagonist');
-  const identity = element('div', 're0-identity');
-  identity.append(createAvatarButton({ namespace: 'protagonist', name: model.overview.protagonist.name }, 're0-avatar--large'));
-  const copy = element('div');
-  copy.append(element('span', 're0-kicker', 'Protagonist'));
-  copy.append(element('h3', 're0-identity__name', model.overview.protagonist.name));
-  copy.append(element('p', '', `${model.overview.protagonist.identity} · ${model.overview.protagonist.form}`));
-  identity.append(copy);
-  protagonist.append(identity);
-  const meters = element('div', 're0-meter-grid');
-  for (const instrument of model.overview.instruments) meters.append(meter(instrument));
-  protagonist.append(meters);
-  grid.append(protagonist);
-  section.append(grid);
+      const protagonist = element('section', 're0-card re0-overview-protagonist');
+      const identity = element('div', 're0-identity');
+      identity.append(createAvatarButton({ namespace: 'protagonist', name: model.overview.protagonist.name }, 're0-avatar--large'));
+      const copy = element('div');
+      copy.append(element('span', 're0-kicker', 'Protagonist'));
+      copy.append(element('h3', 're0-identity__name', model.overview.protagonist.name));
+      copy.append(element('p', '', `${model.overview.protagonist.identity} · ${model.overview.protagonist.form}`));
+      identity.append(copy);
+      protagonist.append(identity);
+      const meters = element('div', 're0-meter-grid');
+      for (const instrument of model.overview.instruments) meters.append(meter(instrument));
+      protagonist.append(meters);
+      grid.append(protagonist);
+      return grid;
+    },
+  }));
 
-  const objective = element('section', 're0-objective');
-  objective.append(element('span', 're0-objective__mark', '⌖'));
-  const objectiveCopy = element('div');
-  objectiveCopy.append(element('small', '', '当前目标'));
-  objectiveCopy.append(element('p', '', model.overview.target));
-  objective.append(objectiveCopy);
-  section.append(objective);
+  section.append(accordionGroup(context, {
+    id: 'signals',
+    title: '目标与警示',
+    summary: model.overview.target,
+    count: model.overview.alerts.length,
+    render: () => {
+      const content = element('div', 're0-group-stack');
+      const objective = element('section', 're0-objective');
+      objective.append(element('span', 're0-objective__mark', '⌖'));
+      const objectiveCopy = element('div');
+      objectiveCopy.append(element('small', '', '当前目标'));
+      objectiveCopy.append(element('p', '', model.overview.target));
+      objective.append(objectiveCopy);
+      content.append(objective);
 
-  const alerts = element('section', 're0-alerts');
-  alerts.append(element('h3', 're0-sr-only', '当前警示'));
-  if (model.overview.alerts.length) {
-    for (const alert of model.overview.alerts) {
-      const item = element('article', `re0-alert re0-alert--${alert.kind}`);
-      item.append(element('strong', '', alert.title));
-      item.append(element('span', '', alert.detail));
-      alerts.append(item);
-    }
-  } else {
-    alerts.append(element('p', 're0-all-clear', '当前没有迫近警示。'));
-  }
-  section.append(alerts);
+      const alerts = element('section', 're0-alerts');
+      alerts.append(element('h3', 're0-sr-only', '当前警示'));
+      if (model.overview.alerts.length) {
+        for (const alert of model.overview.alerts) {
+          const item = element('article', `re0-alert re0-alert--${alert.kind}`);
+          item.append(element('strong', '', alert.title));
+          item.append(element('span', '', alert.detail));
+          alerts.append(item);
+        }
+      } else {
+        alerts.append(element('p', 're0-all-clear', '当前没有迫近警示。'));
+      }
+      content.append(alerts);
+      return content;
+    },
+  }));
 
   context.queuePortraits(section);
   return section;
@@ -289,77 +416,137 @@ function renderOverview(model, context) {
 function renderProtagonist(model, context) {
   const source = model.protagonist.raw;
   const section = element('section', 're0-section-view');
-  section.append(sectionHeading('Locked Profile', '主角档案', '当前聊天唯一锁定主角；状态栏不修改此档案。'));
+  section.append(sectionIntro(model, context, 'Locked Profile', '主角档案', '当前聊天唯一锁定主角；状态栏不修改此档案。'));
 
-  const dossier = element('section', 're0-card re0-dossier');
-  const identity = element('div', 're0-identity re0-identity--dossier');
-  identity.append(createAvatarButton({ namespace: 'protagonist', name: asText(source.姓名) }, 're0-avatar--hero'));
-  const copy = element('div');
-  copy.append(element('span', 're0-kicker', source.主角锁定 ? 'PROFILE LOCKED' : 'PROFILE UNLOCKED'));
-  copy.append(element('h2', 're0-identity__name', asText(source.姓名)));
-  copy.append(element('p', '', `${asText(source.身份)} · ${asText(source.阵营)}`));
-  identity.append(copy);
-  dossier.append(identity);
-  dossier.append(fieldList('', source, [
-    '主角锁定', '角色类型', '性别', '年龄阶段', '种族', '身份', '阵营',
-    '生存状态', '当前形态', '门状态',
-  ], { className: 're0-card--inset' }));
-  section.append(dossier);
+  section.append(accordionGroup(context, {
+    id: 'profile',
+    title: '身份档案',
+    summary: `${asText(source.姓名)} · ${asText(source.身份)} · ${asText(source.生存状态)}`,
+    render: () => {
+      const dossier = element('section', 're0-card re0-dossier');
+      const identity = element('div', 're0-identity re0-identity--dossier');
+      identity.append(createAvatarButton({ namespace: 'protagonist', name: asText(source.姓名) }, 're0-avatar--hero'));
+      const copy = element('div');
+      copy.append(element('span', 're0-kicker', source.主角锁定 ? 'PROFILE LOCKED' : 'PROFILE UNLOCKED'));
+      copy.append(element('h2', 're0-identity__name', asText(source.姓名)));
+      copy.append(element('p', '', `${asText(source.身份)} · ${asText(source.阵营)}`));
+      identity.append(copy);
+      dossier.append(identity);
+      dossier.append(fieldList('', source, [
+        '主角锁定', '角色类型', '性别', '年龄阶段', '种族', '身份', '阵营',
+        '生存状态', '当前形态', '门状态',
+      ], { className: 're0-card--inset' }));
+      return dossier;
+    },
+  }));
 
-  const meters = element('section', 're0-card');
-  meters.append(element('h3', 're0-card__title', '状态仪表'));
-  const meterGrid = element('div', 're0-meter-grid');
-  for (const instrument of model.overview.instruments) meterGrid.append(meter(instrument));
-  meters.append(meterGrid);
-  section.append(meters);
+  section.append(accordionGroup(context, {
+    id: 'vitals',
+    title: '状态仪表',
+    summary: model.overview.instruments.slice(0, 4).map((item) => `${item.label} ${Math.round(clampMeter(item.value))}`).join(' · '),
+    count: model.overview.instruments.length,
+    render: () => {
+      const meters = element('section', 're0-card');
+      const meterGrid = element('div', 're0-meter-grid');
+      for (const instrument of model.overview.instruments) meterGrid.append(meter(instrument));
+      meters.append(meterGrid);
+      return meters;
+    },
+  }));
 
-  const longText = element('div', 're0-fold-grid');
-  for (const key of ['容貌', '衣着']) {
-    const details = element('details', 're0-fold');
-    details.append(element('summary', '', key));
-    details.append(element('p', '', displayValue(source[key])));
-    longText.append(details);
-  }
-  section.append(longText);
-  section.append(recordCards('伤势', model.protagonist.injuries));
-  section.append(recordCards('异常状态', model.protagonist.abnormalities));
-  section.append(fieldList('战力等阶', asRecord(source.战力等阶), ['阶数', '位阶', '可战状态', '生效条件']));
+  section.append(accordionGroup(context, {
+    id: 'appearance',
+    title: '容貌与衣着',
+    summary: source.容貌,
+    count: 2,
+    render: () => fieldList('外观记录', source, ['容貌', '衣着']),
+  }));
 
-  const abilities = element('section', 're0-record-section');
-  abilities.append(element('h3', '', '能力谱系'));
-  const groups = element('div', 're0-ability-groups');
-  for (const group of model.protagonist.abilities) {
-    const details = element('details', 're0-ability-group');
-    if (group.items.length) details.open = true;
-    const summary = element('summary');
-    summary.append(element('span', '', group.category));
-    summary.append(element('span', 're0-count', String(group.items.length)));
-    details.append(summary);
-    details.append(recordCards(group.category, group.items, { className: 're0-record-grid--single' }));
-    groups.append(details);
-  }
-  abilities.append(groups);
-  section.append(abilities);
-  section.append(fieldList('行动锚点', source, ['当前目标']));
+  section.append(accordionGroup(context, {
+    id: 'conditions',
+    title: '伤势、异常与战力',
+    summary: `${model.protagonist.injuries.length} 处伤势 · ${model.protagonist.abnormalities.length} 项异常 · ${displayValue(source.战力等阶?.可战状态)}`,
+    count: model.protagonist.injuries.length + model.protagonist.abnormalities.length,
+    render: () => {
+      const content = element('div', 're0-group-stack');
+      content.append(recordCards('伤势', model.protagonist.injuries, { context, listKey: 'protagonist:injuries' }));
+      content.append(recordCards('异常状态', model.protagonist.abnormalities, { context, listKey: 'protagonist:abnormalities' }));
+      content.append(fieldList('战力等阶', asRecord(source.战力等阶), ['阶数', '位阶', '可战状态', '生效条件']));
+      return content;
+    },
+  }));
+
+  const abilityCount = model.protagonist.abilities.reduce((sum, group) => sum + group.items.length, 0);
+  section.append(accordionGroup(context, {
+    id: 'abilities',
+    title: '能力谱系',
+    summary: `${model.protagonist.abilities.filter((group) => group.items.length).length} 个分类含记录`,
+    count: abilityCount,
+    render: () => {
+      const groups = element('div', 're0-ability-groups');
+      for (const group of model.protagonist.abilities) {
+        const details = element('details', 're0-ability-group');
+        const summary = element('summary');
+        summary.append(element('span', '', group.category));
+        summary.append(element('span', 're0-count', String(group.items.length)));
+        details.append(summary);
+        details.append(recordCards(group.category, group.items, {
+          className: 're0-record-grid--single',
+          context,
+          listKey: `protagonist:ability:${group.category}`,
+        }));
+        groups.append(details);
+      }
+      return groups;
+    },
+  }));
+
+  section.append(accordionGroup(context, {
+    id: 'objective',
+    title: '行动锚点',
+    summary: source.当前目标,
+    render: () => fieldList('当前目标', source, ['当前目标']),
+  }));
   context.queuePortraits(section);
   return section;
 }
 
-function renderWorld(model) {
+function renderWorld(model, context) {
   const world = model.world.raw;
   const section = element('section', 're0-section-view');
-  section.append(sectionHeading('World Ledger', '世界态势', '时间、地点、环境与正在移动的力量。'));
-  const grid = element('div', 're0-triple-grid');
-  grid.append(fieldList('当前时间', asRecord(world.当前时间), ['规范日期', '时段', '时间层', '轮回分支']));
-  grid.append(fieldList('当前地点', asRecord(world.当前地点), ['国家', '地区', '场所', '具体位置']));
-  grid.append(fieldList('环境', asRecord(world.环境), ['天气', '光照', '描述']));
-  section.append(grid);
-  const crisis = element('div', `re0-crisis re0-crisis--${asText(world.危机等级, '无')}`);
-  crisis.append(element('span', '', '危机等级'));
-  crisis.append(element('strong', '', asText(world.危机等级, '无')));
-  section.append(crisis);
-  section.append(recordCards('动向', model.world.movements));
-  section.append(recordCards('势力态势', model.world.factions));
+  section.append(sectionIntro(model, context, 'World Ledger', '世界态势', '时间、地点、环境与正在移动的力量。'));
+  section.append(accordionGroup(context, {
+    id: 'position',
+    title: '时间、地点与环境',
+    summary: `${displayValue(world.当前时间?.时段)} · ${displayValue(world.当前地点?.具体位置)} · ${displayValue(world.环境?.天气)}`,
+    render: () => {
+      const content = element('div', 're0-group-stack');
+      const grid = element('div', 're0-triple-grid');
+      grid.append(fieldList('当前时间', asRecord(world.当前时间), ['规范日期', '时段', '时间层', '轮回分支']));
+      grid.append(fieldList('当前地点', asRecord(world.当前地点), ['国家', '地区', '场所', '具体位置']));
+      grid.append(fieldList('环境', asRecord(world.环境), ['天气', '光照', '描述']));
+      content.append(grid);
+      const crisis = element('div', `re0-crisis re0-crisis--${asText(world.危机等级, '无')}`);
+      crisis.append(element('span', '', '危机等级'));
+      crisis.append(element('strong', '', asText(world.危机等级, '无')));
+      content.append(crisis);
+      return content;
+    },
+  }));
+  section.append(accordionGroup(context, {
+    id: 'movements',
+    title: '世界动向',
+    summary: model.world.movements[0]?.标题 || '当前没有显著动向',
+    count: model.world.movements.length,
+    render: () => recordCards('动向', model.world.movements, { context, listKey: 'world:movements' }),
+  }));
+  section.append(accordionGroup(context, {
+    id: 'factions',
+    title: '势力态势',
+    summary: model.world.factions[0]?.id || '尚未记录势力变化',
+    count: model.world.factions.length,
+    render: () => recordCards('势力态势', model.world.factions, { context, listKey: 'world:factions' }),
+  }));
   return section;
 }
 
@@ -376,47 +563,61 @@ function personQuickFacts(person) {
 
 function renderRelations(model, context) {
   const section = element('section', 're0-section-view');
-  section.append(sectionHeading('Constellation', '人际星图', '伴侣、契约伙伴与其他人物的当前关系切面。'));
-  const filters = element('div', 're0-segmented');
-  filters.setAttribute('aria-label', '筛选关系人物');
-  for (const [id, label] of RELATION_FILTERS) {
-    const button = actionButton(label, 'filter-relations', '', {
-      'aria-pressed': context.state.relationFilter === id,
-    });
-    button.dataset.filter = id;
-    filters.append(button);
-  }
-  section.append(filters);
-
+  section.append(sectionIntro(model, context, 'Constellation', '人际星图', '伴侣、契约伙伴与其他人物的当前关系切面。'));
   const people = context.state.relationFilter === 'all'
     ? model.relations.people
     : model.relations.people.filter((person) => person.category === context.state.relationFilter);
-  if (!people.length) {
-    section.append(emptyState('此分类暂无人物'));
-    return section;
-  }
+  section.append(accordionGroup(context, {
+    id: 'people',
+    title: '关系人物',
+    summary: `${model.relations.people.length} 人 · 当前筛选 ${RELATION_FILTERS.find(([id]) => id === context.state.relationFilter)?.[1] || '全部'}`,
+    count: people.length,
+    render: () => {
+      const content = element('div', 're0-group-stack');
+      const filters = element('div', 're0-segmented');
+      filters.setAttribute('aria-label', '筛选关系人物');
+      for (const [id, label] of RELATION_FILTERS) {
+        const button = actionButton(label, 'filter-relations', '', {
+          'aria-pressed': context.state.relationFilter === id,
+        });
+        button.dataset.filter = id;
+        filters.append(button);
+      }
+      content.append(filters);
 
-  const grid = element('div', 're0-people-grid');
-  for (const person of people) {
-    const card = element('article', 're0-person-card');
-    card.dataset.category = person.category;
-    card.dataset.name = person.name;
-    const top = element('div', 're0-person-card__top');
-    top.append(createAvatarButton({ namespace: 'person', name: person.name }, 're0-avatar--person'));
-    const copy = element('div');
-    copy.append(element('span', 're0-kicker', person.category));
-    copy.append(element('h3', '', person.name));
-    copy.append(element('p', '', displayValue(person.身份 || person.契约状态 || person.关系阶段)));
-    top.append(copy);
-    card.append(top);
-    card.append(personQuickFacts(person));
-    const view = actionButton('查看完整档案', 'open-person', 're0-text-button');
-    view.dataset.category = person.category;
-    view.dataset.name = person.name;
-    card.append(view);
-    grid.append(card);
-  }
-  section.append(grid);
+      if (!people.length) {
+        content.append(emptyState('此分类暂无人物'));
+        return content;
+      }
+
+      const listKey = `relations:${context.state.relationFilter}`;
+      const limit = visibleListLimit(context.state.listLimits, listKey, people.length);
+      const grid = element('div', 're0-people-grid');
+      for (const person of people.slice(0, limit)) {
+        const card = element('article', 're0-person-card');
+        card.dataset.category = person.category;
+        card.dataset.name = person.name;
+        const top = element('div', 're0-person-card__top');
+        top.append(createAvatarButton({ namespace: 'person', name: person.name }, 're0-avatar--person'));
+        const copy = element('div');
+        copy.append(element('span', 're0-kicker', person.category));
+        copy.append(element('h3', '', person.name));
+        copy.append(element('p', '', displayValue(person.身份 || person.契约状态 || person.关系阶段)));
+        top.append(copy);
+        card.append(top);
+        card.append(personQuickFacts(person));
+        const view = actionButton('查看完整档案', 'open-person', 're0-text-button');
+        view.dataset.category = person.category;
+        view.dataset.name = person.name;
+        card.append(view);
+        grid.append(card);
+      }
+      content.append(grid);
+      const pagination = paginationControls(people.length, listKey, context);
+      if (pagination) content.append(pagination);
+      return content;
+    },
+  }));
   context.queuePortraits(section);
   return section;
 }
@@ -425,139 +626,232 @@ function renderLoop(model, context) {
   const loop = model.loop.raw;
   const checkpoint = asRecord(loop.存档点);
   const section = element('section', 're0-section-view re0-section-view--loop');
-  section.append(sectionHeading('Return by Death', '轮回账本', '敏感记录默认封存；状态栏不会执行回档。'));
-  section.append(fieldList('轮回刻度', loop, ['世界重启次数', '当前轮回编号']));
+  section.append(sectionIntro(model, context, 'Return by Death', '轮回账本', '敏感记录默认封存；状态栏不会执行回档。'));
+  section.append(accordionGroup(context, {
+    id: 'summary',
+    title: '轮回刻度与最近记录',
+    summary: `当前轮回 ${displayValue(loop.当前轮回编号)} · 重启 ${displayValue(loop.世界重启次数)} 次`,
+    render: () => {
+      const content = element('div', 're0-triple-grid');
+      content.append(fieldList('轮回刻度', loop, ['世界重启次数', '当前轮回编号']));
+      content.append(fieldList('最近一次重启', asRecord(loop.最近一次重启), ['死亡事件ID', '重启编号', '触发时间', '恢复结果']));
+      content.append(fieldList('最近一次死亡', asRecord(loop.最近一次死亡), ['死亡ID', '直接原因', '死亡经过']));
+      return content;
+    },
+  }));
 
-  const checkpointCard = element('section', 're0-card re0-checkpoint');
-  checkpointCard.append(element('h3', 're0-card__title', '死亡回归存档点'));
-  checkpointCard.append(fieldList('', checkpoint, ['有效', '创建时间'], { className: 're0-card--inset' }));
-  const snapshotButton = actionButton(
-    context.state.snapshotVisible ? '收起状态快照' : '确认并查看状态快照',
-    'toggle-snapshot',
-    're0-button re0-button--quiet',
-    { 'aria-expanded': context.state.snapshotVisible },
-  );
-  checkpointCard.append(snapshotButton);
-  if (context.state.snapshotVisible) {
-    const snapshot = element('div', 're0-sensitive-data');
-    snapshot.append(element('p', 're0-sensitive-data__notice', '以下是存档点的完整六域快照，可能包含失败轮状态。'));
-    snapshot.append(valueTree(asRecord(checkpoint.状态快照)));
-    checkpointCard.append(snapshot);
-  } else {
-    checkpointCard.append(element('p', 're0-sensitive-hint', '状态快照体积可能很大，且可能泄露失败轮信息。'));
-  }
-  section.append(checkpointCard);
-  section.append(fieldList('最近一次重启', asRecord(loop.最近一次重启), ['死亡事件ID', '重启编号', '触发时间', '恢复结果']));
-  section.append(fieldList('最近一次死亡', asRecord(loop.最近一次死亡), ['死亡ID', '直接原因', '死亡经过']));
+  section.append(accordionGroup(context, {
+    id: 'checkpoint',
+    title: '死亡回归存档点',
+    summary: `${displayValue(checkpoint.有效)} · ${displayValue(checkpoint.创建时间)}`,
+    render: () => {
+      const checkpointCard = element('section', 're0-card re0-checkpoint');
+      checkpointCard.append(fieldList('', checkpoint, ['有效', '创建时间'], { className: 're0-card--inset' }));
+      const snapshotButton = actionButton(
+        context.state.snapshotVisible ? '收起状态快照' : '确认并查看状态快照',
+        'toggle-snapshot',
+        're0-button re0-button--quiet',
+        { 'aria-expanded': context.state.snapshotVisible },
+      );
+      checkpointCard.append(snapshotButton);
+      if (context.state.snapshotVisible) {
+        const snapshot = element('div', 're0-sensitive-data');
+        snapshot.append(element('p', 're0-sensitive-data__notice', '以下是存档点的完整六域快照，可能包含失败轮状态。'));
+        snapshot.append(valueTree(asRecord(checkpoint.状态快照)));
+        checkpointCard.append(snapshot);
+      } else {
+        checkpointCard.append(element('p', 're0-sensitive-hint', '状态快照体积可能很大，且可能泄露失败轮信息。'));
+      }
+      return checkpointCard;
+    },
+  }));
 
-  const deathBook = element('section', 're0-record-section re0-death-book');
-  const heading = element('div', 're0-record-section__heading');
-  heading.append(element('h3', '', '菜月昴死亡记录'));
-  heading.append(element('span', 're0-count', String(model.loop.deaths.length)));
-  deathBook.append(heading);
-  if (!model.loop.deaths.length) {
-    deathBook.append(emptyState('死亡之书尚无记录'));
-  } else {
-    for (const death of model.loop.deaths) {
-      const details = element('details', 're0-death-entry');
-      const summary = element('summary');
-      summary.append(element('span', 're0-death-entry__id', death.id));
-      summary.append(element('strong', '', displayValue(death.直接原因)));
-      summary.append(element('span', '', displayValue(death.死亡时规范日期与时段)));
-      details.append(summary);
-      const payload = Object.fromEntries(Object.entries(death).filter(([key]) => !['id', 'category'].includes(key)));
-      details.append(valueTree(payload));
-      deathBook.append(details);
-    }
-  }
-  section.append(deathBook);
+  section.append(accordionGroup(context, {
+    id: 'deaths',
+    title: '菜月昴死亡记录',
+    summary: model.loop.deaths[0]?.直接原因 || '死亡之书尚无记录',
+    count: model.loop.deaths.length,
+    render: () => {
+      const deathBook = element('section', 're0-record-section re0-death-book');
+      if (!model.loop.deaths.length) {
+        deathBook.append(emptyState('死亡之书尚无记录'));
+        return deathBook;
+      }
+      const listKey = 'loop:deaths';
+      const limit = visibleListLimit(context.state.listLimits, listKey, model.loop.deaths.length);
+      for (const death of model.loop.deaths.slice(0, limit)) {
+        const details = element('details', 're0-death-entry');
+        const summary = element('summary');
+        summary.append(element('span', 're0-death-entry__id', death.id));
+        summary.append(element('strong', '', displayValue(death.直接原因)));
+        summary.append(element('span', '', displayValue(death.死亡时规范日期与时段)));
+        details.append(summary);
+        const payload = Object.fromEntries(Object.entries(death).filter(([key]) => !['id', 'category'].includes(key)));
+        details.append(valueTree(payload));
+        deathBook.append(details);
+      }
+      const pagination = paginationControls(model.loop.deaths.length, listKey, context);
+      if (pagination) deathBook.append(pagination);
+      return deathBook;
+    },
+  }));
   return section;
 }
 
-function renderEvents(model) {
+function renderEvents(model, context) {
   const section = element('section', 're0-section-view');
-  section.append(sectionHeading('Event Threads', '事件脉络', '进行中的事件与近期已经落定的结果。'));
-  section.append(recordCards('进行中', model.events.active));
-  section.append(recordCards('近期记录', model.events.recent));
+  section.append(sectionIntro(model, context, 'Event Threads', '事件脉络', '进行中的事件与近期已经落定的结果。'));
+  section.append(accordionGroup(context, {
+    id: 'active',
+    title: '进行中的事件',
+    summary: model.events.active[0]?.标题 || '当前没有进行中事件',
+    count: model.events.active.length,
+    render: () => recordCards('进行中', model.events.active, { context, listKey: 'events:active' }),
+  }));
+  section.append(accordionGroup(context, {
+    id: 'recent',
+    title: '近期记录',
+    summary: model.events.recent[0]?.标题 || '尚无近期事件记录',
+    count: model.events.recent.length,
+    render: () => recordCards('近期记录', model.events.recent, { context, listKey: 'events:recent' }),
+  }));
   return section;
 }
 
-function renderClues(model) {
+function renderClues(model, context) {
   const section = element('section', 're0-section-view');
-  section.append(sectionHeading('Unfinished Questions', '线索簿', '已获得的线索与尚未回答的问题。'));
-  section.append(recordCards('当前线索', model.clues.current));
-  const questions = element('section', 're0-card');
-  questions.append(element('h3', 're0-card__title', '未解问题'));
-  if (!model.clues.questions.length) {
-    questions.append(emptyState('暂无未解问题'));
-  } else {
-    const list = element('ol', 're0-question-list');
-    for (const question of model.clues.questions) list.append(element('li', '', displayValue(question)));
-    questions.append(list);
+  section.append(sectionIntro(model, context, 'Unfinished Questions', '线索簿', '已获得的线索与尚未回答的问题。'));
+  section.append(accordionGroup(context, {
+    id: 'current',
+    title: '当前线索',
+    summary: model.clues.current[0]?.标题 || '当前没有可追踪线索',
+    count: model.clues.current.length,
+    render: () => recordCards('当前线索', model.clues.current, { context, listKey: 'clues:current' }),
+  }));
+  section.append(accordionGroup(context, {
+    id: 'questions',
+    title: '未解问题',
+    summary: model.clues.questions[0] || '当前没有未解问题',
+    count: model.clues.questions.length,
+    render: () => {
+      const questions = element('section', 're0-card');
+      if (!model.clues.questions.length) {
+        questions.append(emptyState('暂无未解问题'));
+        return questions;
+      }
+      const listKey = 'clues:questions';
+      const limit = visibleListLimit(context.state.listLimits, listKey, model.clues.questions.length);
+      const list = element('ol', 're0-question-list');
+      for (const question of model.clues.questions.slice(0, limit)) list.append(element('li', '', displayValue(question)));
+      questions.append(list);
+      const pagination = paginationControls(model.clues.questions.length, listKey, context);
+      if (pagination) questions.append(pagination);
+      return questions;
+    },
+  }));
+  return section;
+}
+
+function renderAssets(model, context) {
+  const section = element('section', 're0-section-view');
+  section.append(sectionIntro(model, context, 'Assets Ledger', '资产 · 行囊与据点', '货币、物品、装备及可使用的存放地点。'));
+  for (const group of [
+    ['currencies', '货币', model.assets.currencies, 'assets:currencies'],
+    ['items', '物品', model.assets.items, 'assets:items'],
+    ['equipment', '装备', model.assets.equipment, 'assets:equipment'],
+    ['locations', '据点与存放', model.assets.locations, 'assets:locations'],
+  ]) {
+    const [id, title, entries, listKey] = group;
+    section.append(accordionGroup(context, {
+      id,
+      title,
+      summary: entries[0]?.名称 || entries[0]?.id || `暂无${title}`,
+      count: entries.length,
+      render: () => recordCards(title, entries, { context, listKey }),
+    }));
   }
-  section.append(questions);
-  return section;
-}
-
-function renderAssets(model) {
-  const section = element('section', 're0-section-view');
-  section.append(sectionHeading('Assets Ledger', '资产 · 行囊与据点', '货币、物品、装备及可使用的存放地点。'));
-  section.append(recordCards('货币', model.assets.currencies));
-  section.append(recordCards('物品', model.assets.items));
-  section.append(recordCards('装备', model.assets.equipment));
-  section.append(recordCards('据点与存放', model.assets.locations));
   return section;
 }
 
 function renderDiagnostics(model, context) {
   const section = element('section', 're0-section-view');
-  section.append(sectionHeading('Protocol Lens', '诊断', '协议覆盖、运行时来源与透传字段；仅供核对。'));
+  section.append(sectionIntro(model, context, 'Protocol Lens', '诊断', '协议覆盖、运行时来源与透传字段；仅供核对。'));
 
-  const notice = element('section', 're0-readonly-notice');
-  notice.append(element('span', '', 'READ ONLY'));
-  notice.append(element('p', '', '本界面只读取状态。剧情变量仍仅由每轮 <UpdateVariable> 更新流程写入。'));
-  section.append(notice);
+  section.append(accordionGroup(context, {
+    id: 'coverage',
+    title: '完整状态映射',
+    summary: '八域 · 172 个已声明叶路径 · 只读',
+    count: 172,
+    render: () => {
+      const content = element('div', 're0-group-stack');
+      const notice = element('section', 're0-readonly-notice');
+      notice.append(element('span', '', 'READ ONLY'));
+      notice.append(element('p', '', '本界面只读取状态。剧情变量仍仅由每轮 <UpdateVariable> 更新流程写入。'));
+      content.append(notice);
+      const coverage = element('section', 're0-card');
+      const coverageGrid = element('div', 're0-coverage-grid');
+      let total = 0;
+      for (const [domain, count] of Object.entries(model.diagnostics.declaredDomainCounts)) {
+        total += count;
+        coverageGrid.append(statusChip(domain, `${count} 叶`));
+      }
+      coverageGrid.prepend(statusChip('合计', `${total} 叶`, 'accent'));
+      coverage.append(coverageGrid);
+      content.append(coverage);
+      return content;
+    },
+  }));
 
-  const coverage = element('section', 're0-card');
-  coverage.append(element('h3', 're0-card__title', '完整状态映射'));
-  const coverageGrid = element('div', 're0-coverage-grid');
-  let total = 0;
-  for (const [domain, count] of Object.entries(model.diagnostics.declaredDomainCounts)) {
-    total += count;
-    coverageGrid.append(statusChip(domain, `${count} 叶`));
-  }
-  coverageGrid.prepend(statusChip('合计', `${total} 叶`, 'accent'));
-  coverage.append(coverageGrid);
-  section.append(coverage);
+  section.append(accordionGroup(context, {
+    id: 'rules',
+    title: '规则元数据',
+    summary: `${displayValue(model.rules.schema版本)} · 初始化 ${displayValue(model.rules.初始化完成)}`,
+    render: () => fieldList('规则元数据', model.rules, ['schema版本', '初始化完成']),
+  }));
 
-  section.append(fieldList('规则元数据', model.rules, ['schema版本', '初始化完成']));
-  section.append(fieldList('运行时探测', {
-    状态: context.runtime.status,
-    来源: context.runtime.source || '无',
-    消息: context.runtime.message || '读取正常',
-    SillyTavern: context.runtime.probe?.tavern || '未报告',
-    TavernHelper: context.runtime.probe?.helper || '未报告',
-    消息楼层: context.runtime.probe?.messageId ?? '未报告',
-    MVU: context.runtime.probe?.hasMvu ? '可用' : '未检测到',
-  }, ['状态', '来源', '消息', 'SillyTavern', 'TavernHelper', '消息楼层', 'MVU']));
+  section.append(accordionGroup(context, {
+    id: 'runtime',
+    title: '运行时探测',
+    summary: `${context.runtime.status} · ${context.runtime.source || '无来源'}`,
+    render: () => fieldList('运行时探测', {
+      状态: context.runtime.status,
+      来源: context.runtime.source || '无',
+      消息: context.runtime.message || '读取正常',
+      SillyTavern: context.runtime.probe?.tavern || '未报告',
+      TavernHelper: context.runtime.probe?.helper || '未报告',
+      消息楼层: context.runtime.probe?.messageId ?? '未报告',
+      MVU: context.runtime.probe?.hasMvu ? '可用' : '未检测到',
+    }, ['状态', '来源', '消息', 'SillyTavern', 'TavernHelper', '消息楼层', 'MVU']),
+  }));
 
-  const unknown = element('section', 're0-card');
-  unknown.append(element('h3', 're0-card__title', '未知透传字段'));
-  if (!model.diagnostics.unknown.length) {
-    unknown.append(emptyState('没有发现协议外叶字段', '当前状态树与已声明映射一致。'));
-  } else {
-    const list = element('dl', 're0-tree');
-    for (const entry of model.diagnostics.unknown) {
-      const row = element('div', 're0-tree__row');
-      row.append(element('dt', '', entry.path));
-      const dd = element('dd');
-      dd.append(valueTree(entry.value));
-      row.append(dd);
-      list.append(row);
-    }
-    unknown.append(list);
-  }
-  section.append(unknown);
+  section.append(accordionGroup(context, {
+    id: 'unknown',
+    title: '未知透传字段',
+    summary: model.diagnostics.unknown.length ? model.diagnostics.unknown[0].path : '当前状态树与已声明映射一致',
+    count: model.diagnostics.unknown.length,
+    render: () => {
+      const unknown = element('section', 're0-card');
+      if (!model.diagnostics.unknown.length) {
+        unknown.append(emptyState('没有发现协议外叶字段', '当前状态树与已声明映射一致。'));
+      } else {
+        const listKey = 'diagnostics:unknown';
+        const limit = visibleListLimit(context.state.listLimits, listKey, model.diagnostics.unknown.length);
+        const list = element('dl', 're0-tree');
+        for (const entry of model.diagnostics.unknown.slice(0, limit)) {
+          const row = element('div', 're0-tree__row');
+          row.append(element('dt', '', entry.path));
+          const dd = element('dd');
+          dd.append(valueTree(entry.value));
+          row.append(dd);
+          list.append(row);
+        }
+        unknown.append(list);
+        const pagination = paginationControls(model.diagnostics.unknown.length, listKey, context);
+        if (pagination) unknown.append(pagination);
+      }
+      return unknown;
+    },
+  }));
   return section;
 }
 
@@ -848,8 +1142,11 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
   if (!app || !overlay) throw new Error('Re:Zero 状态栏结构不完整');
 
   const storage = safeStorage();
+  const chatId = readChatId(runtimeScope);
+  const storageKey = uiStorageKey(chatId);
+  const instanceId = ++instanceSequence;
   const state = {
-    ...loadPreferences(storage),
+    ...loadPreferences(storage, storageKey),
     snapshotVisible: false,
     model: null,
     statData: null,
@@ -865,7 +1162,6 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     message: '',
     probe: runtimeBridge.probe(),
   };
-  const chatId = readChatId(runtimeScope);
   const artwork = artworkUrls();
   const asCssUrl = (value) => `url("${String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"')}")`;
   app.style.setProperty('--re0-day-art', asCssUrl(artwork.day.wide));
@@ -880,14 +1176,18 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
   let refreshFrame = 0;
   let stopRuntime = () => {};
   let observer = null;
+  let layoutObserver = null;
+  let compactLayout = root.getBoundingClientRect().width <= 700;
 
   const persist = () => {
     if (!storage) return;
-    storage.setItem(STORAGE_KEY, JSON.stringify({
+    storage.setItem(storageKey, JSON.stringify({
       activeSection: state.activeSection,
       detailsOpen: state.detailsOpen,
       relationFilter: state.relationFilter,
       themePreference: state.themePreference,
+      openGroupBySection: state.openGroupBySection,
+      listLimits: state.listLimits,
     }));
   };
 
@@ -975,9 +1275,16 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     state,
     runtime,
     chatId,
+    instanceId,
     portraitRepository,
     queuePortraits,
     closeOverlay,
+    openGroup: (groupId) => resolveOpenGroup(
+      state.openGroupBySection,
+      state.activeSection,
+      DEFAULT_GROUPS[state.activeSection],
+      { compact: compactLayout },
+    ) === groupId,
     render: () => render(),
   };
 
@@ -1014,21 +1321,6 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     title.append(element('h1', '', model.overview.location.at(-1) || '世界状态'));
     brand.append(title);
     header.append(brand);
-
-    const controls = element('div', 're0-header-controls');
-    const themeLabel = state.themePreference === 'auto'
-      ? `自动 · ${model.theme.mode === 'day' ? '日间' : '夜间'}`
-      : state.themePreference === 'day' ? '日间模式' : '夜间模式';
-    const theme = actionButton(themeLabel, 'cycle-theme', 're0-theme-button', {
-      title: '切换日间或夜间模式',
-      'aria-label': `当前${themeLabel}，点击切换`,
-    });
-    theme.prepend(element('span', 're0-theme-button__icon', model.theme.mode === 'day' ? '☼' : '☾'));
-    controls.append(theme);
-    if (state.themePreference !== 'auto') {
-      controls.append(actionButton('恢复自动', 'restore-auto-theme', 're0-auto-button'));
-    }
-    header.append(controls);
     return header;
   };
 
@@ -1051,12 +1343,15 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     signals.append(statusChip('重启', model.overview.loop.restarts));
     if (runtime.status === 'stale') signals.append(statusChip('数据', '旧', 'warning'));
     compact.append(signals);
-    compact.append(actionButton(
+    const actions = element('div', 're0-compact__actions');
+    if (!state.detailsOpen) actions.append(themeButton(model, state, { compact: true }));
+    actions.append(actionButton(
       state.detailsOpen ? '收起档案' : '展开档案',
       'toggle-details',
       're0-expand-button',
       { 'aria-expanded': state.detailsOpen, 'aria-controls': 're0-statusbar-details' },
     ));
+    compact.append(actions);
     queuePortraits(compact);
     return compact;
   };
@@ -1185,7 +1480,38 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       state.detailsOpen = true;
       persist();
       render();
+      app.querySelector(`[data-section="${state.activeSection}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
       app.querySelector('#re0-section-panel')?.focus();
+    } else if (action === 'toggle-group') {
+      const groupId = String(button.dataset.group || '');
+      if (!groupId) return;
+      const current = resolveOpenGroup(
+        state.openGroupBySection,
+        state.activeSection,
+        DEFAULT_GROUPS[state.activeSection],
+        { compact: compactLayout },
+      );
+      state.openGroupBySection = toggleOpenGroup(
+        state.openGroupBySection,
+        state.activeSection,
+        groupId,
+        current,
+      );
+      persist();
+      render();
+      app.querySelector(`.re0-accordion-group[data-group="${CSS.escape(groupId)}"] .re0-accordion-group__trigger`)?.focus();
+    } else if (action === 'show-more') {
+      const listKey = String(button.dataset.listKey || '');
+      if (!listKey) return;
+      state.listLimits = growListLimit(state.listLimits, listKey, Number(button.dataset.total));
+      persist();
+      render();
+    } else if (action === 'collapse-list') {
+      const listKey = String(button.dataset.listKey || '');
+      if (!listKey) return;
+      state.listLimits = resetListLimit(state.listLimits, listKey);
+      persist();
+      render();
     } else if (action === 'cycle-theme') {
       const current = state.model?.theme.mode || 'day';
       state.themePreference = current === 'day' ? 'night' : 'day';
@@ -1255,6 +1581,15 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     }, { rootMargin: '120px' });
     observer.observe(root);
   }
+  if ('ResizeObserver' in globalThis) {
+    layoutObserver = new ResizeObserver(([entry]) => {
+      const nextCompact = entry.contentRect.width <= 700;
+      if (nextCompact === compactLayout) return;
+      compactLayout = nextCompact;
+      if (state.model) render();
+    });
+    layoutObserver.observe(root);
+  }
 
   function destroy() {
     if (state.destroyed) return;
@@ -1262,6 +1597,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     cancelAnimationFrame(refreshFrame);
     stopRuntime();
     observer?.disconnect();
+    layoutObserver?.disconnect();
     closeOverlay();
     clearObjectUrls();
     root.removeEventListener('click', handleAction);
