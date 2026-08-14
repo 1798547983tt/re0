@@ -620,7 +620,7 @@ git commit -m "test: verify status bar browser experience"
 - Create: `reports/statusbar-runtime-handoff.md`
 - Modify: `statusbar/RUNTIME.md`
 
-- [ ] **Step 1: Run every automated test**
+- [x] **Step 1: Run every automated test**
 
 Run: `node --test tests/test_creator_core.mjs tests/test_ai_provider.mjs tests/test_assets.mjs tests/test_creator_package.mjs tests/test_statusbar_core.mjs tests/test_statusbar_runtime.mjs tests/test_statusbar_portraits.mjs tests/test_statusbar_surface.mjs tests/test_statusbar_assets.mjs tests/test_statusbar_package.mjs`
 
@@ -630,7 +630,7 @@ Run: `python -m unittest discover -s tests -p 'test_*.py' -v`
 
 Expected: all Python tests pass with 0 failures.
 
-- [ ] **Step 2: Re-run package parity and source checks**
+- [x] **Step 2: Re-run package parity and source checks**
 
 Run: `node tools/package_creator_regex.mjs --check`
 
@@ -644,11 +644,11 @@ Run: `git diff --check`
 
 Expected: no whitespace errors.
 
-- [ ] **Step 3: Record artifact identity**
+- [x] **Step 3: Record artifact identity**
 
 Record the regex JSON byte size and SHA-256, the pinned artwork commit, every artwork byte size and SHA-256, and the current source commit. Confirm there are no unexpected writes outside `statusbar/`, its dedicated tests/tool/artifact, the two ADRs, glossary, plan, and reports.
 
-- [ ] **Step 4: Prepare the runtime-debug handoff**
+- [x] **Step 4: Prepare the runtime-debug handoff**
 
 Request real-runtime evidence for fresh chat, initialization, correct message floor, update event, swipe, edit, rerender, reload, chat switch, duplicate prevention, all three theme states, uploaded and URL portraits, keyboard focus, 320px layout, 200% zoom, reduced motion, broken asset network, missing MVU, and console cleanliness. Mark every host-dependent case pending unless the exact packaged artifact is actually exercised.
 
