@@ -30,10 +30,10 @@
 
 ## 当前发布候选
 
-- 源码基线：`dc5099d56ed722211be0f069bc5ea9675bd984c5`
+- 源码基线：`4a51a897e4085acffd9c54674bfd8bf33223810f`
 - 导入文件：`dist/regex-Re0·全变量状态栏.json`
-- 大小：152429 bytes
-- SHA-256：`f74bd859b8fd5a10e1467ab832532b8d57aa08bdef16f336008cd5a2a32b5960`
+- 大小：162064 bytes
+- SHA-256：`a3cb9c86db2f64259c4a0aa9b1c5c7af0403f681200d82f5ae7ae509fc9f53ec`
 - 图像固定提交：`75d39874e8b6246a0d5f9bd45779441cdaf743cf`
 - 真实运行时清单：`reports/statusbar-runtime-handoff.md`
 
