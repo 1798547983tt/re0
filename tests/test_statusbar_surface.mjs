@@ -43,7 +43,12 @@ test('status bar source exposes the complete read-only accessible surface', () =
 
   assert.match(css, /container-type:\s*inline-size/);
   assert.match(css, /@container[^\{]*\(max-width:\s*700px\)/);
+  assert.match(css, /@container[^\{]*\(max-width:\s*420px\)[\s\S]*?\.re0-navigation\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(3,[^}]*overflow-x:\s*clip/s);
   assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /\.re0-navigation::\-webkit-scrollbar\s*\{[^}]*display:\s*none/s);
+  assert.match(css, /\.re0-navigation::\-webkit-scrollbar\s*\{[^}]*block-size:\s*0/s);
+  assert.match(css, /\.re0-navigation::\-webkit-scrollbar\s*\{[^}]*inline-size:\s*0/s);
+  assert.match(css, /scrollbar-width:\s*none/);
   assert.match(css, /data-theme="day"/);
   assert.match(css, /data-theme="night"/);
   assert.match(css, /min-(?:inline-)?size:\s*44px|min-height:\s*44px/);

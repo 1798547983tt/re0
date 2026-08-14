@@ -1666,8 +1666,14 @@ button {
     overflow-x: auto;
     border-inline-end: 0;
     border-block-end: 1px solid var(--re0-line);
-    scrollbar-width: thin;
+    scrollbar-width: none;
     scroll-snap-type: inline mandatory;
+  }
+
+  .re0-navigation::-webkit-scrollbar {
+    display: none;
+    inline-size: 0;
+    block-size: 0;
   }
 
   .re0-navigation::before {
@@ -1757,6 +1763,20 @@ button {
 
   .re0-dialog__actions .re0-button--danger {
     margin-inline-end: 0;
+  }
+}
+
+@container (max-width: 420px) {
+  .re0-navigation {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: clip;
+    scroll-snap-type: none;
+  }
+
+  .re0-nav-button {
+    inline-size: 100%;
+    min-inline-size: 0;
   }
 }
 

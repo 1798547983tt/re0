@@ -28,6 +28,13 @@ export function portraitKeys({ namespace = 'person', name, chatId = '' }) {
   };
 }
 
+export function portraitScopeOptions(chatId = '') {
+  return {
+    selected: 'shared',
+    overrideDisabled: !String(chatId).trim(),
+  };
+}
+
 export function validatePortraitUrl(input) {
   const value = String(input ?? '').trim();
   try {

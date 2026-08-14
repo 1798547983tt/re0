@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   normalizePortraitName,
   portraitKeys,
+  portraitScopeOptions,
   resolvePortrait,
   validatePortraitUrl,
 } from '../statusbar/src/portraits.mjs';
@@ -22,6 +23,17 @@ test('portrait keys separate protagonist, shared person and chat override', () =
   );
   assert.equal(normalizePortraitName('  雷  姆 '), '雷 姆');
   assert.equal(normalizePortraitName('Ａlice'), 'Alice');
+});
+
+test('portrait scope defaults to shared when no current chat identity exists', () => {
+  assert.deepEqual(portraitScopeOptions(''), {
+    selected: 'shared',
+    overrideDisabled: true,
+  });
+  assert.deepEqual(portraitScopeOptions('chat/1'), {
+    selected: 'shared',
+    overrideDisabled: false,
+  });
 });
 
 test('portrait URLs accept HTTPS only', () => {

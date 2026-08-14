@@ -11,6 +11,7 @@ const MODULES = Object.freeze([
   'statusbar/src/portraits.mjs',
   'statusbar/src/runtime.mjs',
   'statusbar/src/assets.mjs',
+  'statusbar/src/preview.mjs',
   'statusbar/src/app.mjs',
 ]);
 

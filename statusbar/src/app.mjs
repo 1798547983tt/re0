@@ -10,11 +10,13 @@ import {
   createPortraitRepository,
   cropPortrait,
   portraitKeys,
+  portraitScopeOptions,
   resolvePortrait,
   validatePortraitUrl,
 } from './portraits.mjs';
 import { createRuntimeBridge, discoverRuntimeScope } from './runtime.mjs';
 import { artworkUrls } from './assets.mjs';
+import { selectPreviewFixture } from './preview.mjs';
 
 const SECTION_IDS = Object.freeze([
   'overview',
@@ -655,14 +657,15 @@ function createPortraitModal(identity, context) {
 
   const scopeField = element('fieldset', 're0-scope-picker');
   scopeField.append(element('legend', '', '保存范围'));
+  const scopeOptions = portraitScopeOptions(context.chatId);
   for (const [value, label] of [['shared', '同名人物跨聊天复用'], ['override', '只覆盖当前聊天']]) {
     const choice = element('label');
     const radio = document.createElement('input');
     radio.type = 'radio';
     radio.name = 'portrait-scope';
     radio.value = value;
-    radio.checked = value === 'shared' || !context.chatId;
-    radio.disabled = value === 'override' && !context.chatId;
+    radio.checked = value === scopeOptions.selected;
+    radio.disabled = value === 'override' && scopeOptions.overrideDisabled;
     choice.append(radio, element('span', '', label));
     scopeField.append(choice);
   }
@@ -1119,7 +1122,8 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       const response = await fetch(new URL(sampleUrl, document.baseURI));
       if (!response.ok) return null;
       const sample = await response.json();
-      return asRecord(sample.stat_data);
+      const fixture = new URLSearchParams(globalThis.location?.search || '').get('fixture') || 'normal';
+      return selectPreviewFixture(asRecord(sample.stat_data), fixture);
     } catch {
       return null;
     }
@@ -1135,11 +1139,11 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     let statData = result.statData;
     if (result.status === 'unavailable') {
       const sample = await loadSample();
-      if (sample && Object.keys(sample).length) {
-        statData = sample;
-        runtime.status = 'preview';
+      if (sample && typeof sample.statData === 'object') {
+        statData = sample.statData;
+        runtime.status = sample.status;
         runtime.source = 'sample-state.json';
-        runtime.message = '离线预览样例，不代表当前聊天状态';
+        runtime.message = sample.message;
       } else {
         runtime.status = result.status;
         runtime.source = result.source || '';
@@ -1154,7 +1158,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       runtime.message = result.message || '';
     }
     state.statData = asRecord(statData);
-    if (result.status === 'ready' || runtime.status === 'preview') state.lastGood = state.statData;
+    if (result.status === 'ready' || ['preview', 'stale'].includes(runtime.status)) state.lastGood = state.statData;
     state.model = buildHudModel(state.statData, { themePreference: state.themePreference });
     render();
   };
