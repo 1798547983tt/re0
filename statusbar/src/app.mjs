@@ -76,6 +76,19 @@ function actionButton(label, action, className = '', attributes = {}) {
   return button;
 }
 
+function setInert(node, value) {
+  if (!node) return;
+  if ('inert' in node) node.inert = value;
+  if (value) node.setAttribute('inert', '');
+  else node.removeAttribute('inert');
+}
+
+function isInteractiveTarget(target) {
+  return Boolean(target?.closest?.(
+    'button, a, input, select, textarea, summary, [data-no-shell-toggle]',
+  ));
+}
+
 function safeStorage() {
   try {
     const storage = globalThis.localStorage;
@@ -177,15 +190,18 @@ function accordionGroup(context, { id, title, summary, count = null, render }) {
   if (count !== null) heading.append(element('span', 're0-count', String(count)));
   trigger.append(heading, element('span', 're0-accordion-group__summary', groupSummary(summary)));
   trigger.append(element('span', 're0-accordion-group__chevron', '⌄'));
-  group.append(trigger);
+  const bodyShell = element('div', 're0-accordion-group__body-shell');
+  bodyShell.id = bodyId;
+  bodyShell.setAttribute('aria-hidden', String(!open));
+  setInert(bodyShell, !open);
   if (open) {
     const body = element('div', 're0-accordion-group__body');
-    body.id = bodyId;
     const content = render();
     if (Array.isArray(content)) body.append(...content);
     else if (content) body.append(content);
-    group.append(body);
+    bodyShell.append(body);
   }
+  group.append(trigger, bodyShell);
   return group;
 }
 
@@ -1191,8 +1207,12 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     }));
   };
 
+  const revokeObjectUrls = (urls) => {
+    for (const url of urls) URL.revokeObjectURL(url);
+  };
+
   const clearObjectUrls = () => {
-    for (const url of objectUrls) URL.revokeObjectURL(url);
+    revokeObjectUrls(objectUrls);
     objectUrls = [];
   };
 
@@ -1285,7 +1305,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       DEFAULT_GROUPS[state.activeSection],
       { compact: compactLayout },
     ) === groupId,
-    render: () => render(),
+    render: (reason = 'data') => render(reason),
   };
 
   const renderLoading = () => {
@@ -1314,6 +1334,12 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
 
   const renderHeader = (model) => {
     const header = element('header', 're0-statusbar__header');
+    header.dataset.shellToggle = 'true';
+    header.tabIndex = 0;
+    header.setAttribute('role', 'button');
+    header.setAttribute('aria-controls', 're0-statusbar-details');
+    header.setAttribute('aria-expanded', state.detailsOpen);
+    header.setAttribute('aria-label', state.detailsOpen ? '收起状态栏详情' : '展开状态栏详情');
     const brand = element('div', 're0-brand');
     brand.append(element('span', 're0-brand__sigil', 'R:0'));
     const title = element('div');
@@ -1326,6 +1352,10 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
 
   const renderCompact = (model) => {
     const compact = element('section', 're0-compact');
+    compact.dataset.shellToggle = 'true';
+    compact.setAttribute('aria-expanded', state.detailsOpen);
+    compact.setAttribute('aria-controls', 're0-statusbar-details');
+    compact.setAttribute('aria-label', state.detailsOpen ? '收起状态栏详情' : '展开状态栏详情');
     const identity = element('div', 're0-compact__identity');
     identity.append(createAvatarButton({ namespace: 'protagonist', name: model.overview.protagonist.name }, 're0-avatar--compact'));
     const copy = element('div');
@@ -1345,20 +1375,28 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     compact.append(signals);
     const actions = element('div', 're0-compact__actions');
     if (!state.detailsOpen) actions.append(themeButton(model, state, { compact: true }));
-    actions.append(actionButton(
-      state.detailsOpen ? '收起档案' : '展开档案',
-      'toggle-details',
-      're0-expand-button',
-      { 'aria-expanded': state.detailsOpen, 'aria-controls': 're0-statusbar-details' },
-    ));
     compact.append(actions);
     queuePortraits(compact);
     return compact;
   };
 
+  const createSectionPanel = (model) => {
+    const panel = element('div', 're0-section-panel');
+    panel.id = 're0-section-panel';
+    panel.setAttribute('role', 'tabpanel');
+    panel.tabIndex = 0;
+    const renderer = SECTION_RENDERERS[state.activeSection] || renderOverview;
+    panel.append(renderer(model, context));
+    return panel;
+  };
+
   const renderDetails = (model) => {
     const details = element('div', 're0-details');
     details.id = 're0-statusbar-details';
+    details.dataset.open = state.detailsOpen ? 'true' : 'false';
+    details.setAttribute('aria-hidden', String(!state.detailsOpen));
+    setInert(details, !state.detailsOpen);
+    const inner = element('div', 're0-details__inner');
     const navigation = element('nav', 're0-navigation');
     navigation.setAttribute('aria-label', '状态栏分区');
     navigation.setAttribute('role', 'tablist');
@@ -1374,40 +1412,202 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       tab.append(element('span', '', section.label));
       navigation.append(tab);
     }
-    details.append(navigation);
-
-    const panel = element('div', 're0-section-panel');
-    panel.id = 're0-section-panel';
-    panel.setAttribute('role', 'tabpanel');
-    panel.tabIndex = 0;
-    const renderer = SECTION_RENDERERS[state.activeSection] || renderOverview;
-    panel.append(renderer(model, context));
-    details.append(panel);
+    inner.append(navigation, createSectionPanel(model));
+    details.append(inner);
     return details;
   };
 
-  function render() {
+  const motionReduced = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+
+  const animateFrameSwap = (frame, commit) => {
+    const current = app.querySelector('.re0-statusbar');
+    if (!current || motionReduced()) {
+      commit();
+      return;
+    }
+    if (typeof document.startViewTransition === 'function') {
+      const transitionName = `re0-statusbar-${instanceId}`;
+      current.style.viewTransitionName = transitionName;
+      frame.style.viewTransitionName = transitionName;
+      const transition = document.startViewTransition(() => commit());
+      const cleanup = () => {
+        current.style.viewTransitionName = '';
+        frame.style.viewTransitionName = '';
+      };
+      transition.finished?.then(cleanup, cleanup);
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      current.removeEventListener('animationend', onAnimationEnd);
+      commit();
+      requestAnimationFrame(() => frame.removeAttribute('data-motion'));
+    };
+    const onAnimationEnd = (event) => {
+      if (event.animationName === 're0-frame-leave') finish();
+    };
+    current.dataset.motion = 'leave';
+    frame.dataset.motion = 'enter';
+    current.addEventListener('animationend', onAnimationEnd);
+    globalThis.setTimeout(finish, 220);
+  };
+
+  const syncShellToggleSurfaces = (open) => {
+    for (const surface of app.querySelectorAll('[data-shell-toggle]')) {
+      surface.setAttribute('aria-expanded', String(open));
+      surface.setAttribute('aria-label', open ? '收起状态栏详情' : '展开状态栏详情');
+    }
+  };
+
+  const setDetailsOpen = (open) => {
+    state.detailsOpen = Boolean(open);
+    const details = app.querySelector('#re0-statusbar-details');
+    if (!details) {
+      render('interaction');
+      return;
+    }
+    details.dataset.open = state.detailsOpen ? 'true' : 'false';
+    details.setAttribute('aria-hidden', String(!state.detailsOpen));
+    setInert(details, !state.detailsOpen);
+    syncShellToggleSurfaces(state.detailsOpen);
+  };
+
+  const toggleDetails = () => {
+    setDetailsOpen(!state.detailsOpen);
+    persist();
+  };
+
+  const updateNavigation = () => {
+    for (const tab of app.querySelectorAll('.re0-nav-button[data-section]')) {
+      const selected = tab.dataset.section === state.activeSection;
+      tab.setAttribute('aria-selected', String(selected));
+      tab.setAttribute('tabindex', selected ? '0' : '-1');
+    }
+  };
+
+  const updatePanelView = ({ focusSelector = '' } = {}) => {
+    if (!state.model) return;
+    const current = app.querySelector('#re0-section-panel');
+    const next = createSectionPanel(state.model);
+    const focusNext = () => {
+      if (!focusSelector) return;
+      const target = next.matches(focusSelector) ? next : next.querySelector(focusSelector);
+      target?.focus();
+    };
+    updateNavigation();
+    if (!current || motionReduced()) {
+      current?.replaceWith(next);
+      if (!current) render('interaction');
+      else queuePortraits(next);
+      focusNext();
+      return;
+    }
+
+    next.dataset.motion = 'enter';
+    current.dataset.motion = 'leave';
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      current.removeEventListener('animationend', onAnimationEnd);
+      if (current.isConnected) current.replaceWith(next);
+      queuePortraits(next);
+      requestAnimationFrame(() => {
+        next.removeAttribute('data-motion');
+        focusNext();
+      });
+    };
+    const onAnimationEnd = (event) => {
+      if (event.animationName === 're0-panel-leave') finish();
+    };
+    current.addEventListener('animationend', onAnimationEnd);
+    globalThis.setTimeout(finish, 180);
+  };
+
+  const updateGroupView = (focusGroupId) => {
+    if (!state.model) return;
+    const nextPanel = createSectionPanel(state.model);
+    const nextGroups = new Map(
+      [...nextPanel.querySelectorAll('.re0-accordion-group[data-group]')]
+        .map((group) => [group.dataset.group, group]),
+    );
+    for (const group of app.querySelectorAll('#re0-section-panel .re0-accordion-group[data-group]')) {
+      const next = nextGroups.get(group.dataset.group);
+      if (!next || group.dataset.open === next.dataset.open) continue;
+      const opening = next.dataset.open === 'true';
+      const trigger = group.querySelector('.re0-accordion-group__trigger');
+      const bodyShell = group.querySelector('.re0-accordion-group__body-shell');
+      const nextShell = next.querySelector('.re0-accordion-group__body-shell');
+      if (!trigger || !bodyShell || !nextShell) continue;
+
+      trigger.setAttribute('aria-expanded', String(opening));
+      bodyShell.setAttribute('aria-hidden', String(!opening));
+      setInert(bodyShell, !opening);
+      if (opening) {
+        bodyShell.replaceChildren(...nextShell.childNodes);
+        queuePortraits(bodyShell);
+        if (motionReduced()) {
+          group.dataset.open = 'true';
+        } else {
+          bodyShell.getBoundingClientRect();
+          const stillOpen = resolveOpenGroup(
+            state.openGroupBySection,
+            state.activeSection,
+            DEFAULT_GROUPS[state.activeSection],
+            { compact: compactLayout },
+          ) === group.dataset.group;
+          if (!state.destroyed && group.isConnected && stillOpen) group.dataset.open = 'true';
+        }
+      } else {
+        group.dataset.open = 'false';
+        const cleanup = () => {
+          if (!state.destroyed && group.isConnected && group.dataset.open === 'false') {
+            bodyShell.replaceChildren();
+          }
+        };
+        if (motionReduced()) cleanup();
+        else globalThis.setTimeout(cleanup, 320);
+      }
+    }
+    app.querySelector(
+      `.re0-accordion-group[data-group="${CSS.escape(focusGroupId)}"] .re0-accordion-group__trigger`,
+    )?.focus();
+  };
+
+  function render(reason = 'data') {
     if (state.destroyed) return;
     state.renderEpoch += 1;
-    clearObjectUrls();
+    const previousObjectUrls = objectUrls;
+    objectUrls = [];
     if (!state.model) {
       if (runtime.status === 'loading') renderLoading();
       else renderUnavailable();
+      revokeObjectUrls(previousObjectUrls);
       return;
     }
     const model = state.model;
     app.setAttribute('aria-busy', 'false');
-    app.dataset.theme = model.theme.mode;
-    app.dataset.transition = model.theme.transition;
-    app.dataset.runtime = runtime.status;
-    overlay.dataset.theme = model.theme.mode;
     const frame = element('article', 're0-statusbar');
     frame.append(element('div', 're0-ambient re0-ambient--back'));
     frame.append(renderHeader(model));
     frame.append(renderCompact(model));
-    if (state.detailsOpen) frame.append(renderDetails(model));
+    frame.append(renderDetails(model));
     frame.append(element('div', 're0-ambient re0-ambient--front'));
-    app.replaceChildren(frame);
+    const commit = () => {
+      app.dataset.theme = model.theme.mode;
+      app.dataset.transition = model.theme.transition;
+      app.dataset.runtime = runtime.status;
+      overlay.dataset.theme = model.theme.mode;
+      app.replaceChildren(frame);
+      revokeObjectUrls(previousObjectUrls);
+    };
+    if (reason === 'theme' && app.querySelector('.re0-statusbar')) {
+      animateFrameSwap(frame, commit);
+    } else {
+      commit();
+    }
   }
 
   const loadSample = async () => {
@@ -1468,20 +1668,20 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
   );
 
   const handleAction = (event) => {
+    const shell = event.target.closest?.('[data-shell-toggle]');
+    if (shell && root.contains(shell) && !isInteractiveTarget(event.target)) {
+      toggleDetails();
+      return;
+    }
     const button = event.target.closest('[data-action]');
     if (!button || !root.contains(button)) return;
     const { action } = button.dataset;
-    if (action === 'toggle-details') {
-      state.detailsOpen = !state.detailsOpen;
-      persist();
-      render();
-    } else if (action === 'select-section') {
+    if (action === 'select-section') {
       state.activeSection = SECTION_IDS.includes(button.dataset.section) ? button.dataset.section : 'overview';
-      state.detailsOpen = true;
+      setDetailsOpen(true);
       persist();
-      render();
+      updatePanelView({ focusSelector: '#re0-section-panel' });
       app.querySelector(`[data-section="${state.activeSection}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
-      app.querySelector('#re0-section-panel')?.focus();
     } else if (action === 'toggle-group') {
       const groupId = String(button.dataset.group || '');
       if (!groupId) return;
@@ -1498,35 +1698,34 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
         current,
       );
       persist();
-      render();
-      app.querySelector(`.re0-accordion-group[data-group="${CSS.escape(groupId)}"] .re0-accordion-group__trigger`)?.focus();
+      updateGroupView(groupId);
     } else if (action === 'show-more') {
       const listKey = String(button.dataset.listKey || '');
       if (!listKey) return;
       state.listLimits = growListLimit(state.listLimits, listKey, Number(button.dataset.total));
       persist();
-      render();
+      updatePanelView({ focusSelector: `[data-list-key="${CSS.escape(listKey)}"]` });
     } else if (action === 'collapse-list') {
       const listKey = String(button.dataset.listKey || '');
       if (!listKey) return;
       state.listLimits = resetListLimit(state.listLimits, listKey);
       persist();
-      render();
+      updatePanelView({ focusSelector: `[data-list-key="${CSS.escape(listKey)}"]` });
     } else if (action === 'cycle-theme') {
       const current = state.model?.theme.mode || 'day';
       state.themePreference = current === 'day' ? 'night' : 'day';
       state.model = buildHudModel(state.statData, { themePreference: state.themePreference });
       persist();
-      render();
+      render('theme');
     } else if (action === 'restore-auto-theme') {
       state.themePreference = 'auto';
       state.model = buildHudModel(state.statData, { themePreference: 'auto' });
       persist();
-      render();
+      render('theme');
     } else if (action === 'filter-relations') {
       state.relationFilter = button.dataset.filter;
       persist();
-      render();
+      updatePanelView({ focusSelector: `[data-filter="${CSS.escape(state.relationFilter)}"]` });
     } else if (action === 'open-person') {
       const person = findPerson(button.dataset.category, button.dataset.name);
       if (person) openOverlay(createPersonDrawer(person), button);
@@ -1537,7 +1736,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       }, context), button);
     } else if (action === 'toggle-snapshot') {
       state.snapshotVisible = !state.snapshotVisible;
-      render();
+      updatePanelView({ focusSelector: '[data-action="toggle-snapshot"]' });
     } else if (action === 'close-overlay') {
       closeOverlay();
     } else if (action === 'retry') {
@@ -1552,6 +1751,13 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       return;
     }
     trapFocus(event);
+    const shell = event.target.closest?.('[data-shell-toggle]');
+    if (shell && root.contains(shell) && !isInteractiveTarget(event.target)
+      && ['Enter', ' ', 'Spacebar'].includes(event.key)) {
+      event.preventDefault();
+      toggleDetails();
+      return;
+    }
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     const current = event.target.closest('[role="tab"]');
     if (!current) return;

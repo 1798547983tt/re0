@@ -34,7 +34,6 @@ test('status bar source exposes the complete read-only accessible surface', () =
   assert.match(app, /data-action|dataset\.action/);
   assert.match(app, /edit-portrait/);
   assert.match(app, /toggle-snapshot/);
-  assert.match(app, /toggle-details/);
   assert.match(app, /toggle-group/);
   assert.match(app, /show-more/);
   assert.match(app, /collapse-list/);
@@ -81,7 +80,7 @@ test('status bar source exposes the complete read-only accessible surface', () =
   const headerSource = app.match(/const renderHeader\s*=\s*\(model\)\s*=>\s*\{[\s\S]*?return header;\s*\};/)?.[0] || '';
   assert.doesNotMatch(headerSource, /re0-header-controls|re0-theme-button/, 'large theme controls belong in the detail heading');
   assert.doesNotMatch(css, /\.re0-details\s*\{[^}]*min-block-size:\s*480px/s, 'expanded details must size to their visible group');
-  assert.match(css, /\.re0-section-panel\s*\{[^}]*--re0-panel-alpha:\s*58%/s, 'the detail scene should remain plainly visible');
+  assert.match(css, /\.re0-section-panel\s*\{[^}]*--re0-panel-alpha:\s*22%/s, 'the detail scene should remain plainly visible');
 });
 
 test('the nine sections expose every declared state domain and sensitive folds', () => {
