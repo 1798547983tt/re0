@@ -17,7 +17,7 @@ import {
   validateDraft,
 } from '../frontend/src/creator-core.mjs';
 
-const { COMBAT_TIER_LEVELS, COMBAT_TIER_POSITIONS } = creatorCore;
+const { ABILITY_CATEGORIES, COMBAT_TIER_LEVELS, COMBAT_TIER_POSITIONS } = creatorCore;
 
 const storyFixture = normalizeStoryIndex([
   {
@@ -110,6 +110,22 @@ test('combat tier exposes exactly seven levels with upper and lower positions', 
   });
 });
 
+test('creator drafts no longer carry the removed age-stage field', () => {
+  const draft = createDefaultDraft();
+  const legacy = structuredClone(draft);
+  legacy.protagonist.ageStage = '青年';
+
+  assert.equal(Object.hasOwn(draft.protagonist, 'ageStage'), false);
+  assert.equal(Object.hasOwn(parseDraft(JSON.stringify(legacy)).protagonist, 'ageStage'), false);
+  assert.equal(Object.hasOwn(JSON.parse(serializeDraft(legacy)).protagonist, 'ageStage'), false);
+  assert.equal(Object.hasOwn(buildStatePayload(legacy).主角档案, '年龄阶段'), false);
+  assert.doesNotMatch(buildOpeningMessage(legacy), /年龄|青年/);
+});
+
+test('ability categories expose the seven Re:0 state buckets in display order', () => {
+  assert.deepEqual(ABILITY_CATEGORIES, ['加护', '权能', '魔法', '精灵术', '种族能力', '武技', '一般技能']);
+});
+
 test('state payload maps the creator draft to the ZOD-aligned Chinese state concepts', () => {
   const payload = buildStatePayload(completeDraft());
 
@@ -159,6 +175,33 @@ test('opening message includes the story anchor and preserves the character voic
   assert.match(opening, /不以无辜者换取胜利/);
   assert.match(opening, /3阶上位/);
   assert.match(opening, /常态即可发挥/);
+});
+
+test('state payload routes every ability into its selected ZOD category', () => {
+  const draft = completeDraft();
+  draft.abilities = ABILITY_CATEGORIES.map((category, index) => ({
+    name: `${category}${index + 1}`,
+    category,
+    status: '可用',
+    cost: '无',
+    description: `${category}效果`,
+    limits: '',
+  }));
+  draft.abilities.push({
+    name: '自定义秘技',
+    category: '异界科技',
+    status: '受限',
+    cost: '零件',
+    description: '来自异世界的装置',
+    limits: '无法在缺少材料时修复',
+  });
+
+  const abilities = buildStatePayload(draft).主角档案.能力;
+
+  for (const category of ABILITY_CATEGORIES) {
+    assert.ok(Object.hasOwn(abilities[category], `${category}${ABILITY_CATEGORIES.indexOf(category) + 1}`));
+  }
+  assert.match(abilities.一般技能.自定义秘技.描述, /自定义类别：异界科技/);
 });
 
 test('opening message keeps an incomplete combat tier readable instead of concatenating fallback labels', () => {

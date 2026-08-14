@@ -50,6 +50,12 @@ test('creator regex artifact is a complete importable self-contained package', (
   assert.match(artifact.replaceString, /data-portrait-image/);
   assert.match(artifact.replaceString, /data-portrait-file/);
   assert.match(artifact.replaceString, /data-step-visual/);
+  assert.match(artifact.replaceString, /Re0：从零开始的异世界生活/);
+  assert.match(artifact.replaceString, /class="companion-bar"/);
+  assert.match(artifact.replaceString, /data-arsenal-tab=/);
+  assert.match(artifact.replaceString, /class="review-disclosure/);
+  assert.doesNotMatch(artifact.replaceString, /data-path="protagonist\.ageStage"|ageStage:\s*'字符串'/);
+  assert.doesNotMatch(artifact.replaceString, /class="title-footer"/);
   assert.doesNotMatch(artifact.replaceString, /portrait-presets/);
   assert.doesNotMatch(artifact.replaceString, /data-action="choose-portrait"/);
   assert.doesNotMatch(artifact.replaceString, /updateAiTrace\(\{ \.\.\.event/);

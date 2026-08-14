@@ -1,4 +1,5 @@
 import {
+  ABILITY_CATEGORIES,
   COMBAT_STATUSES,
   COMBAT_TIER_LEVELS,
   COMBAT_TIER_POSITIONS,
@@ -32,6 +33,31 @@ const SETTINGS_STORAGE_KEY = 're0.creator.settings.v1';
 const FINAL_STORAGE_KEY = 're0.creator.final.v1';
 const PORTRAIT_STORAGE_KEY = 're0.creator.portrait.v1';
 const MAX_REPEATERS = 12;
+const CUSTOM_OPTION = '__custom__';
+
+const IDENTITY_OPTIONS = ['平民', '旅人', '冒险者', '佣兵', '骑士', '商人', '贵族', '学者', '教会人员'];
+const GENDER_OPTIONS = ['女性', '男性', '非二元', '不公开'];
+const RACE_OPTIONS = ['人类', '半精灵', '精灵', '鬼族', '兽人', '亚人'];
+const LOCATION_OPTIONS = ['王都', '贵族宅邸', '城镇街区', '森林或荒野', '战场', '边境地区'];
+const ENTRY_CONTEXT_OPTIONS = ['街道', '室内', '庭院', '森林', '战场边缘', '城门附近'];
+const ABILITY_STATUS_OPTIONS = ['可用', '受限', '封印', '失控', '冷却中'];
+const ABILITY_COST_OPTIONS = ['无', '体力', '魔力', '精神', '生命', '条件触发'];
+const RELATION_TYPE_OPTIONS = ['同伴', '亲属', '主从', '师徒', '盟友', '宿敌', '陌生人'];
+const TRAIT_PRESETS = ['正直', '谨慎', '温柔', '执着', '骄傲', '机敏', '克制', '冲动'];
+
+const FIELD_INSPIRATIONS = {
+  'protagonist.appearance': ['银白长发与紫绀色眼眸，气质安静而醒目。', '旅行留下了风尘，目光始终保持警惕。', '外表普通，只有一道旧伤令人难忘。'],
+  'protagonist.clothing': ['便于行动的旅行装，随身带着御寒斗篷。', '剪裁整洁的王都常服，没有显眼徽记。', '临时拼凑的衣物，仍带着抵达时的痕迹。'],
+  'protagonist.currentGoal': ['先确认所在事件与可依靠的人。', '保护眼前最可能遭遇危险的人。', '找到能够改变既定结局的第一条线索。'],
+  'personality.wish': ['让重要的人都能活着走到明天。', '找到自己真正能够归属的地方。', '证明弱小也能改变无法接受的结局。'],
+  'personality.fear': ['再次失去已经来不及挽回的人。', '自己的选择最终伤害无辜者。', '秘密暴露后被所有人否定。'],
+  'personality.desire': ['被某个人毫无保留地理解。', '拥有无需向任何人解释的力量。', '得到一次可以只为自己做决定的机会。'],
+  'personality.boundary': ['不以无辜者的生命换取胜利。', '不背弃已经亲口许下的承诺。', '不把同伴当成可以牺牲的筹码。'],
+  'personality.speechStyle': ['语气克制，重要时会直呼对方姓名。', '平时随和，紧张时会用玩笑掩饰。', '说话简短直接，不轻易承诺。'],
+  'personality.habits': ['思考时会反复确认周围的出口。', '紧张时下意识握住随身物件。', '做决定前会短暂观察他人的表情。'],
+  'personality.secret': ['曾经见过不该属于这个时间点的景象。', '真正的来历与公开身份并不一致。', '某项能力的代价从未告诉任何人。'],
+  'combatTier.condition': ['常态即可发挥。', '需要持有惯用武器。', '只在契约对象或精灵在场时完整生效。', '解除封印或满足特定环境后才能发挥。'],
+};
 
 const PAGE_ART = [
   assetUrl('emilia-blue-tea.png'),
@@ -180,6 +206,8 @@ const state = {
     aiPreview: null,
     aiTrace: null,
     lastAiScope: 'page',
+    arsenalTab: 'combat',
+    customFields: new Set(),
   },
 };
 
@@ -353,18 +381,49 @@ function selectField({ path, label, options, placeholder = '请选择', hint = '
   </div>`;
 }
 
+function presetField({ path, label, options, placeholder = '请选择', hint = '', full = false }) {
+  const id = `field-${path.replaceAll('.', '-')}`;
+  const selected = String(valueOf(path));
+  const values = options.map((option) => String(typeof option === 'string' ? option : option.value));
+  const custom = state.ui.customFields.has(path) || Boolean(selected && !values.includes(selected));
+  return `<div class="field preset-field${full ? ' full' : ''}" data-preset-field="${escapeHtml(path)}">
+    <label for="${id}"><span>${escapeHtml(label)}</span>${hint ? `<small>${escapeHtml(hint)}</small>` : ''}</label>
+    <select class="control" id="${id}" data-preset-path="${escapeHtml(path)}">
+      <option value="">${escapeHtml(placeholder)}</option>
+      ${options.map((option) => {
+        const item = typeof option === 'string' ? { value: option, label: option } : option;
+        return `<option value="${escapeHtml(item.value)}"${!custom && selected === String(item.value) ? ' selected' : ''}>${escapeHtml(item.label)}</option>`;
+      }).join('')}
+      <option value="${CUSTOM_OPTION}"${custom ? ' selected' : ''}>自由填写</option>
+    </select>
+    ${custom ? `<label class="custom-entry-label" for="${id}-custom"><span>自由填写</span></label><input class="control custom-entry" id="${id}-custom" data-path="${escapeHtml(path)}" value="${escapeHtml(selected)}" placeholder="输入自己的答案">` : ''}
+  </div>`;
+}
+
+function guidedField({ path, label, hint = '', placeholder = '', type = 'textarea', full = false, required = false }) {
+  const id = `field-${path.replaceAll('.', '-')}`;
+  const ideas = FIELD_INSPIRATIONS[path] ?? [];
+  const control = type === 'textarea'
+    ? `<textarea class="control" id="${id}" data-path="${escapeHtml(path)}" placeholder="${escapeHtml(placeholder)}"${required ? ' required' : ''}>${escapeHtml(valueOf(path))}</textarea>`
+    : `<input class="control" id="${id}" type="text" data-path="${escapeHtml(path)}" value="${escapeHtml(valueOf(path))}" placeholder="${escapeHtml(placeholder)}"${required ? ' required' : ''}>`;
+  return `<div class="field guided-field${full ? ' full' : ''}">
+    <label for="${id}"><span>${escapeHtml(label)}${required ? '＊' : ''}</span>${hint ? `<small>${escapeHtml(hint)}</small>` : ''}</label>
+    ${ideas.length ? `<select class="control inspiration-select" data-inspiration-path="${escapeHtml(path)}" aria-label="${escapeHtml(label)}快速灵感"><option value="">快速灵感 · 只填空白</option>${ideas.map((idea) => `<option value="${escapeHtml(idea)}">${escapeHtml(idea)}</option>`).join('')}</select>` : ''}
+    ${control}
+  </div>`;
+}
+
 function renderIdentityPage() {
   return `<div class="page" data-page="identity">
     <section class="section">
       <div class="field-grid">
         ${inputField({ path: 'protagonist.name', label: '角色姓名', hint: 'NAME', placeholder: '世界将以这个名字呼唤你', required: true })}
-        ${inputField({ path: 'protagonist.identity', label: '表面身份', hint: 'IDENTITY', placeholder: '旅人、候补骑士、商人学徒……' })}
+        ${presetField({ path: 'protagonist.identity', label: '表面身份', hint: 'IDENTITY', options: IDENTITY_OPTIONS, placeholder: '选择最接近的身份' })}
         ${choiceField({ path: 'protagonist.roleType', label: '角色类型＊', hint: 'ROLE ARCHETYPE', options: ROLE_TYPES })}
-        ${inputField({ path: 'protagonist.gender', label: '性别 / 自我认同', placeholder: '自由填写' })}
-        ${inputField({ path: 'protagonist.ageStage', label: '年龄阶段', placeholder: '少年、青年、成年……' })}
-        ${inputField({ path: 'protagonist.race', label: '种族', placeholder: '人类、亚人、精灵……' })}
+        ${presetField({ path: 'protagonist.gender', label: '性别 / 自我认同', options: GENDER_OPTIONS })}
+        ${presetField({ path: 'protagonist.race', label: '种族', options: RACE_OPTIONS })}
       </div>
-      <p class="field-note">先写下能稳定角色轮廓的部分。未确定的信息可以留白，右侧的 AI 帮填只会补空白，不会覆盖你已经写好的内容。</p>
+      <p class="field-note">先选最接近的答案；没有合适选项时再使用“自由填写”。AI 帮填只补空白，不会覆盖已有内容。</p>
     </section>
   </div>`;
 }
@@ -410,13 +469,13 @@ function renderOriginPage() {
     <section class="section">
       <div class="section-head"><div><h3>抵达世界的方式</h3><p>剧情锚点负责时间，下面的信息负责你以什么姿态出现。</p></div></div>
       <div class="field-grid">
-        ${choiceField({ path: 'protagonist.faction', label: '初始阵营', hint: 'FACTION', options: FACTIONS })}
-        ${inputField({ path: 'world.currentLocation', label: '当前地点', placeholder: '王都贫民街、罗兹瓦尔宅邸……' })}
-        ${inputField({ path: 'world.entryContext', label: '具体出现位置', placeholder: '巷口、庭院、会议室门外……' })}
+        ${presetField({ path: 'protagonist.faction', label: '初始阵营', hint: 'FACTION', options: FACTIONS.filter((value) => value !== '其他'), full: true })}
+        ${presetField({ path: 'world.currentLocation', label: '当前地点', options: LOCATION_OPTIONS })}
+        ${presetField({ path: 'world.entryContext', label: '具体出现位置', options: ENTRY_CONTEXT_OPTIONS })}
         ${choiceField({ path: 'world.difficulty', label: '叙事难度', hint: 'DIFFICULTY', options: ['轻松', '标准', '困难'], full: false })}
-        ${inputField({ path: 'protagonist.appearance', label: '外貌特征', placeholder: '发色、瞳色、体态、辨识特征', type: 'textarea', full: true })}
-        ${inputField({ path: 'protagonist.clothing', label: '初始衣着', placeholder: '服装、随身配件与状态', type: 'textarea' })}
-        ${inputField({ path: 'protagonist.currentGoal', label: '眼下目标', placeholder: '在这个事件中，第一件想完成的事', type: 'textarea' })}
+        ${guidedField({ path: 'protagonist.appearance', label: '外貌特征', placeholder: '发色、瞳色、体态、辨识特征', full: true })}
+        ${guidedField({ path: 'protagonist.clothing', label: '初始衣着', placeholder: '服装、随身配件与状态' })}
+        ${guidedField({ path: 'protagonist.currentGoal', label: '眼下目标', placeholder: '在这个事件中，第一件想完成的事' })}
       </div>
     </section>
   </div>`;
@@ -429,7 +488,8 @@ function renderTraits() {
     <div class="choice-grid" data-trait-list>
       ${traits.map((trait, index) => `<button type="button" class="choice is-selected" data-action="remove-trait" data-index="${index}" title="点击移除">${escapeHtml(trait)} ×</button>`).join('')}
     </div>
-    <div class="button-row" style="margin-top:9px">
+    <div class="trait-entry-row">
+      <select class="control" data-trait-preset aria-label="选择性格关键词"><option value="">快速选择关键词</option>${TRAIT_PRESETS.map((trait) => `<option value="${escapeHtml(trait)}">${escapeHtml(trait)}</option>`).join('')}</select>
       <input class="control" style="flex:1" data-trait-entry placeholder="输入关键词，按 Enter 添加" maxlength="16">
       <button type="button" class="add-btn" data-action="add-trait">添加</button>
     </div>
@@ -441,13 +501,13 @@ function renderHeartPage() {
     <section class="section">
       <div class="field-grid">
         ${renderTraits()}
-        ${inputField({ path: 'personality.wish', label: '一句话愿望', hint: 'WISH', placeholder: '真正想守住或抵达的东西', type: 'textarea', required: true })}
-        ${inputField({ path: 'personality.fear', label: '最深恐惧', hint: 'FEAR', placeholder: '最不愿面对的失去或真相', type: 'textarea' })}
-        ${inputField({ path: 'personality.desire', label: '隐秘渴望', placeholder: '不一定愿意承认的欲求', type: 'textarea' })}
-        ${inputField({ path: 'personality.boundary', label: '绝不越过的底线', hint: 'BOUNDARY', placeholder: '即使失败也不会做的事', type: 'textarea' })}
-        ${inputField({ path: 'personality.speechStyle', label: '说话风格', placeholder: '语气、口癖、称呼习惯', type: 'textarea' })}
-        ${inputField({ path: 'personality.habits', label: '动作习惯', placeholder: '紧张、思考或战斗时的小动作', type: 'textarea' })}
-        ${inputField({ path: 'personality.secret', label: '不公开的秘密', hint: 'PRIVATE', placeholder: '只写给叙事系统看的信息', type: 'textarea', full: true })}
+        ${guidedField({ path: 'personality.wish', label: '一句话愿望', hint: 'WISH', placeholder: '真正想守住或抵达的东西', required: true })}
+        ${guidedField({ path: 'personality.fear', label: '最深恐惧', hint: 'FEAR', placeholder: '最不愿面对的失去或真相' })}
+        ${guidedField({ path: 'personality.desire', label: '隐秘渴望', placeholder: '不一定愿意承认的欲求' })}
+        ${guidedField({ path: 'personality.boundary', label: '绝不越过的底线', hint: 'BOUNDARY', placeholder: '即使失败也不会做的事' })}
+        ${guidedField({ path: 'personality.speechStyle', label: '说话风格', placeholder: '语气、口癖、称呼习惯' })}
+        ${guidedField({ path: 'personality.habits', label: '动作习惯', placeholder: '紧张、思考或战斗时的小动作' })}
+        ${guidedField({ path: 'personality.secret', label: '不公开的秘密', hint: 'PRIVATE', placeholder: '只写给叙事系统看的信息', full: true })}
       </div>
     </section>
   </div>`;
@@ -461,6 +521,22 @@ function repeatInput({ section, index, key, label, value = '', type = 'text', pl
   return `<div class="field${full ? ' full' : ''}"><label for="${id}"><span>${escapeHtml(label)}</span></label>${control}</div>`;
 }
 
+function repeatPresetField({ section, index, key, label, value = '', options, placeholder = '请选择', full = false }) {
+  const id = `${section.replaceAll('.', '-')}-${index}-${key}`;
+  const customKey = `array:${section}:${index}:${key}`;
+  const selected = String(value ?? '');
+  const custom = state.ui.customFields.has(customKey) || Boolean(selected && !options.map(String).includes(selected));
+  return `<div class="field preset-field${full ? ' full' : ''}" data-array-preset-field="${escapeHtml(customKey)}">
+    <label for="${id}"><span>${escapeHtml(label)}</span></label>
+    <select class="control" id="${id}" data-array-preset-section="${escapeHtml(section)}" data-index="${index}" data-key="${escapeHtml(key)}" data-custom-key="${escapeHtml(customKey)}">
+      <option value="">${escapeHtml(placeholder)}</option>
+      ${options.map((option) => `<option value="${escapeHtml(option)}"${!custom && selected === String(option) ? ' selected' : ''}>${escapeHtml(option)}</option>`).join('')}
+      <option value="${CUSTOM_OPTION}"${custom ? ' selected' : ''}>自由填写</option>
+    </select>
+    ${custom ? `<label class="custom-entry-label" for="${id}-custom"><span>自由填写</span></label><input class="control custom-entry" id="${id}-custom" data-array-section="${escapeHtml(section)}" data-index="${index}" data-key="${escapeHtml(key)}" value="${escapeHtml(selected)}" placeholder="输入自己的答案">` : ''}
+  </div>`;
+}
+
 function renderAbilityList() {
   const abilities = state.draft.abilities ?? [];
   if (!abilities.length) return '<div class="empty-state">还没有记录能力。可以从一项真正会改变选择的能力开始。</div>';
@@ -468,9 +544,9 @@ function renderAbilityList() {
     <div class="repeat-card-head"><strong>能力 ${String(index + 1).padStart(2, '0')}</strong><button type="button" class="remove-btn" data-action="remove-array-item" data-section="abilities" data-index="${index}" aria-label="移除能力">×</button></div>
     <div class="field-grid three">
       ${repeatInput({ section: 'abilities', index, key: 'name', label: '名称', value: ability.name, placeholder: '能力名称' })}
-      ${repeatInput({ section: 'abilities', index, key: 'category', label: '类别', value: ability.category, placeholder: '加护、魔法、技能……' })}
-      ${repeatInput({ section: 'abilities', index, key: 'status', label: '状态', value: ability.status, placeholder: '可用 / 封印' })}
-      ${repeatInput({ section: 'abilities', index, key: 'cost', label: '代价 / 冷却', value: ability.cost, placeholder: '无、消耗魔力……' })}
+      ${repeatPresetField({ section: 'abilities', index, key: 'category', label: '类别', value: ability.category, options: ABILITY_CATEGORIES })}
+      ${repeatPresetField({ section: 'abilities', index, key: 'status', label: '状态', value: ability.status, options: ABILITY_STATUS_OPTIONS })}
+      ${repeatPresetField({ section: 'abilities', index, key: 'cost', label: '代价 / 冷却', value: ability.cost, options: ABILITY_COST_OPTIONS })}
       ${repeatInput({ section: 'abilities', index, key: 'description', label: '效果', value: ability.description, type: 'textarea', placeholder: '它能做到什么', full: true })}
       ${repeatInput({ section: 'abilities', index, key: 'limits', label: '限制', value: ability.limits, type: 'textarea', placeholder: '它不能做到什么', full: true })}
     </div>
@@ -484,7 +560,7 @@ function renderRelationshipList() {
     <div class="repeat-card-head"><strong>关系 ${String(index + 1).padStart(2, '0')}</strong><button type="button" class="remove-btn" data-action="remove-array-item" data-section="relationships" data-index="${index}" aria-label="移除关系">×</button></div>
     <div class="field-grid three">
       ${repeatInput({ section: 'relationships', index, key: 'name', label: '人物', value: relationship.name, placeholder: '人物姓名' })}
-      ${repeatInput({ section: 'relationships', index, key: 'relation', label: '关系', value: relationship.relation, placeholder: '同伴、恩人、宿敌……' })}
+      ${repeatPresetField({ section: 'relationships', index, key: 'relation', label: '关系', value: relationship.relation, options: RELATION_TYPE_OPTIONS })}
       <div class="field"><label for="relation-${index}-stance"><span>立场</span></label><select class="control" id="relation-${index}-stance" data-array-section="relationships" data-index="${index}" data-key="stance">${RELATION_STANCES.map((stance) => `<option${relationship.stance === stance ? ' selected' : ''}>${escapeHtml(stance)}</option>`).join('')}</select></div>
       ${repeatInput({ section: 'relationships', index, key: 'trust', label: '初始信任', value: relationship.trust, type: 'number', min: 0, max: 100 })}
       ${repeatInput({ section: 'relationships', index, key: 'notes', label: '备注', value: relationship.notes, type: 'textarea', placeholder: '关系起点、误解或未说出口的事', full: true })}
@@ -506,37 +582,36 @@ function renderAssetList(section, label) {
 }
 
 function renderArsenalPage() {
-  return `<div class="page" data-page="arsenal">
-    <section class="section combat-tier-panel">
+  const tabs = [
+    { id: 'combat', label: '战力' },
+    { id: 'abilities', label: '能力' },
+    { id: 'relationships', label: '关系' },
+    { id: 'assets', label: '行囊' },
+  ];
+  const active = tabs.some((tab) => tab.id === state.ui.arsenalTab) ? state.ui.arsenalTab : 'combat';
+  const panels = {
+    combat: `<section class="section combat-tier-panel" role="tabpanel" id="arsenal-panel-combat" aria-labelledby="arsenal-tab-combat">
       <div class="section-head"><div><h3>战力等阶</h3><p>同阶上、下位描述综合战斗表现；相性、环境与代价仍可能逆转结果。</p></div><span class="tier-sigil">TIER</span></div>
       <div class="field-grid">
         ${choiceField({ path: 'combatTier.level', label: '战力阶数＊', hint: '1—7', options: COMBAT_TIER_LEVELS })}
         ${choiceField({ path: 'combatTier.position', label: '阶内位次＊', hint: 'UPPER / LOWER', options: COMBAT_TIER_POSITIONS })}
         ${selectField({ path: 'combatTier.combatStatus', label: '当前可战状态', hint: 'COMBAT STATUS', options: COMBAT_STATUSES })}
-        ${inputField({ path: 'combatTier.condition', label: '战力生效条件', hint: 'CONDITION', placeholder: '常态、持有武器、月光下、解除封印后……' })}
+        ${guidedField({ path: 'combatTier.condition', label: '战力生效条件', hint: 'CONDITION', placeholder: '常态、持有武器、月光下、解除封印后……', type: 'text' })}
       </div>
-      <p class="field-note">等阶从1阶（基础）到7阶（顶点）。上位 / 下位仅表示同阶内部参考，不代表必然胜负；请把关键前提写进生效条件。</p>
-    </section>
-    <section class="section">
-      <div class="section-head"><div><h3>能力</h3><p>能力越强，越应该写清代价与限制。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="abilities">＋ 新增能力</button></div>
-      ${renderAbilityList()}
-    </section>
-    <section class="section">
-      <div class="section-head"><div><h3>预设关系</h3><p>只记录开局前已经存在的羁绊。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="relationships">＋ 新增关系</button></div>
-      ${renderRelationshipList()}
-    </section>
-    <section class="section">
-      <div class="section-head"><div><h3>货币</h3><p>只记录开局时实际持有的币种与数量。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="assets.currency">＋ 新增货币</button></div>
-      ${renderAssetList('assets.currency', '货币')}
-    </section>
-    <section class="section">
-      <div class="section-head"><div><h3>随身物品</h3><p>会被带进第一幕的物件。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="assets.items">＋ 新增物品</button></div>
-      ${renderAssetList('assets.items', '物品')}
-    </section>
-    <section class="section">
-      <div class="section-head"><div><h3>装备</h3><p>武器、护具或具有持续效果的物件。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="assets.equipment">＋ 新增装备</button></div>
-      ${renderAssetList('assets.equipment', '装备')}
-    </section>
+      <p class="field-note">等阶从1阶（基础）到7阶（顶点）。位次只表示同阶内部参考；请把关键前提写进生效条件。</p>
+    </section>`,
+    abilities: `<section class="section" role="tabpanel" id="arsenal-panel-abilities" aria-labelledby="arsenal-tab-abilities"><div class="section-head"><div><h3>能力</h3><p>先选类别，再写清效果、代价与限制。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="abilities">＋ 新增能力</button></div>${renderAbilityList()}</section>`,
+    relationships: `<section class="section" role="tabpanel" id="arsenal-panel-relationships" aria-labelledby="arsenal-tab-relationships"><div class="section-head"><div><h3>预设关系</h3><p>只记录开局前已经存在的羁绊。</p></div><button type="button" class="add-btn" data-action="add-array-item" data-section="relationships">＋ 新增关系</button></div>${renderRelationshipList()}</section>`,
+    assets: `<section class="section assets-panel" role="tabpanel" id="arsenal-panel-assets" aria-labelledby="arsenal-tab-assets">
+      <div class="section-head"><div><h3>行囊</h3><p>只记录会被带进第一幕的货币、物品和装备。</p></div></div>
+      <div class="asset-group"><div class="section-head compact"><div><h4>货币</h4></div><button type="button" class="add-btn" data-action="add-array-item" data-section="assets.currency">＋ 新增货币</button></div>${renderAssetList('assets.currency', '货币')}</div>
+      <div class="asset-group"><div class="section-head compact"><div><h4>随身物品</h4></div><button type="button" class="add-btn" data-action="add-array-item" data-section="assets.items">＋ 新增物品</button></div>${renderAssetList('assets.items', '物品')}</div>
+      <div class="asset-group"><div class="section-head compact"><div><h4>装备</h4></div><button type="button" class="add-btn" data-action="add-array-item" data-section="assets.equipment">＋ 新增装备</button></div>${renderAssetList('assets.equipment', '装备')}</div>
+    </section>`,
+  };
+  return `<div class="page" data-page="arsenal">
+    <div class="arsenal-tabs" role="tablist" aria-label="羁绊栏目">${tabs.map((tab) => `<button type="button" role="tab" id="arsenal-tab-${tab.id}" class="arsenal-tab${active === tab.id ? ' is-active' : ''}" data-action="set-arsenal-tab" data-arsenal-tab="${tab.id}" aria-selected="${active === tab.id}" aria-controls="arsenal-panel-${tab.id}">${tab.label}</button>`).join('')}</div>
+    ${panels[active]}
   </div>`;
 }
 
@@ -573,23 +648,8 @@ function renderReviewPage() {
       <ul class="validation-list">${checks.map((check) => `<li class="validation-item${check.ok ? ' ok' : ''}"><span>${check.ok ? '✓' : '!'}</span><span>${escapeHtml(check.text)}</span></li>`).join('')}</ul>
       ${!validation.ok ? `<p class="field-note">还差 ${validation.errors.length} 项必填信息。点击下方提示可跳回对应页面。</p><div class="button-row">${validation.errors.map((item) => `<button type="button" class="ghost-btn" data-action="focus-error" data-error-path="${escapeHtml(item.path)}">${escapeHtml(item.message)}</button>`).join('')}</div>` : '<p class="field-note">基础信息已经完整。你仍可以继续润色开场文本，再决定写入酒馆或下载。</p>'}
     </section>
-    <section class="section">
-      <div class="section-head"><div><h3>开场文本</h3><p>可直接编辑；编辑后不再随表单自动改写，直到点击“恢复自动生成”。</p></div><button type="button" class="ghost-btn" data-action="reset-opening">恢复自动生成</button></div>
-      <textarea class="code-preview" data-opening-text>${escapeHtml(openingText())}</textarea>
-      <div class="button-row" style="margin-top:10px">
-        <button type="button" class="primary-btn" data-action="copy-opening">复制开场文本</button>
-        <button type="button" class="ghost-btn" data-action="download-opening">下载 TXT</button>
-        <button type="button" class="ghost-btn" data-action="write-tavern">写入酒馆输入框</button>
-      </div>
-    </section>
-    <section class="section">
-      <div class="section-head"><div><h3>结构化档案</h3><p>包含创角草稿、ZOD 对齐状态和开场文本。</p></div></div>
-      <textarea class="code-preview" data-json-preview readonly>${escapeHtml(JSON.stringify(buildExportBundle(state.ui.confirmed), null, 2))}</textarea>
-      <div class="button-row" style="margin-top:10px">
-        <button type="button" class="primary-btn" data-action="copy-json">复制 JSON</button>
-        <button type="button" class="ghost-btn" data-action="download-json">下载 JSON</button>
-      </div>
-    </section>
+    <details class="review-disclosure section"><summary><span><b>开场文本</b><small>展开后可编辑、复制或写入酒馆</small></span><i>＋</i></summary><div class="review-disclosure-body"><div class="section-head"><div><p>编辑后不再随表单自动改写，直到恢复自动生成。</p></div><button type="button" class="ghost-btn" data-action="reset-opening">恢复自动生成</button></div><textarea class="code-preview" data-opening-text>${escapeHtml(openingText())}</textarea><div class="button-row"><button type="button" class="primary-btn" data-action="copy-opening">复制开场文本</button><button type="button" class="ghost-btn" data-action="download-opening">下载 TXT</button><button type="button" class="ghost-btn" data-action="write-tavern">写入酒馆输入框</button></div></div></details>
+    <details class="review-disclosure section"><summary><span><b>结构化档案</b><small>草稿、ZOD 对齐状态与开场文本</small></span><i>＋</i></summary><div class="review-disclosure-body"><textarea class="code-preview" data-json-preview readonly>${escapeHtml(JSON.stringify(buildExportBundle(state.ui.confirmed), null, 2))}</textarea><div class="button-row"><button type="button" class="primary-btn" data-action="copy-json">复制 JSON</button><button type="button" class="ghost-btn" data-action="download-json">下载 JSON</button></div></div></details>
     <section class="section">
       <div class="button-row end">
         <button type="button" class="primary-btn" data-action="confirm-start"${validation.ok ? '' : ' disabled'}>确认角色并启程</button>
@@ -617,48 +677,39 @@ function renderProgress() {
   </button>`).join('');
 }
 
-function renderRail() {
+function renderCompanionBar() {
   const step = currentStep();
   const visual = STEP_VISUALS[state.ui.activeStep] || STEP_VISUALS[0];
   const event = currentEvent();
   const name = state.draft.protagonist.name || '未命名旅人';
   const appearance = state.draft.protagonist.appearance || '外貌尚未描写；可在“来历与处境”页补充发色、瞳色与显眼特征。';
-  const completion = [0, 1, 2, 3, 4].filter(stepIsComplete).length;
-  return `<aside class="rail">
-    <section class="rail-card portrait-dossier">
-      <div class="portrait">
+  return `<section class="companion-bar" aria-label="当前角色与 AI 帮填">
+    <div class="companion-portrait">
         <img src="${escapeHtml(portraitSource())}" alt="${escapeHtml(visual.caption)}" data-portrait-image data-step-visual="${escapeHtml(step.id)}">
-        <div class="portrait-vignette"></div>
-        <div class="portrait-copy"><small>CHARACTER DOSSIER</small><strong data-live-name>${escapeHtml(name)}</strong><span data-live-identity>${escapeHtml(state.draft.protagonist.identity || '身份尚未落笔')} · ${escapeHtml(state.draft.protagonist.faction || '中立')}</span><p data-live-appearance>${escapeHtml(appearance)}</p></div>
-      </div>
-      <div class="rail-card-body">
-        ${state.ui.activeStep === 1 ? `<div class="portrait-toolbar" aria-label="自定义角色肖像"><div class="step-visual-note"><small>${escapeHtml(visual.label)}</small><strong>${escapeHtml(state.portrait.customDataUrl ? '正在使用本机肖像' : visual.caption)}</strong></div><label class="portrait-upload">上传角色肖像<input class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-portrait-file></label>${state.portrait.customDataUrl ? '<button type="button" class="portrait-clear" data-action="clear-portrait">恢复本页画面</button>' : ''}</div><p class="portrait-local-note">上传仅替换“出身”页画面并保存在本机；其他填表页仍显示各自的剧情画面。</p>` : `<div class="step-visual-note"><small>${escapeHtml(visual.label)} · AUTO SWITCH</small><strong>${escapeHtml(visual.caption)}</strong><span>翻到下一页时，画面会随填写主题自动切换。</span></div>`}
-        <div class="mini-grid">
-          <div class="mini-stat"><small>PROGRESS</small><b data-live-progress>${completion} / 5 页完整</b></div>
-          <div class="mini-stat"><small>TYPE</small><b>${escapeHtml(state.draft.protagonist.roleType || '未选择')}</b></div>
-          <div class="mini-stat"><small>POWER</small><b>${escapeHtml(state.draft.combatTier?.level && state.draft.combatTier?.position ? `${state.draft.combatTier.level}${state.draft.combatTier.position}` : '未选择')}</b></div>
-          <div class="mini-stat"><small>VOLUME</small><b>${state.draft.storyAnchor.volumeNumber ? `第 ${String(state.draft.storyAnchor.volumeNumber).padStart(2, '0')} 卷` : '未选择'}</b></div>
-          <div class="mini-stat"><small>STEP</small><b>${escapeHtml(step.label)}</b></div>
-        </div>
-        <div class="portrait-anchor"><small>CURRENT STORY · ${state.draft.storyAnchor.volumeNumber ? `第 ${String(state.draft.storyAnchor.volumeNumber).padStart(2, '0')} 卷` : '未选择卷数'}</small><strong>${escapeHtml(event?.title || '尚未选择事件')}</strong><span>${escapeHtml(event?.time || '选择事件后会显示对应日期、时段与时间线。')}</span></div>
-      </div>
-    </section>
-    <section class="rail-card ai-card">
-      <div class="rail-card-head"><h3>AI 帮填</h3><small>REVIEW BEFORE APPLY</small></div>
-      <div class="rail-card-body">
-        <div class="ai-status"><span class="orb${state.settings.provider !== 'offline' ? ' remote' : ''}"></span><span>${escapeHtml(providerLabel())}</span></div>
-        <textarea class="control ai-idea" data-ai-idea placeholder="可选：写一句角色灵感或希望保留的气质">${escapeHtml(state.ui.aiIdea)}</textarea>
-        <div class="button-row ai-actions">
+        <div class="companion-vignette"></div>
+        <div class="companion-image-copy"><small>${escapeHtml(visual.label)}</small><strong>${escapeHtml(visual.caption)}</strong></div>
+    </div>
+    <div class="companion-content">
+      <div class="companion-profile"><small>CHARACTER DOSSIER · ${escapeHtml(step.label)}</small><h3 data-live-name>${escapeHtml(name)}</h3><span data-live-identity>${escapeHtml(state.draft.protagonist.identity || '身份尚未落笔')} · ${escapeHtml(state.draft.protagonist.faction || '中立')}</span><p data-live-appearance>${escapeHtml(appearance)}</p></div>
+      <div class="companion-anchor"><small>${state.draft.storyAnchor.volumeNumber ? `第 ${String(state.draft.storyAnchor.volumeNumber).padStart(2, '0')} 卷` : '剧情卷未选择'}</small><strong>${escapeHtml(event?.title || '尚未选择事件')}</strong><span>${escapeHtml(event?.time || '选择事件后显示对应时间。')}</span></div>
+      ${state.ui.activeStep === 1 ? `<div class="portrait-toolbar" aria-label="自定义角色肖像"><label class="portrait-upload">上传角色肖像<input class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-portrait-file></label>${state.portrait.customDataUrl ? '<button type="button" class="portrait-clear" data-action="clear-portrait">恢复本页画面</button>' : ''}<span>肖像仅保存在本机，不写入角色状态。</span></div>` : ''}
+      <details class="ai-disclosure">
+        <summary><span><b>AI 帮填</b><small>${escapeHtml(providerLabel())} · 默认收起</small></span><i>＋</i></summary>
+        <div class="ai-disclosure-body">
+          <div class="ai-status"><span class="orb${state.settings.provider !== 'offline' ? ' remote' : ''}"></span><span>${escapeHtml(providerLabel())}</span></div>
+          <textarea class="control ai-idea" data-ai-idea placeholder="可选：写一句角色灵感或希望保留的气质">${escapeHtml(state.ui.aiIdea)}</textarea>
+          <div class="button-row ai-actions">
           <button type="button" class="primary-btn" data-action="run-ai"${state.ui.busy ? ' disabled' : ''}>生成本页建议</button>
           <button type="button" class="ghost-btn" data-action="run-ai-all"${state.ui.busy ? ' disabled' : ''}>生成全档案</button>
           <button type="button" class="ghost-btn" data-action="open-settings">设置</button>
         </div>
-        <div class="ai-feedback ${escapeHtml(state.ui.aiTone)}" data-ai-status aria-live="polite"><strong>${escapeHtml(state.ui.aiTone === 'bad' ? '请求未完成' : state.ui.aiTone === 'ok' ? '已收到回复' : '请求状态')}</strong><span>${escapeHtml(state.ui.aiStatus)}</span>${state.ui.aiTone === 'bad' ? '<div class="button-row"><button type="button" class="ghost-btn" data-action="retry-ai">重试</button><button type="button" class="ghost-btn" data-action="run-ai-offline">改用离线灵感</button></div>' : ''}</div>
-        ${state.ui.aiTrace ? `<details class="ai-trace"><summary>本次调用记录</summary><dl><div><dt>阶段</dt><dd data-ai-trace-phase>${escapeHtml(tracePhaseLabel(state.ui.aiTrace.phase))}</dd></div><div><dt>通道</dt><dd>${escapeHtml(state.ui.aiTrace.channel || '—')}</dd></div><div><dt>目标</dt><dd data-ai-trace-target>${escapeHtml(state.ui.aiTrace.target || '—')}</dd></div><div><dt>模型</dt><dd data-ai-trace-model>${escapeHtml(state.ui.aiTrace.model || '酒馆当前模型')}</dd></div><div><dt>提示词</dt><dd data-ai-trace-prompt>${state.ui.aiTrace.promptLength ? `${state.ui.aiTrace.promptLength} 字` : '—'}</dd></div></dl>${state.ui.aiTrace.channel === '独立 API 直连' ? '<p>此通道由浏览器直接请求接口，不经过 SillyTavern 后台；请在独立 API 服务端查看 POST 记录。</p>' : ''}</details>` : ''}
-        <p class="rail-note">模型回复会先进入变更预览；确认后才补入空白字段，已有内容不会被覆盖。</p>
-      </div>
-    </section>
-  </aside>`;
+          <div class="ai-feedback ${escapeHtml(state.ui.aiTone)}" data-ai-status aria-live="polite"><strong>${escapeHtml(state.ui.aiTone === 'bad' ? '请求未完成' : state.ui.aiTone === 'ok' ? '已收到回复' : '请求状态')}</strong><span>${escapeHtml(state.ui.aiStatus)}</span>${state.ui.aiTone === 'bad' ? '<div class="button-row"><button type="button" class="ghost-btn" data-action="retry-ai">重试</button><button type="button" class="ghost-btn" data-action="run-ai-offline">改用离线灵感</button></div>' : ''}</div>
+          ${state.ui.aiTrace ? `<details class="ai-trace"><summary>本次调用记录</summary><dl><div><dt>阶段</dt><dd data-ai-trace-phase>${escapeHtml(tracePhaseLabel(state.ui.aiTrace.phase))}</dd></div><div><dt>通道</dt><dd>${escapeHtml(state.ui.aiTrace.channel || '—')}</dd></div><div><dt>目标</dt><dd data-ai-trace-target>${escapeHtml(state.ui.aiTrace.target || '—')}</dd></div><div><dt>模型</dt><dd data-ai-trace-model>${escapeHtml(state.ui.aiTrace.model || '酒馆当前模型')}</dd></div><div><dt>提示词</dt><dd data-ai-trace-prompt>${state.ui.aiTrace.promptLength ? `${state.ui.aiTrace.promptLength} 字` : '—'}</dd></div></dl>${state.ui.aiTrace.channel === '独立 API 直连' ? '<p>此通道由浏览器直接请求接口，不经过 SillyTavern 后台；请在独立 API 服务端查看 POST 记录。</p>' : ''}</details>` : ''}
+          <p class="rail-note">模型回复先进入变更预览；确认后才补入空白字段。</p>
+        </div>
+      </details>
+    </div>
+  </section>`;
 }
 
 function renderSettingsModal() {
@@ -668,6 +719,7 @@ function renderSettingsModal() {
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div class="modal-head"><div><h2 id="settings-title">模型连接与显示</h2><p>优先使用酒馆当前连接；也可切换独立兼容接口，或完全离线。</p></div><button type="button" class="close-btn" data-action="close-modal" aria-label="关闭">×</button></div>
       <div class="modal-body">
+        <section class="settings-utilities" aria-label="草稿与帮助"><div><small>CREATOR UTILITIES</small><strong>草稿与帮助</strong></div><div class="button-row"><button type="button" class="ghost-btn" data-action="save-draft">保存草稿</button><label class="import-label">导入角色 JSON<input class="sr-only" type="file" accept="application/json,.json" data-import-draft></label><button type="button" class="ghost-btn" data-action="open-help">查看帮助</button></div></section>
         <div class="field-grid">
           <div class="field full"><label for="setting-provider"><span>帮填方式</span><small>PROVIDER</small></label><select class="control" id="setting-provider" data-setting="provider"><option value="tavern"${state.settings.provider === 'tavern' ? ' selected' : ''}>酒馆当前连接（使用当前模型）</option><option value="remote"${state.settings.provider === 'remote' ? ' selected' : ''}>独立 OpenAI 兼容接口（浏览器直连）</option><option value="offline"${state.settings.provider === 'offline' ? ' selected' : ''}>离线灵感（无需请求）</option></select></div>
           ${state.settings.provider === 'tavern' ? '<div class="provider-note field full"><strong>酒馆当前连接</strong><span>通过 Tavern Helper 的 generateRaw 静默生成，不新增聊天楼层。若当前 iframe 无此能力，会显示明确错误并提供离线降级。</span></div>' : ''}
@@ -757,23 +809,21 @@ function renderChromeLayers() {
 
 function renderTitleScreen() {
   const saved = hasSavedDraft();
-  const event = currentEvent();
   return `<section class="title-screen" data-screen="title" data-motion="${state.settings.reducedMotion ? 'off' : 'on'}">
     <div class="title-art"><img src="${escapeHtml(PAGE_ART[0])}" alt="月夜茶会中的银发少女"><div class="title-art-wash"></div></div>
     <div class="title-frame" aria-hidden="true"></div>
-    <header class="title-topbar"><div class="brand"><span class="brand-mark">零</span><span class="brand-copy"><strong>RE:ZERO / ANOTHER CHRONICLE</strong><span>从零开始的异世界生活 · 角色档案</span></span></div><button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button></header>
+    <header class="title-topbar"><div class="brand" aria-label="Re0"><span class="brand-mark">零</span></div><button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button></header>
     <div class="title-main">
-      <div class="title-copy"><p class="eyebrow">RETURN BY DEATH · WITCH'S TEA PARTY</p><h1>从零开始<span>异世界角色创建</span></h1><p class="title-motto">“在命运翻页以前，先决定这一次要以谁的名字活下去。”</p><div class="title-prologue"><span>银月落进茶杯，书页停在尚未写下的名字前。</span><span>选择一个剧情锚点，把愿望、恐惧与力量带进第一幕。</span></div></div>
+      <div class="title-copy"><h1>Re0：从零开始的异世界生活</h1></div>
       <nav class="title-menu" aria-label="开始游戏菜单">
         <button type="button" class="title-menu-btn primary" data-action="start-new"><span>01</span><b>开始游戏<small>NEW CHRONICLE</small></b><i>›</i></button>
         <button type="button" class="title-menu-btn" data-action="continue-draft"${saved ? '' : ' disabled'}><span>02</span><b>继续游戏<small>CONTINUE AUTOSAVE</small></b><i>›</i></button>
         <button type="button" class="title-menu-btn" data-action="open-archive"><span>03</span><b>存档管理<small>CHARACTER ARCHIVE</small></b><i>›</i></button>
-        <label class="title-menu-btn"><span>04</span><b>导入角色档案<small>IMPORT JSON</small></b><i>↥</i><input class="sr-only" type="file" accept="application/json,.json" data-import-draft></label>
-        <button type="button" class="title-menu-btn" data-action="export-draft"><span>05</span><b>提取角色档案<small>EXPORT JSON</small></b><i>↓</i></button>
+        <label class="title-menu-btn"><span>04</span><b>导入角色档案<small>IMPORT JSON</small></b><i>›</i><input class="sr-only" type="file" accept="application/json,.json" data-import-draft></label>
+        <button type="button" class="title-menu-btn" data-action="export-draft"><span>05</span><b>提取角色档案<small>EXPORT JSON</small></b><i>›</i></button>
         <button type="button" class="title-menu-btn" data-action="open-settings"><span>06</span><b>设置<small>MODEL & DISPLAY</small></b><i>›</i></button>
       </nav>
     </div>
-    <footer class="title-footer"><div><span class="status-dot ${state.ui.storyStatus === 'error' ? 'bad' : ''}"></span><b>${state.ui.storyStatus === 'ready' ? `剧情索引已就绪 · ${state.storyIndex.length} 卷` : state.ui.storyStatus === 'error' ? '剧情索引加载失败' : '正在展开剧情索引…'}</b></div><p>${saved ? `本机草稿：${escapeHtml(state.draft.protagonist.name || '未命名旅人')} · ${escapeHtml(event?.title || '尚未选择事件')}` : '尚无本机草稿；选择“开始游戏”建立新的角色档案。'}</p></footer>
   </section>`;
 }
 
@@ -792,14 +842,12 @@ function render() {
         <button type="button" class="back-to-title" data-action="return-title" aria-label="返回开局页">←</button><div class="brand"><span class="brand-mark">零</span><span class="brand-copy"><strong>RE:ZERO / CHARACTER FORGE</strong><span>魔女茶会 · 创角向导</span></span></div>
         <div class="session-pill"><span class="dot"></span><span>${safeReadStorage(DRAFT_STORAGE_KEY) ? '本机草稿已恢复' : '新草稿已建立'}</span></div>
         <div class="top-actions">
-          <button type="button" class="icon-btn" data-action="save-draft" aria-label="保存草稿" title="保存草稿">⌁</button>
-          <label class="icon-btn" aria-label="导入草稿" title="导入草稿">↥<input class="sr-only" type="file" accept="application/json,.json" data-import-draft></label>
-          <button type="button" class="icon-btn" data-action="open-help" aria-label="帮助" title="帮助">?</button>
           <button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button>
         </div>
       </header>
       <section class="creator-ribbon"><div><small>WITCH'S TEA PARTY · DOSSIER 00</small><strong>在故事开始前，写下这一次的名字。</strong></div><span>${escapeHtml(storyVolumeLabel(currentVolume()) || '剧情锚点尚未选择')}</span></section>
       <nav class="progress" aria-label="创角步骤">${renderProgress()}</nav>
+      ${renderCompanionBar()}
       <div class="workspace">
         <main class="stage">
           <header class="stage-head"><div><p class="stage-kicker">${escapeHtml(step.kicker)}</p><h2>${escapeHtml(step.title)}</h2><p>${pageDescription(step.id)}</p></div><span class="stage-count">PAGE ${String(step.index).padStart(2, '0')} / 05</span></header>
@@ -810,7 +858,6 @@ function render() {
             <button type="button" class="nav-btn next" data-action="next-step"${state.ui.activeStep === STEP_DEFINITIONS.length - 1 ? ' disabled' : ''}>下一页 →</button>
           </nav>
         </main>
-        ${renderRail()}
       </div>
     </div>
   </div><div data-chrome-layers></div>`;
@@ -852,6 +899,7 @@ function addArrayItem(section) {
     'assets.currency': { name: '', quantity: 0, description: '' },
   };
   list.push(structuredClone(templates[section] ?? {}));
+  [...state.ui.customFields].filter((key) => key.startsWith(`array:${section}:`)).forEach((key) => state.ui.customFields.delete(key));
   queueSave();
   render();
 }
@@ -860,13 +908,13 @@ function removeArrayItem(section, index) {
   const list = getAt(state.draft, section);
   if (!Array.isArray(list)) return;
   list.splice(Number(index), 1);
+  [...state.ui.customFields].filter((key) => key.startsWith(`array:${section}:`)).forEach((key) => state.ui.customFields.delete(key));
   queueSave();
   render();
 }
 
-function addTrait() {
-  const input = app.querySelector('[data-trait-entry]');
-  const value = input?.value.trim();
+function addTraitValue(value) {
+  value = String(value || '').trim();
   if (!value) return;
   if (!Array.isArray(state.draft.personality.traits)) state.draft.personality.traits = [];
   if (state.draft.personality.traits.length >= 8) {
@@ -876,6 +924,10 @@ function addTrait() {
   if (!state.draft.personality.traits.includes(value)) state.draft.personality.traits.push(value);
   queueSave();
   render();
+}
+
+function addTrait() {
+  addTraitValue(app.querySelector('[data-trait-entry]')?.value);
 }
 
 function updateLivePreview() {
@@ -1095,6 +1147,8 @@ function beginNewDraft() {
   state.ui.openingEdited = false;
   state.ui.openingOverride = '';
   state.ui.aiPreview = null;
+  state.ui.arsenalTab = 'combat';
+  state.ui.customFields.clear();
   saveDraft();
   render();
   window.scrollTo({ top: 0, behavior: 'auto' });
@@ -1188,6 +1242,8 @@ async function importDraft(file) {
     state.ui.confirmed = false;
     state.ui.openingEdited = false;
     state.ui.openingOverride = '';
+    state.ui.arsenalTab = 'combat';
+    state.ui.customFields.clear();
     state.ui.screen = 'creator';
     state.ui.modal = null;
     syncStoryAnchor();
@@ -1219,6 +1275,11 @@ async function handleAction(action, element) {
   if (action === 'save-draft') return saveDraft({ announce: true });
   if (action === 'open-settings') { state.ui.modal = 'settings'; renderChromeLayers(); return; }
   if (action === 'open-help') { state.ui.modal = 'help'; renderChromeLayers(); return; }
+  if (action === 'set-arsenal-tab') {
+    state.ui.arsenalTab = element.dataset.arsenalTab || 'combat';
+    render();
+    return;
+  }
   if (action === 'close-modal') { state.ui.modal = null; renderChromeLayers(); return; }
   if (action === 'save-settings') {
     safeWriteStorage(SETTINGS_STORAGE_KEY, JSON.stringify(state.settings));
@@ -1342,6 +1403,54 @@ app.addEventListener('input', (event) => {
 
 app.addEventListener('change', (event) => {
   const target = event.target;
+  if (target.matches('[data-preset-path]')) {
+    const path = target.dataset.presetPath;
+    if (target.value === CUSTOM_OPTION) {
+      state.ui.customFields.add(path);
+      setAt(state.draft, path, '');
+    } else {
+      state.ui.customFields.delete(path);
+      setAt(state.draft, path, target.value);
+    }
+    state.ui.confirmed = false;
+    queueSave();
+    render();
+    return;
+  }
+  if (target.matches('[data-array-preset-section]')) {
+    const section = target.dataset.arrayPresetSection;
+    const item = getAt(state.draft, section)?.[Number(target.dataset.index)];
+    if (!item) return;
+    if (target.value === CUSTOM_OPTION) {
+      state.ui.customFields.add(target.dataset.customKey);
+      item[target.dataset.key] = '';
+    } else {
+      state.ui.customFields.delete(target.dataset.customKey);
+      item[target.dataset.key] = target.value;
+    }
+    state.ui.confirmed = false;
+    queueSave();
+    render();
+    return;
+  }
+  if (target.matches('[data-inspiration-path]')) {
+    const path = target.dataset.inspirationPath;
+    if (!target.value) return;
+    if (String(valueOf(path)).trim()) {
+      target.value = '';
+      showToast('这个字段已有内容，快速灵感没有覆盖它。');
+      return;
+    }
+    setAt(state.draft, path, target.value);
+    state.ui.confirmed = false;
+    queueSave();
+    render();
+    return;
+  }
+  if (target.matches('[data-trait-preset]')) {
+    addTraitValue(target.value);
+    return;
+  }
   if (target.matches('[data-story-select="volume"]')) {
     selectVolume(target.value);
     state.ui.confirmed = false;

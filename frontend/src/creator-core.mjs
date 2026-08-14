@@ -11,6 +11,7 @@ export const STEP_DEFINITIONS = [
 export const ROLE_TYPES = ['原创角色', '原作人物', '异界来客'];
 export const FACTIONS = ['中立', '爱蜜莉雅阵营', '库珥修阵营', '安娜塔西亚阵营', '普莉希拉阵营', '露格尼卡王国', '沃拉基亚帝国', '魔女教', '其他'];
 export const RELATION_STANCES = ['友方', '中立', '戒备', '敌对', '未知'];
+export const ABILITY_CATEGORIES = ['加护', '权能', '魔法', '精灵术', '种族能力', '武技', '一般技能'];
 export const COMBAT_TIER_LEVELS = ['1阶', '2阶', '3阶', '4阶', '5阶', '6阶', '7阶'];
 export const COMBAT_TIER_POSITIONS = ['上位', '下位'];
 export const COMBAT_STATUSES = ['可战', '受限', '无法战斗', '未知'];
@@ -41,7 +42,6 @@ export function createDefaultDraft() {
       name: '',
       roleType: '',
       gender: '',
-      ageStage: '',
       race: '',
       identity: '',
       faction: '中立',
@@ -236,14 +236,16 @@ export function buildStatePayload(draft) {
     时间层: normalizeLayer(rawLayer),
     轮回分支: normalizeBranch(rawLayer),
   };
-  const abilityRecord = {};
+  const abilityRecords = Object.fromEntries(ABILITY_CATEGORIES.map((category) => [category, {}]));
   asArray(value.abilities).filter((ability) => asText(ability?.name)).forEach((ability) => {
     const item = normalizeAbility(ability);
-    abilityRecord[item.name] = {
+    const category = ABILITY_CATEGORIES.includes(item.category) ? item.category : '一般技能';
+    const customCategory = category === item.category ? '' : `自定义类别：${item.category}。`;
+    abilityRecords[category][item.name] = {
       状态: item.status,
       可用性: normalizeAvailability(item.status),
       消耗或冷却: item.cost,
-      描述: [item.description, item.limits ? `限制：${item.limits}` : ''].filter(Boolean).join(' '),
+      描述: [customCategory, item.description, item.limits ? `限制：${item.limits}` : ''].filter(Boolean).join(' '),
     };
   });
   const relationshipRecord = {};
@@ -312,7 +314,6 @@ export function buildStatePayload(draft) {
       角色类型: creatorRoleType === '原作人物' ? '原作人物' : '原创角色',
       创角类型: creatorRoleType || '原创角色',
       性别: asText(value.protagonist?.gender),
-      年龄阶段: asText(value.protagonist?.ageStage),
       种族: asText(value.protagonist?.race),
       身份: asText(value.protagonist?.identity),
       阵营: asText(value.protagonist?.faction),
@@ -325,15 +326,7 @@ export function buildStatePayload(draft) {
       精神稳定: 100,
       当前形态: '正常',
       战力等阶: { 阶数: combatTier.level, 位阶: combatTier.position, 可战状态: combatTier.combatStatus, 生效条件: combatTier.condition },
-      能力: {
-        加护: {},
-        权能: {},
-        魔法: {},
-        精灵术: {},
-        种族能力: {},
-        武技: {},
-        一般技能: abilityRecord,
-      },
+      能力: abilityRecords,
       当前目标: asText(value.protagonist?.currentGoal),
     },
     轮回: {
@@ -367,7 +360,7 @@ export function buildOpeningMessage(draft) {
     '【Re:0 · 创角向导 · 开局档案】',
     `我的名字是${asText(protagonist.name) || '未命名的旅人'}。我是${asText(protagonist.identity) || '一个尚未找到归处的人'}，以${asText(protagonist.roleType) || '原创角色'}的身份进入这个世界。`,
     `我会从「${asText(anchor.volumeTitle) || '未选择卷数'}」的「${asText(anchor.eventTitle) || '未选择事件'}」开始；事件时间为${asText(anchor.eventTime) || '时间未详'}。`,
-    `我的外在身份是：${asText(protagonist.gender) || '未详'}、${asText(protagonist.ageStage) || '年龄未详'}、${asText(protagonist.race) || '种族未详'}，站在${asText(protagonist.faction) || '中立'}一侧。`,
+    `我的外在身份是：${asText(protagonist.gender) || '性别未详'}、${asText(protagonist.race) || '种族未详'}，站在${asText(protagonist.faction) || '中立'}一侧。`,
     `我的战力等阶是${combatLabel}，当前${combatTier.combatStatus}；生效条件为：${combatTier.condition}。`,
     `我希望${asText(personality.wish) || '找到一个值得坚持的愿望'}；我害怕${asText(personality.fear) || '失去无法挽回的东西'}。我的底线是：${asText(personality.boundary) || '不让重要的选择被别人替我做出'}。`,
     `我的性格关键词是：${traits}。我当前的目标是：${asText(protagonist.currentGoal) || '确认自己在这个世界的位置'}。`,
@@ -405,7 +398,7 @@ export function suggestOffline(draft, stepId = 'identity') {
 }
 
 const PATCH_FIELDS = {
-  protagonist: new Set(['name', 'roleType', 'gender', 'ageStage', 'race', 'identity', 'faction', 'appearance', 'clothing', 'survival', 'currentGoal']),
+  protagonist: new Set(['name', 'roleType', 'gender', 'race', 'identity', 'faction', 'appearance', 'clothing', 'survival', 'currentGoal']),
   personality: new Set(['traits', 'wish', 'fear', 'desire', 'boundary', 'speechStyle', 'habits', 'secret']),
   world: new Set(['currentLocation', 'entryContext', 'difficulty']),
   abilities: new Set(['name', 'category', 'status', 'cost', 'description', 'limits']),
@@ -416,7 +409,7 @@ const PATCH_FIELDS = {
 
 const PATCH_SCOPE_FIELDS = {
   identity: {
-    protagonist: new Set(['name', 'identity', 'roleType', 'gender', 'ageStage', 'race']),
+    protagonist: new Set(['name', 'identity', 'roleType', 'gender', 'race']),
   },
   origin: {
     protagonist: new Set(['faction', 'appearance', 'clothing', 'currentGoal']),
@@ -607,6 +600,7 @@ export function mergeAiPatch(draft, patch) {
 
 export function serializeDraft(draft) {
   const value = structuredClone(draft ?? createDefaultDraft());
+  if (isRecord(value.protagonist)) delete value.protagonist.ageStage;
   value.version = DRAFT_VERSION;
   value.meta = { ...(value.meta ?? {}), updatedAt: new Date().toISOString() };
   return JSON.stringify(value, null, 2);
@@ -616,6 +610,7 @@ export function parseDraft(serialized) {
   const value = typeof serialized === 'string' ? JSON.parse(serialized) : structuredClone(serialized);
   if (!value || typeof value !== 'object') throw new Error('草稿不是对象');
   if (value.version !== DRAFT_VERSION) throw new Error('不支持的草稿版本');
+  if (isRecord(value.protagonist)) delete value.protagonist.ageStage;
   value.combatTier = { ...EMPTY_COMBAT_TIER, ...(isRecord(value.combatTier) ? value.combatTier : {}) };
   return value;
 }

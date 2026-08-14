@@ -31,6 +31,8 @@ test('full-draft AI prompt exposes fields from every creator page', () => {
   assert.match(prompt, /"protagonist":\{"name":"字符串"[^}]*"appearance":"字符串"/);
   assert.match(prompt, /"wish":"字符串"/);
   assert.match(prompt, /"combatTier"/);
+  assert.doesNotMatch(prompt, /ageStage|年龄阶段/);
+  assert.match(prompt, /加护｜权能｜魔法｜精灵术｜种族能力｜武技｜一般技能/);
 });
 
 test('AI response parser extracts fenced JSON and rejects non-object output', () => {

@@ -13,8 +13,11 @@ python -m http.server 4173 --directory frontend
 ## AI 帮填
 
 - 离线灵感模式不需要网络或密钥。
-- 设置中可切换到 OpenAI-compatible API，填写完整的 chat-completions 地址、模型和本机 API Key。
+- 设置中可使用酒馆当前连接，或切换到 OpenAI-compatible API；接口支持根地址、`/v1`、`/models` 和完整的 chat-completions 地址。
+- 独立接口可以拉取并搜索全部模型，同时保留手动填写模型名；本地服务可不填 API Key。
 - 模型只能返回允许的局部 JSON 补丁；已有字段不会被覆盖，危险键和未知字段会被拒绝。
+
+创角页默认只显示当前步骤对应的肖像和表单。AI 面板、能力/关系/行囊栏目以及最终开场与 JSON 均按需展开，减少一次性信息量。
 
 ## 导出与酒馆
 

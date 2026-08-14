@@ -5,7 +5,7 @@ function asText(value) {
 const AI_PATCH_SHAPES = {
   identity: {
     protagonist: {
-      name: '字符串', identity: '字符串', roleType: '原创角色｜原作人物｜异界来客', gender: '字符串', ageStage: '字符串', race: '字符串',
+      name: '字符串', identity: '字符串', roleType: '原创角色｜原作人物｜异界来客', gender: '字符串', race: '字符串',
     },
   },
   origin: {
@@ -17,7 +17,7 @@ const AI_PATCH_SHAPES = {
   },
   arsenal: {
     combatTier: { level: '1阶至7阶', position: '上位｜下位', combatStatus: '可战｜受限｜无法战斗｜未知', condition: '字符串' },
-    abilities: [{ name: '字符串', category: '字符串', status: '字符串', cost: '字符串', description: '字符串', limits: '字符串' }],
+    abilities: [{ name: '字符串', category: '加护｜权能｜魔法｜精灵术｜种族能力｜武技｜一般技能', status: '字符串', cost: '字符串', description: '字符串', limits: '字符串' }],
     relationships: [{ name: '字符串', relation: '字符串', stance: '友方｜中立｜戒备｜敌对｜未知', trust: 0, notes: '字符串' }],
     assets: { currency: [{ name: '字符串', quantity: 1, description: '字符串' }], items: [], equipment: [] },
   },
@@ -36,7 +36,12 @@ function emitStatus(listener, event) {
 }
 
 export function buildAiPrompt(draft, stepId, idea = '') {
-  const compactDraft = JSON.stringify(draft ?? {});
+  const promptDraft = { ...(draft ?? {}) };
+  if (promptDraft.protagonist && typeof promptDraft.protagonist === 'object' && !Array.isArray(promptDraft.protagonist)) {
+    promptDraft.protagonist = { ...promptDraft.protagonist };
+    delete promptDraft.protagonist.ageStage;
+  }
+  const compactDraft = JSON.stringify(promptDraft);
   const shape = AI_PATCH_SHAPES[stepId] ?? AI_PATCH_SHAPES['all-pages'];
   return [
     '你是《Re：从零开始的异世界生活》创角向导的灵感助手。',
