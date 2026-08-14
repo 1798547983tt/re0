@@ -652,7 +652,7 @@ Record the regex JSON byte size and SHA-256, the pinned artwork commit, every ar
 
 Request real-runtime evidence for fresh chat, initialization, correct message floor, update event, swipe, edit, rerender, reload, chat switch, duplicate prevention, all three theme states, uploaded and URL portraits, keyboard focus, 320px layout, 200% zoom, reduced motion, broken asset network, missing MVU, and console cleanliness. Mark every host-dependent case pending unless the exact packaged artifact is actually exercised.
 
-- [ ] **Step 5: Commit the handoff report and push the branch**
+- [x] **Step 5: Commit the handoff report and push the branch**
 
 ```powershell
 git add statusbar/RUNTIME.md reports/statusbar-runtime-handoff.md
@@ -660,6 +660,6 @@ git commit -m "docs: prepare status bar runtime handoff"
 git push
 ```
 
-- [ ] **Step 6: Finish the branch**
+- [x] **Step 6: Finish the branch**
 
 Use `superpowers:verification-before-completion`, `superpowers:requesting-code-review`, and `superpowers:finishing-a-development-branch`. Do not claim real-SillyTavern acceptance unless the runtime-debug evidence names the exact regex artifact hash.
