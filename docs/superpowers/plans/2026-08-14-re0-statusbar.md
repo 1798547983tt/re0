@@ -401,7 +401,7 @@ git commit -m "feat: add local portrait library"
 - Create: `statusbar/src/app.mjs`
 - Create: `statusbar/README.md`
 
-- [ ] **Step 1: Write the failing surface contract**
+- [x] **Step 1: Write the failing surface contract**
 
 Test that the maintained HTML contains one namespaced mount and overlay root, the CSS includes container-based narrow layout and reduced-motion handling, and the app source contains the nine stable section IDs, real button creation, `textContent`, avatar actions, a dialog/drawer close path, and no `replaceVariables` or model-derived `innerHTML`.
 
@@ -420,39 +420,39 @@ test('status bar source exposes the complete read-only accessible surface', () =
 });
 ```
 
-- [ ] **Step 2: Run the surface test and verify RED**
+- [x] **Step 2: Run the surface test and verify RED**
 
 Run: `node --test tests/test_statusbar_surface.mjs`
 
 Expected: FAIL because the status-bar surface files do not exist.
 
-- [ ] **Step 3: Create the static shell**
+- [x] **Step 3: Create the static shell**
 
 Use one mount, one `main` with `aria-live="polite"`, one overlay root, a no-script message, the stylesheet, and one module entry. Keep the same IDs when packaged so the offline and regex builds share one binder.
 
-- [ ] **Step 4: Implement safe DOM rendering**
+- [x] **Step 4: Implement safe DOM rendering**
 
 `app.mjs` must construct every dynamic node with DOM methods and `textContent`. Implement `renderOverview`, `renderProtagonist`, `renderWorld`, `renderRelations`, `renderLoop`, `renderEvents`, `renderClues`, `renderAssets`, and `renderDiagnostics`; each consumes the stable model and uses reusable `meter`, `fieldList`, `recordCards`, `emptyState`, and `diagnosticTree` builders.
 
-- [ ] **Step 5: Implement interactions and lifecycle**
+- [x] **Step 5: Implement interactions and lifecycle**
 
 Use delegated `data-action` handlers for expand/collapse, section selection, relationship filters, person drawer, death-book disclosure, snapshot confirmation, theme cycle, restore automatic theme, portrait edit, retry, and close. Preserve the active section and expanded keys across data refresh; clean up listeners, observers, object URLs, event subscriptions, and scheduled renders in one `destroy()` path.
 
-- [ ] **Step 6: Implement the two visual systems**
+- [x] **Step 6: Implement the two visual systems**
 
 Day mode uses porcelain, parchment, honey-gold light, ice-blue details, arch geometry, floating dust, and steam. Night mode uses ink navy, antique silver, spectral cyan, restrained witch-violet, crystal facets, chess/rune geometry, snow, mist, and butterfly light. Navigation stays stable; content composition, background art, surface materials, ornament, and ambient layers change. Use `container-type: inline-size`, a desktop side rail/two-column detail layout, and a narrow horizontal rail/single-column layout at 700px and below.
 
-- [ ] **Step 7: Implement avatar editing UI**
+- [x] **Step 7: Implement avatar editing UI**
 
 The modal provides file input, HTTPS URL input, preview, zoom, horizontal and vertical position controls, shared-versus-current-chat target, save, remove, reset, Escape, backdrop close, focus trapping, and focus return. Show quota/decode/URL errors through an `aria-live` message and never discard the existing portrait until the replacement succeeds.
 
-- [ ] **Step 8: Run the surface and core suites**
+- [x] **Step 8: Run the surface and core suites**
 
 Run: `node --test tests/test_statusbar_core.mjs tests/test_statusbar_runtime.mjs tests/test_statusbar_portraits.mjs tests/test_statusbar_surface.mjs`
 
 Expected: all status-bar tests pass with no warnings.
 
-- [ ] **Step 9: Commit the complete offline HUD**
+- [x] **Step 9: Commit the complete offline HUD**
 
 ```powershell
 git add tests/test_statusbar_surface.mjs statusbar/index.html statusbar/styles.css statusbar/src/app.mjs statusbar/README.md
