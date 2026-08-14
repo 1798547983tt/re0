@@ -238,7 +238,7 @@ git commit -m "feat: map Re Zero status data"
 - Create: `statusbar/src/runtime.mjs`
 - Create: `statusbar/RUNTIME.md`
 
-- [ ] **Step 1: Write the failing runtime tests**
+- [x] **Step 1: Write the failing runtime tests**
 
 ```js
 import test from 'node:test';
@@ -281,13 +281,13 @@ test('runtime exposes an unavailable result instead of guessing missing APIs', a
 });
 ```
 
-- [ ] **Step 2: Run the runtime tests and verify RED**
+- [x] **Step 2: Run the runtime tests and verify RED**
 
 Run: `node --test tests/test_statusbar_runtime.mjs`
 
 Expected: FAIL with module-not-found for `statusbar/src/runtime.mjs`.
 
-- [ ] **Step 3: Implement the capability bridge**
+- [x] **Step 3: Implement the capability bridge**
 
 ```js
 export function createRuntimeBridge(scope = globalThis) {
@@ -319,17 +319,17 @@ export function createRuntimeBridge(scope = globalThis) {
 }
 ```
 
-- [ ] **Step 4: Record dependency provenance**
+- [x] **Step 4: Record dependency provenance**
 
 Document SillyTavern 1.18.0 regex engine commit, Tavern Helper 4.8.19 declaration commit, MVU declaration/event snapshot, the card-embedded loader identity, remote loader URL, confidence, and the exact runtime checks still pending.
 
-- [ ] **Step 5: Run the runtime tests and verify GREEN**
+- [x] **Step 5: Run the runtime tests and verify GREEN**
 
 Run: `node --test tests/test_statusbar_runtime.mjs`
 
 Expected: 3 passing tests, 0 failures.
 
-- [ ] **Step 6: Commit the runtime adapter**
+- [x] **Step 6: Commit the runtime adapter**
 
 ```powershell
 git add tests/test_statusbar_runtime.mjs statusbar/src/runtime.mjs statusbar/RUNTIME.md
