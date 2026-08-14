@@ -414,12 +414,44 @@ const PATCH_FIELDS = {
   combatTier: new Set(['level', 'position', 'combatStatus', 'condition']),
 };
 
+const PATCH_SCOPE_FIELDS = {
+  identity: {
+    protagonist: new Set(['name', 'identity', 'roleType', 'gender', 'ageStage', 'race']),
+  },
+  origin: {
+    protagonist: new Set(['faction', 'appearance', 'clothing', 'currentGoal']),
+    world: PATCH_FIELDS.world,
+  },
+  heart: {
+    personality: PATCH_FIELDS.personality,
+  },
+  arsenal: {
+    combatTier: PATCH_FIELDS.combatTier,
+    abilities: PATCH_FIELDS.abilities,
+    relationships: PATCH_FIELDS.relationships,
+    assets: PATCH_FIELDS.assets,
+  },
+  review: PATCH_FIELDS,
+  'all-pages': PATCH_FIELDS,
+};
+
+const PATCH_ENVELOPE_KEYS = ['patch', 'data', 'result', 'changes', 'suggestion'];
+const WORLD_DIFFICULTIES = ['轻松', '标准', '困难'];
+
 const UNSAFE_PATCH_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
 function isRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
+}
+
+function hasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object, key);
+}
+
+function patchSectionFields(section) {
+  return hasOwn(PATCH_FIELDS, section) ? PATCH_FIELDS[section] : null;
 }
 
 function validatePatchValue(value, path, errors, depth = 0) {
@@ -446,8 +478,50 @@ function validatePatchValue(value, path, errors, depth = 0) {
   errors.push(error(path, '补丁值类型不受支持'));
 }
 
+function patchFieldError(section, key, value) {
+  if (section === 'protagonist') {
+    if (key === 'roleType') return ROLE_TYPES.includes(value) ? '' : '必须是已支持的角色类型';
+    if (key === 'faction') return FACTIONS.includes(value) ? '' : '必须是已支持的初始阵营';
+    return typeof value === 'string' ? '' : '必须是字符串';
+  }
+  if (section === 'personality') {
+    if (key === 'traits') return Array.isArray(value) && value.every((item) => typeof item === 'string') ? '' : '必须是字符串数组';
+    return typeof value === 'string' ? '' : '必须是字符串';
+  }
+  if (section === 'world') {
+    if (key === 'difficulty') return WORLD_DIFFICULTIES.includes(value) ? '' : '必须是轻松、标准或困难';
+    return typeof value === 'string' ? '' : '必须是字符串';
+  }
+  if (section === 'combatTier') {
+    if (key === 'level') return COMBAT_TIER_LEVELS.includes(value) ? '' : '必须是1阶至7阶';
+    if (key === 'position') return COMBAT_TIER_POSITIONS.includes(value) ? '' : '必须是上位或下位';
+    if (key === 'combatStatus') return COMBAT_STATUSES.includes(value) ? '' : '必须是可战、受限、无法战斗或未知';
+    return typeof value === 'string' ? '' : '必须是字符串';
+  }
+  if (section === 'abilities') return typeof value === 'string' ? '' : '必须是字符串';
+  if (section === 'relationships') {
+    if (key === 'stance') return RELATION_STANCES.includes(value) ? '' : '必须是已支持的关系立场';
+    if (key === 'trust') return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? '' : '必须是0至100的数字';
+    return typeof value === 'string' ? '' : '必须是字符串';
+  }
+  if (section === 'asset') {
+    if (key === 'quantity') return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? '' : '必须是非负数字';
+    return typeof value === 'string' ? '' : '必须是字符串';
+  }
+  return '';
+}
+
+function validatePatchFieldValue(section, key, value, path, errors) {
+  const errorCount = errors.length;
+  validatePatchValue(value, path, errors);
+  if (errors.length !== errorCount) return;
+  const message = patchFieldError(section, key, value);
+  if (message) errors.push(error(path, message));
+}
+
 function validatePatchSection(section, values, errors) {
-  if (UNSAFE_PATCH_KEYS.has(section) || !PATCH_FIELDS[section]) {
+  const sectionFields = patchSectionFields(section);
+  if (UNSAFE_PATCH_KEYS.has(section) || !sectionFields) {
     errors.push(error(section, '不允许修改该字段区段'));
     return;
   }
@@ -462,8 +536,8 @@ function validatePatchSection(section, values, errors) {
         return;
       }
       Object.entries(item).forEach(([key, value]) => {
-        if (UNSAFE_PATCH_KEYS.has(key) || !PATCH_FIELDS[section].has(key)) errors.push(error(`${section}.${index}.${key}`, '未知或危险字段'));
-        else validatePatchValue(value, `${section}.${index}.${key}`, errors);
+        if (UNSAFE_PATCH_KEYS.has(key) || !sectionFields.has(key)) errors.push(error(`${section}.${index}.${key}`, '未知或危险字段'));
+        else validatePatchFieldValue(section, key, value, `${section}.${index}.${key}`, errors);
       });
     });
     return;
@@ -473,7 +547,7 @@ function validatePatchSection(section, values, errors) {
     return;
   }
   Object.entries(values).forEach(([key, value]) => {
-    if (UNSAFE_PATCH_KEYS.has(key) || !PATCH_FIELDS[section].has(key)) {
+    if (UNSAFE_PATCH_KEYS.has(key) || !sectionFields.has(key)) {
       errors.push(error(`${section}.${key}`, '未知或危险字段'));
       return;
     }
@@ -483,11 +557,11 @@ function validatePatchSection(section, values, errors) {
         if (!isRecord(item)) errors.push(error(`${section}.${key}.${index}`, '资产项目必须是对象'));
         else Object.entries(item).forEach(([itemKey, itemValue]) => {
           if (UNSAFE_PATCH_KEYS.has(itemKey) || !new Set(['name', 'quantity', 'description']).has(itemKey)) errors.push(error(`${section}.${key}.${index}.${itemKey}`, '未知或危险字段'));
-          else validatePatchValue(itemValue, `${section}.${key}.${index}.${itemKey}`, errors);
+          else validatePatchFieldValue('asset', itemKey, itemValue, `${section}.${key}.${index}.${itemKey}`, errors);
         });
       });
     } else {
-      validatePatchValue(value, `${section}.${key}`, errors);
+      validatePatchFieldValue(section, key, value, `${section}.${key}`, errors);
     }
   });
 }
@@ -544,4 +618,136 @@ export function parseDraft(serialized) {
   if (value.version !== DRAFT_VERSION) throw new Error('不支持的草稿版本');
   value.combatTier = { ...EMPTY_COMBAT_TIER, ...(isRecord(value.combatTier) ? value.combatTier : {}) };
   return value;
+}
+
+function patchCandidates(value, depth = 0, path = []) {
+  if (!isRecord(value)) return [];
+  const nested = [];
+  if (depth < 3) {
+    PATCH_ENVELOPE_KEYS.forEach((key) => {
+      if (isRecord(value[key])) nested.push(...patchCandidates(value[key], depth + 1, [...path, key]));
+    });
+  }
+  return [...nested, { value, path }];
+}
+
+function unwrapPatchEnvelope(value, scope) {
+  const candidates = patchCandidates(value);
+  return candidates.find((candidate) => Object.keys(candidate.value).some((section) => hasOwn(PATCH_FIELDS, section) && hasOwn(scope, section)))
+    ?? candidates.find((candidate) => Object.keys(candidate.value).some((section) => hasOwn(PATCH_FIELDS, section)))
+    ?? { value, path: [] };
+}
+
+function collectIgnoredEnvelopeSiblings(root, selectedPath, ignoredPaths) {
+  if (!selectedPath.length || !isRecord(root)) return;
+  let current = root;
+  const prefix = [];
+  selectedPath.forEach((selectedKey) => {
+    if (!isRecord(current)) return;
+    Object.keys(current).forEach((key) => {
+      if (key === selectedKey || PATCH_ENVELOPE_KEYS.includes(key)) return;
+      if (hasOwn(PATCH_FIELDS, key) || key === 'storyAnchor' || UNSAFE_PATCH_KEYS.has(key)) {
+        ignoredPaths.push([...prefix, key].join('.'));
+      }
+    });
+    current = current[selectedKey];
+    prefix.push(selectedKey);
+  });
+}
+
+function safePatchValue(value, section, key, path, ignoredPaths) {
+  const errors = [];
+  validatePatchFieldValue(section, key, value, path, errors);
+  if (errors.length) {
+    ignoredPaths.push(path);
+    return undefined;
+  }
+  return structuredClone(value);
+}
+
+function prepareRecordSection(section, values, allowedFields, ignoredPaths) {
+  if (!isRecord(values)) {
+    ignoredPaths.push(section);
+    return null;
+  }
+  const prepared = {};
+  Object.entries(values).forEach(([key, value]) => {
+    const path = `${section}.${key}`;
+    if (UNSAFE_PATCH_KEYS.has(key) || !allowedFields.has(key)) {
+      ignoredPaths.push(path);
+      return;
+    }
+    const safeValue = safePatchValue(value, section, key, path, ignoredPaths);
+    if (safeValue !== undefined) prepared[key] = safeValue;
+  });
+  return Object.keys(prepared).length ? prepared : null;
+}
+
+function prepareListSection(section, values, allowedFields, ignoredPaths, ruleSection = section) {
+  if (!Array.isArray(values)) {
+    ignoredPaths.push(section);
+    return null;
+  }
+  const prepared = values.map((item, index) => {
+    if (!isRecord(item)) {
+      ignoredPaths.push(`${section}.${index}`);
+      return null;
+    }
+    const entry = {};
+    Object.entries(item).forEach(([key, value]) => {
+      const path = `${section}.${index}.${key}`;
+      if (UNSAFE_PATCH_KEYS.has(key) || !allowedFields.has(key)) {
+        ignoredPaths.push(path);
+        return;
+      }
+      const safeValue = safePatchValue(value, ruleSection, key, path, ignoredPaths);
+      if (safeValue !== undefined) entry[key] = safeValue;
+    });
+    return Object.keys(entry).length ? entry : null;
+  }).filter(Boolean);
+  return prepared.length ? prepared : null;
+}
+
+function prepareAssetsSection(values, allowedFields, ignoredPaths) {
+  if (!isRecord(values)) {
+    ignoredPaths.push('assets');
+    return null;
+  }
+  const itemFields = new Set(['name', 'quantity', 'description']);
+  const prepared = {};
+  Object.entries(values).forEach(([key, items]) => {
+    const sectionPath = `assets.${key}`;
+    if (UNSAFE_PATCH_KEYS.has(key) || !allowedFields.has(key) || !Array.isArray(items)) {
+      ignoredPaths.push(sectionPath);
+      return;
+    }
+    const list = prepareListSection(sectionPath, items, itemFields, ignoredPaths, 'asset');
+    if (list) prepared[key] = list;
+  });
+  return Object.keys(prepared).length ? prepared : null;
+}
+
+export function prepareAiPatch(value, stepId = 'all-pages') {
+  const ignoredPaths = [];
+  const patch = {};
+  const scope = hasOwn(PATCH_SCOPE_FIELDS, stepId) ? PATCH_SCOPE_FIELDS[stepId] : {};
+  const selected = unwrapPatchEnvelope(value, scope);
+  const source = selected.value;
+  collectIgnoredEnvelopeSiblings(value, selected.path, ignoredPaths);
+  if (!isRecord(source)) return { patch, ignoredPaths: ['$'] };
+
+  Object.entries(source).forEach(([section, values]) => {
+    const allowedFields = hasOwn(scope, section) ? scope[section] : null;
+    if (UNSAFE_PATCH_KEYS.has(section) || !hasOwn(PATCH_FIELDS, section) || !allowedFields) {
+      ignoredPaths.push(section);
+      return;
+    }
+    let prepared;
+    if (section === 'abilities' || section === 'relationships') prepared = prepareListSection(section, values, allowedFields, ignoredPaths);
+    else if (section === 'assets') prepared = prepareAssetsSection(values, allowedFields, ignoredPaths);
+    else prepared = prepareRecordSection(section, values, allowedFields, ignoredPaths);
+    if (prepared) patch[section] = prepared;
+  });
+
+  return { patch, ignoredPaths: [...new Set(ignoredPaths)] };
 }

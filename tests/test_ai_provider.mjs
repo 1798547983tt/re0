@@ -20,6 +20,17 @@ test('AI prompt asks for a JSON patch and keeps the creator draft authoritative'
   assert.match(prompt, /更克制一点/);
   assert.match(prompt, /1阶到7阶/);
   assert.match(prompt, /上位或下位/);
+  assert.match(prompt, /当前页允许的 JSON 形状/);
+  assert.match(prompt, /personality/);
+  assert.match(prompt, /wish/);
+});
+
+test('full-draft AI prompt exposes fields from every creator page', () => {
+  const prompt = buildAiPrompt({}, 'all-pages', '完整补全');
+
+  assert.match(prompt, /"protagonist":\{"name":"字符串"[^}]*"appearance":"字符串"/);
+  assert.match(prompt, /"wish":"字符串"/);
+  assert.match(prompt, /"combatTier"/);
 });
 
 test('AI response parser extracts fenced JSON and rejects non-object output', () => {
@@ -31,6 +42,7 @@ test('AI response parser extracts fenced JSON and rejects non-object output', ()
 
 test('OpenAI-compatible request normalizes endpoint, authorization and content', async () => {
   let request;
+  const phases = [];
   const fetchImpl = async (url, options) => {
     request = { url, options };
     return new Response(JSON.stringify({ choices: [{ message: { content: '{"personality":{"wish":"活下去"}}' } }] }), {
@@ -45,12 +57,14 @@ test('OpenAI-compatible request normalizes endpoint, authorization and content',
     model: 'model-x',
     prompt: 'prompt',
     fetchImpl,
+    onStatus: (event) => phases.push(event.phase),
   });
 
   assert.equal(request.url, 'https://example.test/v1/chat/completions');
   assert.equal(request.options.headers.Authorization, 'Bearer secret');
   assert.equal(JSON.parse(request.options.body).model, 'model-x');
   assert.deepEqual(result, { personality: { wish: '活下去' } });
+  assert.deepEqual(phases, ['sending', 'response', 'parsed']);
 });
 
 test('API endpoint resolver accepts a root, v1 base, chat endpoint, or models endpoint', () => {
@@ -61,6 +75,28 @@ test('API endpoint resolver accepts a root, v1 base, chat endpoint, or models en
   assert.equal(resolveModelsEndpoint('https://example.test/v1'), 'https://example.test/v1/models');
   assert.equal(resolveModelsEndpoint('https://example.test/v1/chat/completions'), 'https://example.test/v1/models');
   assert.equal(resolveModelsEndpoint('https://example.test/v1/models'), 'https://example.test/v1/models');
+});
+
+test('AI endpoints reject URL credentials before a request or trace event can expose them', async () => {
+  let requests = 0;
+  const events = [];
+
+  await assert.rejects(
+    () => requestOpenAiCompatible({
+      apiUrl: 'https://trace-user:trace-pass@example.test/v1',
+      model: 'model-x',
+      prompt: 'prompt',
+      fetchImpl: async () => {
+        requests += 1;
+        return new Response('{}', { status: 200 });
+      },
+      onStatus: (event) => events.push(event),
+    }),
+    /账号密码|凭据/,
+  );
+
+  assert.equal(requests, 0);
+  assert.deepEqual(events, []);
 });
 
 test('model catalog accepts common payload shapes and follows every pagination page', async () => {

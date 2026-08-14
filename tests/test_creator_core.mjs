@@ -8,6 +8,7 @@ import {
   getStoryEvent,
   getStoryVolume,
   mergeAiPatch,
+  prepareAiPatch,
   normalizeStoryIndex,
   parseDraft,
   serializeDraft,
@@ -235,4 +236,80 @@ test('AI patches reject unknown or prototype-polluting paths before merge', () =
   assert.equal(result.ok, false);
   assert.ok(result.errors.some((error) => error.path === '__proto__'));
   assert.throws(() => mergeAiPatch(createDefaultDraft(), unsafe), /AI 补丁/);
+});
+
+test('AI patch preparation keeps safe current-page fields inside common wrappers', () => {
+  const prepared = prepareAiPatch({
+    patch: {
+      protagonist: {
+        appearance: '银白长发与紫绀色眼睛，神情清冷。',
+        hairColor: '银白',
+      },
+      storyAnchor: { eventTitle: '不得由模型改写' },
+    },
+    explanation: '额外说明不属于补丁',
+  }, 'origin');
+
+  assert.deepEqual(prepared.patch, {
+    protagonist: { appearance: '银白长发与紫绀色眼睛，神情清冷。' },
+  });
+  assert.ok(prepared.ignoredPaths.includes('protagonist.hairColor'));
+  assert.ok(prepared.ignoredPaths.includes('storyAnchor'));
+});
+
+test('AI patch preparation ignores schema-invalid values without losing valid siblings', () => {
+  const prepared = prepareAiPatch({
+    protagonist: {
+      name: { nested: 'not text' },
+      identity: '王都边境的旅人',
+    },
+    combatTier: {
+      level: '999阶',
+      position: '上位',
+    },
+  }, 'all-pages');
+
+  assert.deepEqual(prepared.patch, {
+    protagonist: { identity: '王都边境的旅人' },
+    combatTier: { position: '上位' },
+  });
+  assert.ok(prepared.ignoredPaths.includes('protagonist.name'));
+  assert.ok(prepared.ignoredPaths.includes('combatTier.level'));
+  assert.throws(
+    () => mergeAiPatch(createDefaultDraft(), { protagonist: { name: { nested: 'not text' } } }),
+    /AI 补丁/,
+  );
+});
+
+test('AI patch preparation finds a scoped patch behind metadata and unrelated sections', () => {
+  const prepared = prepareAiPatch({
+    abilities: [{ name: '当前身份页不应使用的能力' }],
+    storyAnchor: { eventTitle: '不得由模型改写' },
+    data: { requestId: 'request-1' },
+    result: {
+      patch: {
+        protagonist: { name: '露娜' },
+      },
+    },
+  }, 'identity');
+
+  assert.deepEqual(prepared.patch, { protagonist: { name: '露娜' } });
+  assert.ok(prepared.ignoredPaths.includes('abilities'));
+  assert.ok(prepared.ignoredPaths.includes('storyAnchor'));
+});
+
+test('AI patch maps treat inherited object names as unknown data, never schema entries', () => {
+  const response = JSON.parse('{"personality":{"wish":"守住重要之人"},"toString":{"x":1}}');
+  const prepared = prepareAiPatch(response, 'heart');
+
+  assert.deepEqual(prepared.patch, { personality: { wish: '守住重要之人' } });
+  assert.ok(prepared.ignoredPaths.includes('toString'));
+
+  const validation = validateAiPatch({ toString: { x: 1 } });
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.some((item) => item.path === 'toString'));
+  assert.throws(() => mergeAiPatch(createDefaultDraft(), { toString: { x: 1 } }), /AI 补丁/);
+
+  const inheritedScope = prepareAiPatch({ personality: { wish: '不得放宽范围' } }, 'toString');
+  assert.deepEqual(inheritedScope.patch, {});
 });

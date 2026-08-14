@@ -49,6 +49,10 @@ test('creator regex artifact is a complete importable self-contained package', (
   assert.match(artifact.replaceString, /requestTavernHelper/);
   assert.match(artifact.replaceString, /data-portrait-image/);
   assert.match(artifact.replaceString, /data-portrait-file/);
+  assert.match(artifact.replaceString, /data-step-visual/);
+  assert.doesNotMatch(artifact.replaceString, /portrait-presets/);
+  assert.doesNotMatch(artifact.replaceString, /data-action="choose-portrait"/);
+  assert.doesNotMatch(artifact.replaceString, /updateAiTrace\(\{ \.\.\.event/);
   assert.match(artifact.replaceString, /\.footer-nav \{ position: relative;/);
   assert.doesNotMatch(artifact.replaceString, /\.footer-nav \{ position: fixed;/);
   assert.doesNotMatch(artifact.replaceString, /src="\.\/src\/app\.mjs"/);

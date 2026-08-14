@@ -2,14 +2,49 @@ function asText(value) {
   return value == null ? '' : String(value).trim();
 }
 
+const AI_PATCH_SHAPES = {
+  identity: {
+    protagonist: {
+      name: '字符串', identity: '字符串', roleType: '原创角色｜原作人物｜异界来客', gender: '字符串', ageStage: '字符串', race: '字符串',
+    },
+  },
+  origin: {
+    protagonist: { faction: '字符串', appearance: '字符串', clothing: '字符串', currentGoal: '字符串' },
+    world: { currentLocation: '字符串', entryContext: '字符串', difficulty: '轻松｜标准｜困难' },
+  },
+  heart: {
+    personality: { traits: ['字符串'], wish: '字符串', fear: '字符串', desire: '字符串', boundary: '字符串', speechStyle: '字符串', habits: '字符串', secret: '字符串' },
+  },
+  arsenal: {
+    combatTier: { level: '1阶至7阶', position: '上位｜下位', combatStatus: '可战｜受限｜无法战斗｜未知', condition: '字符串' },
+    abilities: [{ name: '字符串', category: '字符串', status: '字符串', cost: '字符串', description: '字符串', limits: '字符串' }],
+    relationships: [{ name: '字符串', relation: '字符串', stance: '友方｜中立｜戒备｜敌对｜未知', trust: 0, notes: '字符串' }],
+    assets: { currency: [{ name: '字符串', quantity: 1, description: '字符串' }], items: [], equipment: [] },
+  },
+};
+
+AI_PATCH_SHAPES.review = {
+  protagonist: { ...AI_PATCH_SHAPES.identity.protagonist, ...AI_PATCH_SHAPES.origin.protagonist },
+  world: AI_PATCH_SHAPES.origin.world,
+  personality: AI_PATCH_SHAPES.heart.personality,
+  ...AI_PATCH_SHAPES.arsenal,
+};
+AI_PATCH_SHAPES['all-pages'] = AI_PATCH_SHAPES.review;
+
+function emitStatus(listener, event) {
+  try { listener?.(event); } catch {}
+}
+
 export function buildAiPrompt(draft, stepId, idea = '') {
   const compactDraft = JSON.stringify(draft ?? {});
+  const shape = AI_PATCH_SHAPES[stepId] ?? AI_PATCH_SHAPES['all-pages'];
   return [
     '你是《Re：从零开始的异世界生活》创角向导的灵感助手。',
     `当前页面：${stepId}。`,
     '只返回一个 JSON 对象，作为局部草稿 patch；不得返回 Markdown、解释文字或代码围栏。',
     '不得覆盖用户已有内容；只补充空字段或新增条目。不得改变剧情锚点的卷、事件标题与事件时间。',
     '战力等阶只能使用1阶到7阶，位阶只能使用上位或下位；给出能力建议时应同步建议合理等阶与限制。',
+    `当前页允许的 JSON 形状：${JSON.stringify(shape)}。只输出需要补充的键，不要输出 patch/data/result 包装层，也不要添加形状之外的字段。`,
     idea ? `用户额外要求：${idea}` : '请保持克制、可游玩，并给出明确限制。',
     `当前草稿：${compactDraft}`,
   ].join('\n');
@@ -36,14 +71,16 @@ export function parseAiResponse(value) {
 function parseApiUrl(apiUrl) {
   const value = asText(apiUrl).replace(/\/+$/, '');
   if (!value) throw new Error('请先填写 AI API 地址');
+  let parsed;
   try {
-    const parsed = new URL(value);
-    parsed.search = '';
-    parsed.hash = '';
-    return parsed;
+    parsed = new URL(value);
   } catch {
     throw new Error('AI API 地址必须是完整 URL，例如 https://example.com/v1');
   }
+  if (parsed.username || parsed.password) throw new Error('AI API 地址不能包含账号密码或其他 URL 凭据；请改用 API Key 字段。');
+  parsed.search = '';
+  parsed.hash = '';
+  return parsed;
 }
 
 function endpointWithPath(parsed, pathname) {
@@ -215,9 +252,10 @@ export async function fetchAllModels({ apiUrl, apiKey = '', fetchImpl = fetch, s
   return { models, pages };
 }
 
-export async function requestOpenAiCompatible({ apiUrl, apiKey = '', model, prompt, fetchImpl = fetch, signal, timeoutMs = 60000 } = {}) {
+export async function requestOpenAiCompatible({ apiUrl, apiKey = '', model, prompt, fetchImpl = fetch, signal, timeoutMs = 60000, onStatus } = {}) {
   const endpoint = resolveChatCompletionsEndpoint(apiUrl);
   if (!asText(model)) throw new Error('请先选择或填写 AI 模型');
+  emitStatus(onStatus, { phase: 'sending', transport: 'direct', method: 'POST', endpoint, model: asText(model), promptLength: String(prompt ?? '').length });
   const response = await fetchWithDiagnostics(fetchImpl, endpoint, {
     method: 'POST',
     headers: requestHeaders(apiKey, true),
@@ -228,11 +266,14 @@ export async function requestOpenAiCompatible({ apiUrl, apiKey = '', model, prom
       messages: [{ role: 'user', content: String(prompt ?? '') }],
     }),
   }, 'AI 请求', timeoutMs, signal);
+  emitStatus(onStatus, { phase: 'response', transport: 'direct', status: response.status, ok: response.ok, endpoint, model: asText(model) });
   const payload = await readPayload(response);
   if (!response.ok) throw new Error(`AI 请求失败（HTTP ${response.status}）${errorDetail(payload) ? `：${errorDetail(payload)}` : ''}`);
   const text = extractCompletionText(payload);
   if (!text) throw new Error('AI 已响应，但没有返回可用文本。');
-  return parseAiResponse(text);
+  const parsed = parseAiResponse(text);
+  emitStatus(onStatus, { phase: 'parsed', transport: 'direct', endpoint, model: asText(model), responseLength: text.length });
+  return parsed;
 }
 
 function generationMember(root = globalThis) {
@@ -248,11 +289,12 @@ function generationMember(root = globalThis) {
   return null;
 }
 
-export async function requestTavernHelper({ root = globalThis, prompt, timeoutMs = 60000 } = {}) {
+export async function requestTavernHelper({ root = globalThis, prompt, timeoutMs = 60000, onStatus } = {}) {
   const member = generationMember(root);
   if (!member) throw new Error('当前消息 iframe 未发现 Tavern Helper 的 generateRaw；请确认酒馆助手已启用，或切换到独立 API / 离线灵感。');
   let timeout;
   try {
+    emitStatus(onStatus, { phase: 'sending', transport: 'tavern-helper', method: 'generateRaw', promptLength: String(prompt ?? '').length });
     const result = await Promise.race([
       member.fn.call(member.owner, {
         should_silence: true,
@@ -263,8 +305,11 @@ export async function requestTavernHelper({ root = globalThis, prompt, timeoutMs
         timeout = setTimeout(() => reject(new Error(`酒馆当前模型请求超时（${Math.ceil(Number(timeoutMs) / 1000)} 秒），请重试。`)), timeoutMs);
       }),
     ]);
+    emitStatus(onStatus, { phase: 'response', transport: 'tavern-helper' });
     if (!asText(result)) throw new Error('酒馆当前模型已结束生成，但没有返回文本。');
-    return parseAiResponse(result);
+    const parsed = parseAiResponse(result);
+    emitStatus(onStatus, { phase: 'parsed', transport: 'tavern-helper', responseLength: String(result).length });
+    return parsed;
   } catch (error) {
     if (/超时|没有返回|JSON|未发现/.test(asText(error?.message))) throw error;
     throw new Error(`酒馆当前模型请求失败：${asText(error?.message ?? error) || '未知错误'}`);

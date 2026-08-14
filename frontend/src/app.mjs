@@ -13,6 +13,7 @@ import {
   getStoryVolume,
   mergeAiPatch,
   parseDraft,
+  prepareAiPatch,
   serializeDraft,
   suggestOffline,
   validateDraft,
@@ -46,6 +47,14 @@ const PORTRAIT_ART = [
   assetUrl('satella-moon.png'),
   assetUrl('rem-tea-rose.png'),
   assetUrl('witch-table-tea.png'),
+];
+
+const STEP_VISUALS = [
+  { label: '身份之页', caption: '月夜茶会中的银发旅人' },
+  { label: '出身之页', caption: '雪原尽头的命运入口' },
+  { label: '内心之页', caption: '月影下无法言说的秘密' },
+  { label: '羁绊之页', caption: '能力与誓约交织的瞬间' },
+  { label: '启程之页', caption: '魔女茶会前的最终确认' },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -132,15 +141,14 @@ function loadSettings() {
 
 function loadPortrait() {
   const serialized = safeReadStorage(PORTRAIT_STORAGE_KEY);
-  if (!serialized) return { presetIndex: 1, customDataUrl: '' };
+  if (!serialized) return { customDataUrl: '' };
   try {
     const value = JSON.parse(serialized);
     return {
-      presetIndex: Math.max(0, Math.min(PORTRAIT_ART.length - 1, Number(value.presetIndex) || 0)),
       customDataUrl: typeof value.customDataUrl === 'string' && value.customDataUrl.startsWith('data:image/') ? value.customDataUrl : '',
     };
   } catch {
-    return { presetIndex: 1, customDataUrl: '' };
+    return { customDataUrl: '' };
   }
 }
 
@@ -170,6 +178,7 @@ const state = {
     aiStatus: '尚未发送请求。选择帮填方式后，可生成本页或全档案建议。',
     aiTone: '',
     aiPreview: null,
+    aiTrace: null,
     lastAiScope: 'page',
   },
 };
@@ -191,7 +200,8 @@ function currentEvent() {
 }
 
 function portraitSource() {
-  return state.portrait.customDataUrl || PORTRAIT_ART[state.portrait.presetIndex] || PORTRAIT_ART[1];
+  if (state.ui.activeStep === 1 && state.portrait.customDataUrl) return state.portrait.customDataUrl;
+  return PORTRAIT_ART[state.ui.activeStep] || PORTRAIT_ART[0];
 }
 
 function persistPortrait() {
@@ -201,9 +211,37 @@ function persistPortrait() {
 function providerLabel() {
   return ({
     tavern: '酒馆当前模型',
-    remote: state.settings.model ? `独立接口 · ${state.settings.model}` : '独立 OpenAI 兼容接口',
+    remote: state.settings.model ? `独立直连 · ${state.settings.model}` : '独立 OpenAI 兼容直连',
     offline: '离线灵感模式',
   })[state.settings.provider] || '未选择';
+}
+
+function safeEndpointLabel(value) {
+  try {
+    const parsed = new URL(String(value || ''));
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return String(value || '未提供');
+  }
+}
+
+function tracePhaseLabel(phase) {
+  return ({ prepared: '提示词已准备', sending: '调用已发起', response: '已收到接口响应', parsed: '回复已解析', filtered: '补丁已筛选', failed: '调用失败' })[phase] || '等待调用';
+}
+
+function updateAiTrace(event = {}) {
+  state.ui.aiTrace = { ...(state.ui.aiTrace ?? {}), ...event };
+  const trace = state.ui.aiTrace;
+  const phaseNode = app.querySelector('[data-ai-trace-phase]');
+  const targetNode = app.querySelector('[data-ai-trace-target]');
+  const modelNode = app.querySelector('[data-ai-trace-model]');
+  const promptNode = app.querySelector('[data-ai-trace-prompt]');
+  if (phaseNode) phaseNode.textContent = tracePhaseLabel(trace.phase);
+  if (targetNode) targetNode.textContent = trace.target || '—';
+  if (modelNode) modelNode.textContent = trace.model || '酒馆当前模型';
+  if (promptNode) promptNode.textContent = trace.promptLength ? `${trace.promptLength} 字` : '—';
+  const statusNode = app.querySelector('[data-ai-status] > span');
+  if (statusNode && trace.message) statusNode.textContent = trace.message;
 }
 
 function hasSavedDraft() {
@@ -581,24 +619,20 @@ function renderProgress() {
 
 function renderRail() {
   const step = currentStep();
+  const visual = STEP_VISUALS[state.ui.activeStep] || STEP_VISUALS[0];
   const event = currentEvent();
   const name = state.draft.protagonist.name || '未命名旅人';
-  const appearance = state.draft.protagonist.appearance || '外貌尚未描写；可在第一页补充发色、瞳色与显眼特征。';
+  const appearance = state.draft.protagonist.appearance || '外貌尚未描写；可在“来历与处境”页补充发色、瞳色与显眼特征。';
   const completion = [0, 1, 2, 3, 4].filter(stepIsComplete).length;
   return `<aside class="rail">
     <section class="rail-card portrait-dossier">
       <div class="portrait">
-        <img src="${escapeHtml(portraitSource())}" alt="${escapeHtml(name)}的人物肖像" data-portrait-image>
+        <img src="${escapeHtml(portraitSource())}" alt="${escapeHtml(visual.caption)}" data-portrait-image data-step-visual="${escapeHtml(step.id)}">
         <div class="portrait-vignette"></div>
         <div class="portrait-copy"><small>CHARACTER DOSSIER</small><strong data-live-name>${escapeHtml(name)}</strong><span data-live-identity>${escapeHtml(state.draft.protagonist.identity || '身份尚未落笔')} · ${escapeHtml(state.draft.protagonist.faction || '中立')}</span><p data-live-appearance>${escapeHtml(appearance)}</p></div>
       </div>
       <div class="rail-card-body">
-        <div class="portrait-toolbar" aria-label="肖像选择">
-          <div class="portrait-presets">${PORTRAIT_ART.map((url, index) => `<button type="button" class="portrait-preset${!state.portrait.customDataUrl && state.portrait.presetIndex === index ? ' is-active' : ''}" data-action="choose-portrait" data-portrait-index="${index}" aria-label="选择预设肖像 ${index + 1}"><img src="${escapeHtml(url)}" alt=""></button>`).join('')}</div>
-          <label class="portrait-upload">上传肖像<input class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-portrait-file></label>
-          ${state.portrait.customDataUrl ? '<button type="button" class="portrait-clear" data-action="clear-portrait">恢复预设</button>' : ''}
-        </div>
-        <p class="portrait-local-note">自定义肖像只保存在本机界面，不会写入角色状态或导出 JSON。</p>
+        ${state.ui.activeStep === 1 ? `<div class="portrait-toolbar" aria-label="自定义角色肖像"><div class="step-visual-note"><small>${escapeHtml(visual.label)}</small><strong>${escapeHtml(state.portrait.customDataUrl ? '正在使用本机肖像' : visual.caption)}</strong></div><label class="portrait-upload">上传角色肖像<input class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-portrait-file></label>${state.portrait.customDataUrl ? '<button type="button" class="portrait-clear" data-action="clear-portrait">恢复本页画面</button>' : ''}</div><p class="portrait-local-note">上传仅替换“出身”页画面并保存在本机；其他填表页仍显示各自的剧情画面。</p>` : `<div class="step-visual-note"><small>${escapeHtml(visual.label)} · AUTO SWITCH</small><strong>${escapeHtml(visual.caption)}</strong><span>翻到下一页时，画面会随填写主题自动切换。</span></div>`}
         <div class="mini-grid">
           <div class="mini-stat"><small>PROGRESS</small><b data-live-progress>${completion} / 5 页完整</b></div>
           <div class="mini-stat"><small>TYPE</small><b>${escapeHtml(state.draft.protagonist.roleType || '未选择')}</b></div>
@@ -620,6 +654,7 @@ function renderRail() {
           <button type="button" class="ghost-btn" data-action="open-settings">设置</button>
         </div>
         <div class="ai-feedback ${escapeHtml(state.ui.aiTone)}" data-ai-status aria-live="polite"><strong>${escapeHtml(state.ui.aiTone === 'bad' ? '请求未完成' : state.ui.aiTone === 'ok' ? '已收到回复' : '请求状态')}</strong><span>${escapeHtml(state.ui.aiStatus)}</span>${state.ui.aiTone === 'bad' ? '<div class="button-row"><button type="button" class="ghost-btn" data-action="retry-ai">重试</button><button type="button" class="ghost-btn" data-action="run-ai-offline">改用离线灵感</button></div>' : ''}</div>
+        ${state.ui.aiTrace ? `<details class="ai-trace"><summary>本次调用记录</summary><dl><div><dt>阶段</dt><dd data-ai-trace-phase>${escapeHtml(tracePhaseLabel(state.ui.aiTrace.phase))}</dd></div><div><dt>通道</dt><dd>${escapeHtml(state.ui.aiTrace.channel || '—')}</dd></div><div><dt>目标</dt><dd data-ai-trace-target>${escapeHtml(state.ui.aiTrace.target || '—')}</dd></div><div><dt>模型</dt><dd data-ai-trace-model>${escapeHtml(state.ui.aiTrace.model || '酒馆当前模型')}</dd></div><div><dt>提示词</dt><dd data-ai-trace-prompt>${state.ui.aiTrace.promptLength ? `${state.ui.aiTrace.promptLength} 字` : '—'}</dd></div></dl>${state.ui.aiTrace.channel === '独立 API 直连' ? '<p>此通道由浏览器直接请求接口，不经过 SillyTavern 后台；请在独立 API 服务端查看 POST 记录。</p>' : ''}</details>` : ''}
         <p class="rail-note">模型回复会先进入变更预览；确认后才补入空白字段，已有内容不会被覆盖。</p>
       </div>
     </section>
@@ -634,7 +669,7 @@ function renderSettingsModal() {
       <div class="modal-head"><div><h2 id="settings-title">模型连接与显示</h2><p>优先使用酒馆当前连接；也可切换独立兼容接口，或完全离线。</p></div><button type="button" class="close-btn" data-action="close-modal" aria-label="关闭">×</button></div>
       <div class="modal-body">
         <div class="field-grid">
-          <div class="field full"><label for="setting-provider"><span>帮填方式</span><small>PROVIDER</small></label><select class="control" id="setting-provider" data-setting="provider"><option value="tavern"${state.settings.provider === 'tavern' ? ' selected' : ''}>酒馆当前连接（使用当前模型）</option><option value="remote"${state.settings.provider === 'remote' ? ' selected' : ''}>独立 OpenAI 兼容接口</option><option value="offline"${state.settings.provider === 'offline' ? ' selected' : ''}>离线灵感（无需请求）</option></select></div>
+          <div class="field full"><label for="setting-provider"><span>帮填方式</span><small>PROVIDER</small></label><select class="control" id="setting-provider" data-setting="provider"><option value="tavern"${state.settings.provider === 'tavern' ? ' selected' : ''}>酒馆当前连接（使用当前模型）</option><option value="remote"${state.settings.provider === 'remote' ? ' selected' : ''}>独立 OpenAI 兼容接口（浏览器直连）</option><option value="offline"${state.settings.provider === 'offline' ? ' selected' : ''}>离线灵感（无需请求）</option></select></div>
           ${state.settings.provider === 'tavern' ? '<div class="provider-note field full"><strong>酒馆当前连接</strong><span>通过 Tavern Helper 的 generateRaw 静默生成，不新增聊天楼层。若当前 iframe 无此能力，会显示明确错误并提供离线降级。</span></div>' : ''}
           ${state.settings.provider === 'offline' ? '<div class="provider-note field full"><strong>离线灵感</strong><span>不发送任何网络请求，使用内置 Re:Zero 角色灵感；仍会先预览再应用。</span></div>' : ''}
           ${state.settings.provider === 'remote' ? `${inputSetting('apiUrl', '接口地址', 'https://example.com、/v1 或完整 /chat/completions', 'url', true)}
@@ -644,7 +679,8 @@ function renderSettingsModal() {
             <div class="model-status ${escapeHtml(state.ui.modelTone)}" data-model-status aria-live="polite">${escapeHtml(state.ui.modelStatus)}</div>
             ${state.ui.modelOptions.length ? `<div class="model-list" data-model-list role="listbox" aria-label="全部模型">${state.ui.modelOptions.map((model) => `<button type="button" class="model-option${state.settings.model === model ? ' is-selected' : ''}" data-action="choose-model" data-model-value="${escapeHtml(model)}" role="option" aria-selected="${state.settings.model === model ? 'true' : 'false'}"${modelNeedle && !model.toLowerCase().includes(modelNeedle) ? ' hidden' : ''}>${escapeHtml(model)}</button>`).join('')}<p data-model-empty${state.ui.modelOptions.some((model) => !modelNeedle || model.toLowerCase().includes(modelNeedle)) ? ' hidden' : ''}>没有匹配项；保留输入内容即可手动使用。</p></div>` : ''}
           </div>
-          ${inputSetting('apiKey', 'API Key（可选）', '本地服务可留空；只保存在本机浏览器', 'password', true)}` : ''}
+          ${inputSetting('apiKey', 'API Key（可选）', '本地服务可留空；只保存在本机浏览器', 'password', true)}
+          <div class="provider-note field full"><strong>浏览器直连说明</strong><span>补全 POST 会从当前消息 iframe 直接发送到该接口，不经过 SillyTavern 后台，因此酒馆控制台不会出现这条请求。接口必须允许浏览器 CORS；调用记录会显示实际目标、模型与提示词长度。</span></div>` : ''}
           <label class="reduced-motion-toggle field full"><input type="checkbox" data-setting="reducedMotion"${state.settings.reducedMotion ? ' checked' : ''}> 减少翻页与背景动效</label>
         </div>
         <p class="field-note">独立接口请求只包含当前草稿和灵感提示。模型列表不会静默过滤；API Key 不会进入角色状态或导出 JSON。</p>
@@ -669,9 +705,11 @@ function renderAiPreviewModal() {
   return `<div class="overlay" data-overlay="ai-preview"><section class="modal ai-preview-modal" role="dialog" aria-modal="true" aria-labelledby="ai-preview-title">
     <div class="modal-head"><div><h2 id="ai-preview-title">模型回复已收到</h2><p>${escapeHtml(preview.source)} · ${preview.scope === 'all' ? '全档案建议' : '当前页建议'} · 只补空白</p></div><button type="button" class="close-btn" data-action="discard-ai-preview" aria-label="关闭">×</button></div>
     <div class="modal-body">
-      <div class="preview-summary"><strong>${preview.appliedPaths.length}</strong><span>处可应用</span><strong>${preview.skippedPaths.length}</strong><span>处因已有内容而跳过</span></div>
+      <div class="preview-summary"><strong>${preview.appliedPaths.length}</strong><span>处可应用</span><strong>${preview.skippedPaths.length}</strong><span>处因已有内容而跳过</span><strong>${preview.ignoredPaths?.length || 0}</strong><span>个范围外字段已忽略</span></div>
       ${changes ? `<ul class="ai-change-list">${changes}</ul>` : '<div class="provider-note"><strong>没有可应用的空白</strong><span>请求和回复均已完成，但当前建议对应的字段已有内容，或模型返回了空补丁。</span></div>'}
-      <details class="raw-patch"><summary>查看模型原始 JSON 补丁</summary><pre>${escapeHtml(JSON.stringify(preview.patch, null, 2))}</pre></details>
+      ${preview.ignoredPaths?.length ? `<div class="provider-note"><strong>已安全忽略范围外字段</strong><span>${escapeHtml(preview.ignoredPaths.join('、'))}</span></div>` : ''}
+      <details class="raw-patch"><summary>查看可应用 JSON 补丁</summary><pre>${escapeHtml(JSON.stringify(preview.patch, null, 2))}</pre></details>
+      <details class="raw-patch"><summary>查看模型原始 JSON 回复</summary><pre>${escapeHtml(JSON.stringify(preview.rawPatch ?? preview.patch, null, 2))}</pre></details>
       <div class="button-row end"><button type="button" class="ghost-btn" data-action="discard-ai-preview">放弃</button><button type="button" class="primary-btn" data-action="apply-ai-preview"${preview.appliedPaths.length ? '' : ' disabled'}>确认补入 ${preview.appliedPaths.length} 处</button></div>
     </div>
   </section></div>`;
@@ -846,7 +884,7 @@ function updateLivePreview() {
   const liveIdentity = app.querySelector('[data-live-identity]');
   if (liveIdentity) liveIdentity.textContent = `${state.draft.protagonist.identity || '身份尚未落笔'} · ${state.draft.protagonist.faction || '中立'}`;
   const liveAppearance = app.querySelector('[data-live-appearance]');
-  if (liveAppearance) liveAppearance.textContent = state.draft.protagonist.appearance || '外貌尚未描写；可在第一页补充发色、瞳色与显眼特征。';
+  if (liveAppearance) liveAppearance.textContent = state.draft.protagonist.appearance || '外貌尚未描写；可在“来历与处境”页补充发色、瞳色与显眼特征。';
   const liveProgress = app.querySelector('[data-live-progress]');
   if (liveProgress) liveProgress.textContent = `${[0, 1, 2, 3, 4].filter(stepIsComplete).length} / 5 页完整`;
   const jsonPreview = app.querySelector('[data-json-preview]');
@@ -945,16 +983,37 @@ async function runAiFill(scope = 'page', providerOverride = '') {
   if (state.ui.busy) return;
   const provider = providerOverride || state.settings.provider;
   const stepId = scope === 'all' ? 'all-pages' : currentStep().id;
+  const prompt = buildAiPrompt(state.draft, stepId, state.ui.aiIdea);
   state.ui.lastAiScope = scope;
   state.ui.aiTone = '';
   state.ui.aiStatus = provider === 'offline' ? '正在生成离线建议…' : `请求已提交给${provider === 'tavern' ? '酒馆当前模型' : '独立兼容接口'}，正在等待回复…`;
   state.ui.busy = provider === 'offline' ? '正在整理离线灵感…' : '请求已经发出，正在等待模型回复…';
+  state.ui.aiTrace = {
+    phase: 'prepared',
+    channel: provider === 'tavern' ? 'Tavern Helper' : provider === 'remote' ? '独立 API 直连' : '本机离线规则',
+    target: provider === 'tavern' ? 'generateRaw' : provider === 'remote' ? safeEndpointLabel(state.settings.apiUrl) : '当前浏览器',
+    model: provider === 'remote' ? state.settings.model : provider === 'tavern' ? '酒馆当前模型' : '无需模型',
+    promptLength: prompt.length,
+  };
   render();
   try {
-    const prompt = buildAiPrompt(state.draft, stepId, state.ui.aiIdea);
+    const onStatus = (event) => {
+      const target = event.endpoint ? safeEndpointLabel(event.endpoint) : state.ui.aiTrace?.target;
+      const message = event.phase === 'sending'
+        ? `${event.transport === 'direct' ? '补全 POST 已发起' : 'generateRaw 已调用'}：${event.model || '酒馆当前模型'}，提示词 ${event.promptLength || prompt.length} 字，等待回复…`
+        : event.phase === 'response'
+          ? `${event.status ? `接口返回 HTTP ${event.status}` : '酒馆模型已返回文本'}，正在解析回复…`
+          : '模型回复已解析，正在筛选当前页允许字段…';
+      state.ui.aiStatus = message;
+      const traceEvent = { target, message };
+      ['phase', 'transport', 'status', 'ok', 'model', 'promptLength', 'responseLength'].forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(event, key)) traceEvent[key] = event[key];
+      });
+      updateAiTrace(traceEvent);
+    };
     let patch;
     if (provider === 'tavern') {
-      patch = await requestTavernHelper({ root: window, prompt, timeoutMs: 60000 });
+      patch = await requestTavernHelper({ root: window, prompt, timeoutMs: 60000, onStatus });
     } else if (provider === 'remote') {
       if (!state.settings.apiUrl || !state.settings.model) throw new Error('请先在设置中填写接口地址，并选择或手动填写模型名称。');
       patch = await requestOpenAiCompatible({
@@ -964,13 +1023,23 @@ async function runAiFill(scope = 'page', providerOverride = '') {
         prompt,
         fetchImpl: fetchFromAvailableRealm,
         timeoutMs: 60000,
+        onStatus,
       });
     } else {
+      updateAiTrace({ phase: 'sending', message: '正在运行本机离线补全规则，不会发送网络请求。' });
       patch = suggestOffline(state.draft, stepId);
     }
-    const result = mergeAiPatch(state.draft, patch);
+    const prepared = prepareAiPatch(patch, stepId);
+    if (!Object.keys(prepared.patch).length) {
+      const ignored = prepared.ignoredPaths.slice(0, 4).join('、');
+      throw new Error(`模型已回复，但没有返回当前页可用字段${ignored ? `；已忽略：${ignored}` : ''}。请重试或补充更具体的要求。`);
+    }
+    const result = mergeAiPatch(state.draft, prepared.patch);
+    updateAiTrace({ phase: 'filtered', ignoredCount: prepared.ignoredPaths.length, message: `补丁筛选完成：${result.appliedPaths.length} 处可补入，忽略 ${prepared.ignoredPaths.length} 个范围外字段。` });
     state.ui.aiPreview = {
-      patch,
+      patch: prepared.patch,
+      rawPatch: patch,
+      ignoredPaths: prepared.ignoredPaths,
       draft: result.draft,
       appliedPaths: result.appliedPaths,
       skippedPaths: result.skippedPaths,
@@ -978,7 +1047,7 @@ async function runAiFill(scope = 'page', providerOverride = '') {
       source: provider === 'tavern' ? '酒馆当前模型' : provider === 'remote' ? `独立接口 · ${state.settings.model}` : '离线灵感',
     };
     state.ui.aiTone = 'ok';
-    state.ui.aiStatus = `回复已收到：${result.appliedPaths.length} 处可补入，${result.skippedPaths.length} 处已有内容被保护。`;
+    state.ui.aiStatus = `回复已收到：${result.appliedPaths.length} 处可补入，${result.skippedPaths.length} 处已有内容被保护，${prepared.ignoredPaths.length} 个范围外字段已忽略。`;
     state.ui.busy = '';
     state.ui.modal = 'ai-preview';
     render();
@@ -987,6 +1056,7 @@ async function runAiFill(scope = 'page', providerOverride = '') {
     state.ui.aiPreview = null;
     state.ui.aiTone = 'bad';
     state.ui.aiStatus = error?.message || 'AI 请求失败；没有改动任何字段。';
+    updateAiTrace({ phase: 'failed', message: state.ui.aiStatus });
     render();
     showToast(state.ui.aiStatus, 'bad');
   }
@@ -1181,13 +1251,6 @@ async function handleAction(action, element) {
   if (action === 'run-ai-offline') return runAiFill(state.ui.lastAiScope || 'page', 'offline');
   if (action === 'apply-ai-preview') return applyAiPreview();
   if (action === 'discard-ai-preview') return discardAiPreview();
-  if (action === 'choose-portrait') {
-    state.portrait.presetIndex = Math.max(0, Math.min(PORTRAIT_ART.length - 1, Number(element.dataset.portraitIndex) || 0));
-    state.portrait.customDataUrl = '';
-    persistPortrait();
-    render();
-    return;
-  }
   if (action === 'clear-portrait') {
     state.portrait.customDataUrl = '';
     persistPortrait();
@@ -1325,11 +1388,11 @@ app.addEventListener('keydown', (event) => {
 app.addEventListener('error', (event) => {
   const image = event.target;
   if (!image?.matches?.('[data-portrait-image]')) return;
-  if (image.src === PORTRAIT_ART[1]) return;
+  const fallback = PORTRAIT_ART[state.ui.activeStep] || PORTRAIT_ART[0];
+  if (image.src === fallback) return;
   state.portrait.customDataUrl = '';
-  state.portrait.presetIndex = 1;
-  image.src = PORTRAIT_ART[1];
-  image.alt = '默认银发少女肖像';
+  image.src = fallback;
+  image.alt = STEP_VISUALS[state.ui.activeStep]?.caption || '当前填表页画面';
   persistPortrait();
   showToast('肖像加载失败，已恢复默认预设。', 'bad');
 }, true);
