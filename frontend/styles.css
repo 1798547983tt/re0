@@ -46,7 +46,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 
 .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
 
-.title-screen { position: relative; isolation: isolate; min-height: 100dvh; overflow: hidden; color: var(--cream); background: #0c0711; }
+.title-screen { position: relative; isolation: isolate; min-height: clamp(650px,66vw,760px); overflow: hidden; color: var(--cream); background: #0c0711; }
 .title-art { position: absolute; inset: 0; z-index: -3; overflow: hidden; }
 .title-art img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 68% 34%; filter: saturate(1.08) contrast(1.06) brightness(.94); }
 .title-art-wash { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7,3,11,.82) 0%, rgba(18,7,25,.58) 38%, rgba(22,8,28,.12) 69%, rgba(7,3,11,.22) 100%), linear-gradient(0deg, rgba(7,3,11,.64), transparent 48%, rgba(9,4,14,.18)); }
@@ -55,7 +55,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .title-frame::before { left: -1px; top: -1px; border-left: 2px solid; border-top: 2px solid; }
 .title-frame::after { right: -1px; bottom: -1px; border-right: 2px solid; border-bottom: 2px solid; }
 .title-topbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px clamp(26px,4vw,58px); border-bottom: 1px solid rgba(255,226,168,.15); }
-.title-main { position: relative; z-index: 3; display: grid; grid-template-columns: minmax(0,1fr) minmax(320px,.62fr); gap: clamp(40px,7vw,110px); align-items: center; min-height: calc(100dvh - 88px); padding: clamp(44px,7vw,90px) clamp(28px,6vw,84px); }
+.title-main { position: relative; z-index: 3; display: grid; grid-template-columns: minmax(0,1fr) minmax(320px,.62fr); gap: clamp(40px,7vw,110px); align-items: center; min-height: clamp(560px,58vw,670px); padding: clamp(44px,7vw,90px) clamp(28px,6vw,84px); }
 .title-copy { max-width: 760px; text-shadow: 0 4px 24px rgba(0,0,0,.85); }
 .title-copy h1 { margin: 0; max-width: 760px; color: #fff8ee; font: 500 clamp(48px,6.7vw,88px)/1.02 var(--display); letter-spacing: .035em; text-wrap: balance; }
 .title-menu { display: grid; align-self: end; }
@@ -363,11 +363,11 @@ select.control { appearance: none; background-image: linear-gradient(45deg, tran
 }
 
 @media (max-width: 760px) {
-  .title-screen { min-height: 100dvh; }
+  .title-screen { min-height: 0; }
   .title-art img { object-position: 62% center; }
   .title-art-wash { background: linear-gradient(0deg, rgba(7,3,11,.96) 0%, rgba(14,6,20,.72) 55%, rgba(7,3,11,.2) 100%); }
   .title-topbar { padding: 17px 20px; }
-  .title-main { min-height: calc(100dvh - 73px); align-content: center; gap: 30px; padding: 48px 22px 34px; }
+  .title-main { min-height: 0; align-content: center; gap: 30px; padding: 48px 22px 34px; }
   .title-copy h1 { max-width: 620px; font-size: clamp(39px,11vw,58px); line-height: 1.08; }
   .title-menu { width: 100%; }.title-menu-btn { min-height: 58px; }
   .shell { width: min(100% - 22px, 620px); padding-top: 11px; padding-bottom: 18px; }

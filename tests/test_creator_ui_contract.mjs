@@ -25,6 +25,29 @@ test('title screen keeps one Re:0 title, uniform menu arrows, and no status foot
   assert.match(CSS, /--title-menu-glass:/);
 });
 
+test('title screen height stays intrinsic inside auto-sizing message iframes', () => {
+  const titleScreenRules = [...CSS.matchAll(/\.title-screen\s*\{([^}]*)\}/g)]
+    .map((match) => match[1])
+    .join('\n');
+  const titleMainRules = [...CSS.matchAll(/\.title-main\s*\{([^}]*)\}/g)]
+    .map((match) => match[1])
+    .join('\n');
+
+  const sizingDeclarations = (rules) => [...rules.matchAll(/\b(?:min-|max-)?(?:height|block-size)\s*:\s*[^;]+/gi)]
+    .map((match) => match[0].replace(/\s+/g, ' ').trim());
+
+  assert.doesNotMatch(titleScreenRules, /(?:d|s|l)?vh|vmin|vmax/i);
+  assert.doesNotMatch(titleMainRules, /(?:d|s|l)?vh|vmin|vmax/i);
+  assert.deepEqual(sizingDeclarations(titleScreenRules), [
+    'min-height: clamp(650px,66vw,760px)',
+    'min-height: 0',
+  ]);
+  assert.deepEqual(sizingDeclarations(titleMainRules), [
+    'min-height: clamp(560px,58vw,670px)',
+    'min-height: 0',
+  ]);
+});
+
 test('creator topbar keeps only settings while utilities live inside settings', () => {
   const topActions = APP.match(/<div class="top-actions">([\s\S]*?)<\/div>/)?.[1] ?? '';
   assert.match(topActions, /data-action="open-settings"/);
