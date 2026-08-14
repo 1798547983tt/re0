@@ -38,6 +38,19 @@ test('creator regex artifact is a complete importable self-contained package', (
   assert.doesNotMatch(artifact.replaceString, /1阶（顶点）到7阶（基础）/);
   assert.match(artifact.replaceString, /path: 'combatTier\.level'/);
   assert.match(artifact.replaceString, /path: 'combatTier\.position'/);
+  assert.match(artifact.replaceString, /data-screen="title"/);
+  assert.match(artifact.replaceString, /data-action="start-new"/);
+  assert.match(artifact.replaceString, /data-action="continue-draft"/);
+  assert.match(artifact.replaceString, /data-action="fetch-models"/);
+  assert.match(artifact.replaceString, /data-model-list/);
+  assert.match(artifact.replaceString, /data-action="run-ai-all"/);
+  assert.match(artifact.replaceString, /data-action="apply-ai-preview"/);
+  assert.match(artifact.replaceString, /data-action="retry-ai"/);
+  assert.match(artifact.replaceString, /requestTavernHelper/);
+  assert.match(artifact.replaceString, /data-portrait-image/);
+  assert.match(artifact.replaceString, /data-portrait-file/);
+  assert.match(artifact.replaceString, /\.footer-nav \{ position: relative;/);
+  assert.doesNotMatch(artifact.replaceString, /\.footer-nav \{ position: fixed;/);
   assert.doesNotMatch(artifact.replaceString, /src="\.\/src\/app\.mjs"/);
   assert.doesNotMatch(artifact.replaceString, /fetch\(['"]\.\/data\/story-index\.json/);
 

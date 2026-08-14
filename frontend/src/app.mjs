@@ -17,13 +17,19 @@ import {
   suggestOffline,
   validateDraft,
 } from './creator-core.mjs';
-import { buildAiPrompt, requestOpenAiCompatible } from './ai-provider.mjs';
+import {
+  buildAiPrompt,
+  fetchAllModels,
+  requestOpenAiCompatible,
+  requestTavernHelper,
+} from './ai-provider.mjs';
 import { loadStoryIndex } from './story-index.mjs';
 import { assetUrl } from './assets.mjs';
 
 const DRAFT_STORAGE_KEY = 're0.creator.draft.v1';
 const SETTINGS_STORAGE_KEY = 're0.creator.settings.v1';
 const FINAL_STORAGE_KEY = 're0.creator.final.v1';
+const PORTRAIT_STORAGE_KEY = 're0.creator.portrait.v1';
 const MAX_REPEATERS = 12;
 
 const PAGE_ART = [
@@ -43,8 +49,8 @@ const PORTRAIT_ART = [
 ];
 
 const DEFAULT_SETTINGS = {
-  provider: 'offline',
-  apiUrl: 'https://api.openai.com/v1/chat/completions',
+  provider: 'tavern',
+  apiUrl: 'https://api.openai.com/v1',
   apiKey: '',
   model: '',
   reducedMotion: false,
@@ -124,11 +130,27 @@ function loadSettings() {
   }
 }
 
+function loadPortrait() {
+  const serialized = safeReadStorage(PORTRAIT_STORAGE_KEY);
+  if (!serialized) return { presetIndex: 1, customDataUrl: '' };
+  try {
+    const value = JSON.parse(serialized);
+    return {
+      presetIndex: Math.max(0, Math.min(PORTRAIT_ART.length - 1, Number(value.presetIndex) || 0)),
+      customDataUrl: typeof value.customDataUrl === 'string' && value.customDataUrl.startsWith('data:image/') ? value.customDataUrl : '',
+    };
+  } catch {
+    return { presetIndex: 1, customDataUrl: '' };
+  }
+}
+
 const state = {
   draft: loadSavedDraft(),
   storyIndex: [],
   settings: loadSettings(),
+  portrait: loadPortrait(),
   ui: {
+    screen: 'title',
     activeStep: 0,
     highestVisitedStep: 0,
     modal: null,
@@ -140,6 +162,15 @@ const state = {
     openingEdited: false,
     storyStatus: 'loading',
     confirmed: false,
+    modelOptions: [],
+    modelFilter: '',
+    modelStatus: '可填写根地址、/v1 或完整聊天地址，再拉取全部模型。',
+    modelTone: '',
+    modelLoading: false,
+    aiStatus: '尚未发送请求。选择帮填方式后，可生成本页或全档案建议。',
+    aiTone: '',
+    aiPreview: null,
+    lastAiScope: 'page',
   },
 };
 
@@ -157,6 +188,26 @@ function currentVolume() {
 
 function currentEvent() {
   return getStoryEvent(state.storyIndex, state.draft.storyAnchor.volumeNumber, state.draft.storyAnchor.eventId);
+}
+
+function portraitSource() {
+  return state.portrait.customDataUrl || PORTRAIT_ART[state.portrait.presetIndex] || PORTRAIT_ART[1];
+}
+
+function persistPortrait() {
+  return safeWriteStorage(PORTRAIT_STORAGE_KEY, JSON.stringify(state.portrait));
+}
+
+function providerLabel() {
+  return ({
+    tavern: '酒馆当前模型',
+    remote: state.settings.model ? `独立接口 · ${state.settings.model}` : '独立 OpenAI 兼容接口',
+    offline: '离线灵感模式',
+  })[state.settings.provider] || '未选择';
+}
+
+function hasSavedDraft() {
+  return Boolean(safeReadStorage(DRAFT_STORAGE_KEY));
 }
 
 function storyVolumeLabel(volume) {
@@ -532,13 +583,22 @@ function renderRail() {
   const step = currentStep();
   const event = currentEvent();
   const name = state.draft.protagonist.name || '未命名旅人';
+  const appearance = state.draft.protagonist.appearance || '外貌尚未描写；可在第一页补充发色、瞳色与显眼特征。';
   const completion = [0, 1, 2, 3, 4].filter(stepIsComplete).length;
   return `<aside class="rail">
-    <section class="rail-card">
-      <div class="portrait" style="--portrait-art:url('${PORTRAIT_ART[state.ui.activeStep]}')">
-        <div class="portrait-copy"><small>CHARACTER DOSSIER</small><strong data-live-name>${escapeHtml(name)}</strong><span>${escapeHtml(state.draft.protagonist.identity || '身份尚未落笔')} · ${escapeHtml(state.draft.protagonist.faction || '中立')}</span></div>
+    <section class="rail-card portrait-dossier">
+      <div class="portrait">
+        <img src="${escapeHtml(portraitSource())}" alt="${escapeHtml(name)}的人物肖像" data-portrait-image>
+        <div class="portrait-vignette"></div>
+        <div class="portrait-copy"><small>CHARACTER DOSSIER</small><strong data-live-name>${escapeHtml(name)}</strong><span data-live-identity>${escapeHtml(state.draft.protagonist.identity || '身份尚未落笔')} · ${escapeHtml(state.draft.protagonist.faction || '中立')}</span><p data-live-appearance>${escapeHtml(appearance)}</p></div>
       </div>
       <div class="rail-card-body">
+        <div class="portrait-toolbar" aria-label="肖像选择">
+          <div class="portrait-presets">${PORTRAIT_ART.map((url, index) => `<button type="button" class="portrait-preset${!state.portrait.customDataUrl && state.portrait.presetIndex === index ? ' is-active' : ''}" data-action="choose-portrait" data-portrait-index="${index}" aria-label="选择预设肖像 ${index + 1}"><img src="${escapeHtml(url)}" alt=""></button>`).join('')}</div>
+          <label class="portrait-upload">上传肖像<input class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-portrait-file></label>
+          ${state.portrait.customDataUrl ? '<button type="button" class="portrait-clear" data-action="clear-portrait">恢复预设</button>' : ''}
+        </div>
+        <p class="portrait-local-note">自定义肖像只保存在本机界面，不会写入角色状态或导出 JSON。</p>
         <div class="mini-grid">
           <div class="mini-stat"><small>PROGRESS</small><b data-live-progress>${completion} / 5 页完整</b></div>
           <div class="mini-stat"><small>TYPE</small><b>${escapeHtml(state.draft.protagonist.roleType || '未选择')}</b></div>
@@ -546,25 +606,21 @@ function renderRail() {
           <div class="mini-stat"><small>VOLUME</small><b>${state.draft.storyAnchor.volumeNumber ? `第 ${String(state.draft.storyAnchor.volumeNumber).padStart(2, '0')} 卷` : '未选择'}</b></div>
           <div class="mini-stat"><small>STEP</small><b>${escapeHtml(step.label)}</b></div>
         </div>
+        <div class="portrait-anchor"><small>CURRENT STORY · ${state.draft.storyAnchor.volumeNumber ? `第 ${String(state.draft.storyAnchor.volumeNumber).padStart(2, '0')} 卷` : '未选择卷数'}</small><strong>${escapeHtml(event?.title || '尚未选择事件')}</strong><span>${escapeHtml(event?.time || '选择事件后会显示对应日期、时段与时间线。')}</span></div>
       </div>
     </section>
     <section class="rail-card ai-card">
-      <div class="rail-card-head"><h3>AI 帮填</h3><small>FILL EMPTY ONLY</small></div>
+      <div class="rail-card-head"><h3>AI 帮填</h3><small>REVIEW BEFORE APPLY</small></div>
       <div class="rail-card-body">
-        <div class="ai-status"><span class="orb${state.settings.provider === 'remote' ? ' remote' : ''}"></span><span>${state.settings.provider === 'remote' ? 'OpenAI 兼容接口' : '离线灵感模式'}</span></div>
+        <div class="ai-status"><span class="orb${state.settings.provider !== 'offline' ? ' remote' : ''}"></span><span>${escapeHtml(providerLabel())}</span></div>
         <textarea class="control ai-idea" data-ai-idea placeholder="可选：写一句角色灵感或希望保留的气质">${escapeHtml(state.ui.aiIdea)}</textarea>
-        <div class="button-row" style="margin-top:9px">
-          <button type="button" class="primary-btn" data-action="run-ai">帮填本页</button>
+        <div class="button-row ai-actions">
+          <button type="button" class="primary-btn" data-action="run-ai"${state.ui.busy ? ' disabled' : ''}>生成本页建议</button>
+          <button type="button" class="ghost-btn" data-action="run-ai-all"${state.ui.busy ? ' disabled' : ''}>生成全档案</button>
           <button type="button" class="ghost-btn" data-action="open-settings">设置</button>
         </div>
-        <p class="rail-note">建议会先生成补丁，再只填入空白字段；你写过的内容不会被覆盖。</p>
-      </div>
-    </section>
-    <section class="rail-card anchor-card">
-      <div class="rail-card-head"><h3>当前剧情</h3><small>STORY ANCHOR</small></div>
-      <div class="rail-card-body">
-        <strong>${escapeHtml(event?.title || '尚未选择事件')}</strong>
-        <p>${escapeHtml(event?.time || '在第二页选择卷数后，这里会固定显示事件对应的日期、时段与时间线。')}</p>
+        <div class="ai-feedback ${escapeHtml(state.ui.aiTone)}" data-ai-status aria-live="polite"><strong>${escapeHtml(state.ui.aiTone === 'bad' ? '请求未完成' : state.ui.aiTone === 'ok' ? '已收到回复' : '请求状态')}</strong><span>${escapeHtml(state.ui.aiStatus)}</span>${state.ui.aiTone === 'bad' ? '<div class="button-row"><button type="button" class="ghost-btn" data-action="retry-ai">重试</button><button type="button" class="ghost-btn" data-action="run-ai-offline">改用离线灵感</button></div>' : ''}</div>
+        <p class="rail-note">模型回复会先进入变更预览；确认后才补入空白字段，已有内容不会被覆盖。</p>
       </div>
     </section>
   </aside>`;
@@ -572,18 +628,26 @@ function renderRail() {
 
 function renderSettingsModal() {
   if (state.ui.modal !== 'settings') return '';
+  const modelNeedle = state.ui.modelFilter.trim().toLowerCase();
   return `<div class="overlay" data-overlay="settings">
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-      <div class="modal-head"><div><h2 id="settings-title">AI 与显示设置</h2><p>接口信息只保存在当前浏览器本机。离线模式无需密钥。</p></div><button type="button" class="close-btn" data-action="close-modal" aria-label="关闭">×</button></div>
+      <div class="modal-head"><div><h2 id="settings-title">模型连接与显示</h2><p>优先使用酒馆当前连接；也可切换独立兼容接口，或完全离线。</p></div><button type="button" class="close-btn" data-action="close-modal" aria-label="关闭">×</button></div>
       <div class="modal-body">
         <div class="field-grid">
-          <div class="field full"><label for="setting-provider"><span>帮填方式</span><small>PROVIDER</small></label><select class="control" id="setting-provider" data-setting="provider"><option value="offline"${state.settings.provider === 'offline' ? ' selected' : ''}>离线灵感模式</option><option value="remote"${state.settings.provider === 'remote' ? ' selected' : ''}>OpenAI 兼容接口</option></select></div>
-          ${inputSetting('apiUrl', '接口地址', 'https://…/v1/chat/completions', 'url')}
-          ${inputSetting('model', '模型名称', '由你的接口服务提供')}
-          ${inputSetting('apiKey', 'API Key', '仅保存在本机浏览器', 'password', true)}
+          <div class="field full"><label for="setting-provider"><span>帮填方式</span><small>PROVIDER</small></label><select class="control" id="setting-provider" data-setting="provider"><option value="tavern"${state.settings.provider === 'tavern' ? ' selected' : ''}>酒馆当前连接（使用当前模型）</option><option value="remote"${state.settings.provider === 'remote' ? ' selected' : ''}>独立 OpenAI 兼容接口</option><option value="offline"${state.settings.provider === 'offline' ? ' selected' : ''}>离线灵感（无需请求）</option></select></div>
+          ${state.settings.provider === 'tavern' ? '<div class="provider-note field full"><strong>酒馆当前连接</strong><span>通过 Tavern Helper 的 generateRaw 静默生成，不新增聊天楼层。若当前 iframe 无此能力，会显示明确错误并提供离线降级。</span></div>' : ''}
+          ${state.settings.provider === 'offline' ? '<div class="provider-note field full"><strong>离线灵感</strong><span>不发送任何网络请求，使用内置 Re:Zero 角色灵感；仍会先预览再应用。</span></div>' : ''}
+          ${state.settings.provider === 'remote' ? `${inputSetting('apiUrl', '接口地址', 'https://example.com、/v1 或完整 /chat/completions', 'url', true)}
+          <div class="field full model-picker">
+            <label for="setting-model"><span>模型名称</span><small>${state.ui.modelOptions.length ? `${state.ui.modelOptions.length} MODELS` : 'MANUAL OR FETCH'}</small></label>
+            <div class="model-input-row"><input class="control" id="setting-model" data-setting="model" value="${escapeHtml(state.settings.model)}" placeholder="搜索已拉取模型，或手动填写"><button type="button" class="ghost-btn" data-action="fetch-models"${state.ui.modelLoading ? ' disabled' : ''}>${state.ui.modelLoading ? '拉取中…' : '拉取全部模型'}</button></div>
+            <div class="model-status ${escapeHtml(state.ui.modelTone)}" data-model-status aria-live="polite">${escapeHtml(state.ui.modelStatus)}</div>
+            ${state.ui.modelOptions.length ? `<div class="model-list" data-model-list role="listbox" aria-label="全部模型">${state.ui.modelOptions.map((model) => `<button type="button" class="model-option${state.settings.model === model ? ' is-selected' : ''}" data-action="choose-model" data-model-value="${escapeHtml(model)}" role="option" aria-selected="${state.settings.model === model ? 'true' : 'false'}"${modelNeedle && !model.toLowerCase().includes(modelNeedle) ? ' hidden' : ''}>${escapeHtml(model)}</button>`).join('')}<p data-model-empty${state.ui.modelOptions.some((model) => !modelNeedle || model.toLowerCase().includes(modelNeedle)) ? ' hidden' : ''}>没有匹配项；保留输入内容即可手动使用。</p></div>` : ''}
+          </div>
+          ${inputSetting('apiKey', 'API Key（可选）', '本地服务可留空；只保存在本机浏览器', 'password', true)}` : ''}
           <label class="reduced-motion-toggle field full"><input type="checkbox" data-setting="reducedMotion"${state.settings.reducedMotion ? ' checked' : ''}> 减少翻页与背景动效</label>
         </div>
-        <p class="field-note">远程 AI 只接收当前草稿和你的灵感提示。密钥不会进入导出的角色 JSON；共享电脑上建议使用离线模式。</p>
+        <p class="field-note">独立接口请求只包含当前草稿和灵感提示。模型列表不会静默过滤；API Key 不会进入角色状态或导出 JSON。</p>
         <div class="button-row end"><button type="button" class="primary-btn" data-action="save-settings">保存设置</button></div>
       </div>
     </section>
@@ -594,6 +658,44 @@ function inputSetting(key, label, placeholder, type = 'text', full = false) {
   return `<div class="field${full ? ' full' : ''}"><label for="setting-${key}"><span>${escapeHtml(label)}</span></label><input class="control" id="setting-${key}" type="${type}" data-setting="${key}" value="${escapeHtml(state.settings[key])}" placeholder="${escapeHtml(placeholder)}"></div>`;
 }
 
+function renderAiPreviewModal() {
+  if (state.ui.modal !== 'ai-preview' || !state.ui.aiPreview) return '';
+  const preview = state.ui.aiPreview;
+  const changes = preview.appliedPaths.map((path) => {
+    const value = getAt(preview.draft, path);
+    const shown = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    return `<li><code>${escapeHtml(path)}</code><span>${escapeHtml(shown)}</span></li>`;
+  }).join('');
+  return `<div class="overlay" data-overlay="ai-preview"><section class="modal ai-preview-modal" role="dialog" aria-modal="true" aria-labelledby="ai-preview-title">
+    <div class="modal-head"><div><h2 id="ai-preview-title">模型回复已收到</h2><p>${escapeHtml(preview.source)} · ${preview.scope === 'all' ? '全档案建议' : '当前页建议'} · 只补空白</p></div><button type="button" class="close-btn" data-action="discard-ai-preview" aria-label="关闭">×</button></div>
+    <div class="modal-body">
+      <div class="preview-summary"><strong>${preview.appliedPaths.length}</strong><span>处可应用</span><strong>${preview.skippedPaths.length}</strong><span>处因已有内容而跳过</span></div>
+      ${changes ? `<ul class="ai-change-list">${changes}</ul>` : '<div class="provider-note"><strong>没有可应用的空白</strong><span>请求和回复均已完成，但当前建议对应的字段已有内容，或模型返回了空补丁。</span></div>'}
+      <details class="raw-patch"><summary>查看模型原始 JSON 补丁</summary><pre>${escapeHtml(JSON.stringify(preview.patch, null, 2))}</pre></details>
+      <div class="button-row end"><button type="button" class="ghost-btn" data-action="discard-ai-preview">放弃</button><button type="button" class="primary-btn" data-action="apply-ai-preview"${preview.appliedPaths.length ? '' : ' disabled'}>确认补入 ${preview.appliedPaths.length} 处</button></div>
+    </div>
+  </section></div>`;
+}
+
+function renderArchiveModal() {
+  if (state.ui.modal !== 'archive') return '';
+  const savedAt = state.draft.meta?.updatedAt ? new Date(state.draft.meta.updatedAt).toLocaleString('zh-CN') : '尚未保存';
+  return `<div class="overlay" data-overlay="archive"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="archive-title">
+    <div class="modal-head"><div><h2 id="archive-title">角色档案</h2><p>本机自动草稿与可携带 JSON 分开管理。</p></div><button type="button" class="close-btn" data-action="close-modal" aria-label="关闭">×</button></div>
+    <div class="modal-body"><div class="archive-card"><small>AUTOSAVE</small><strong>${escapeHtml(state.draft.protagonist.name || '未命名旅人')}</strong><span>最后记录：${escapeHtml(savedAt)}</span><span>${escapeHtml(storyVolumeLabel(currentVolume()) || '尚未选择剧情卷')}</span></div>
+      <div class="button-row"><button type="button" class="primary-btn" data-action="save-draft">立即保存</button><button type="button" class="ghost-btn" data-action="download-json">提取角色 JSON</button><label class="import-label">导入角色 JSON<input class="sr-only" type="file" accept="application/json,.json" data-import-draft></label></div>
+    </div>
+  </section></div>`;
+}
+
+function renderNewConfirmModal() {
+  if (state.ui.modal !== 'new-confirm') return '';
+  return `<div class="overlay" data-overlay="new-confirm"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="new-title">
+    <div class="modal-head"><div><h2 id="new-title">开启新的轮回？</h2><p>当前草稿仍可先提取为 JSON。</p></div><button type="button" class="close-btn" data-action="close-modal" aria-label="关闭">×</button></div>
+    <div class="modal-body"><p class="field-note">确认后会以空白档案开始，现有本机自动草稿将被替换；独立接口设置和本机肖像不会清除。</p><div class="button-row end"><button type="button" class="ghost-btn" data-action="close-modal">取消</button><button type="button" class="danger-btn" data-action="confirm-new">确认新建</button></div></div>
+  </section></div>`;
+}
+
 function renderHelpModal() {
   if (state.ui.modal !== 'help') return '';
   return `<div class="overlay" data-overlay="help"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
@@ -602,7 +704,7 @@ function renderHelpModal() {
       <ul class="validation-list">
         <li class="validation-item ok"><span>01</span><span>五页信息会自动保存在当前浏览器，可随时返回修改。</span></li>
         <li class="validation-item ok"><span>02</span><span>剧情锚点来自项目的 39 卷剧情总结，卷数决定可选事件，事件决定时间。</span></li>
-        <li class="validation-item ok"><span>03</span><span>AI 建议只补空白字段；远程模式使用你配置的 OpenAI 兼容接口。</span></li>
+        <li class="validation-item ok"><span>03</span><span>AI 建议会先进入预览，只补空白字段；可使用酒馆当前模型、独立 OpenAI 兼容接口或离线灵感。</span></li>
         <li class="validation-item ok"><span>04</span><span>最终页可复制、下载或尝试写入 SillyTavern 输入框；若找不到宿主控件会安全回退到剪贴板。</span></li>
       </ul>
     </div>
@@ -612,17 +714,44 @@ function renderHelpModal() {
 function renderChromeLayers() {
   let layers = app.querySelector('[data-chrome-layers]');
   if (!layers) return;
-  layers.innerHTML = `${renderSettingsModal()}${renderHelpModal()}${state.ui.toast ? `<div class="toast ${escapeHtml(state.ui.toast.tone)}" role="status">${escapeHtml(state.ui.toast.message)}</div>` : ''}${state.ui.busy ? `<div class="busy"><div class="busy-card"><span class="spinner"></span><span>${escapeHtml(state.ui.busy)}</span></div></div>` : ''}`;
+  layers.innerHTML = `${renderSettingsModal()}${renderHelpModal()}${renderAiPreviewModal()}${renderArchiveModal()}${renderNewConfirmModal()}${state.ui.toast ? `<div class="toast ${escapeHtml(state.ui.toast.tone)}" role="status">${escapeHtml(state.ui.toast.message)}</div>` : ''}${state.ui.busy ? `<div class="busy" role="status" aria-live="assertive"><div class="busy-card"><span class="spinner"></span><span>${escapeHtml(state.ui.busy)}</span><small>请求最长等待 60 秒；超时后会显示可重试原因。</small></div></div>` : ''}`;
+}
+
+function renderTitleScreen() {
+  const saved = hasSavedDraft();
+  const event = currentEvent();
+  return `<section class="title-screen" data-screen="title" data-motion="${state.settings.reducedMotion ? 'off' : 'on'}">
+    <div class="title-art"><img src="${escapeHtml(PAGE_ART[0])}" alt="月夜茶会中的银发少女"><div class="title-art-wash"></div></div>
+    <div class="title-frame" aria-hidden="true"></div>
+    <header class="title-topbar"><div class="brand"><span class="brand-mark">零</span><span class="brand-copy"><strong>RE:ZERO / ANOTHER CHRONICLE</strong><span>从零开始的异世界生活 · 角色档案</span></span></div><button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button></header>
+    <div class="title-main">
+      <div class="title-copy"><p class="eyebrow">RETURN BY DEATH · WITCH'S TEA PARTY</p><h1>从零开始<span>异世界角色创建</span></h1><p class="title-motto">“在命运翻页以前，先决定这一次要以谁的名字活下去。”</p><div class="title-prologue"><span>银月落进茶杯，书页停在尚未写下的名字前。</span><span>选择一个剧情锚点，把愿望、恐惧与力量带进第一幕。</span></div></div>
+      <nav class="title-menu" aria-label="开始游戏菜单">
+        <button type="button" class="title-menu-btn primary" data-action="start-new"><span>01</span><b>开始游戏<small>NEW CHRONICLE</small></b><i>›</i></button>
+        <button type="button" class="title-menu-btn" data-action="continue-draft"${saved ? '' : ' disabled'}><span>02</span><b>继续游戏<small>CONTINUE AUTOSAVE</small></b><i>›</i></button>
+        <button type="button" class="title-menu-btn" data-action="open-archive"><span>03</span><b>存档管理<small>CHARACTER ARCHIVE</small></b><i>›</i></button>
+        <label class="title-menu-btn"><span>04</span><b>导入角色档案<small>IMPORT JSON</small></b><i>↥</i><input class="sr-only" type="file" accept="application/json,.json" data-import-draft></label>
+        <button type="button" class="title-menu-btn" data-action="export-draft"><span>05</span><b>提取角色档案<small>EXPORT JSON</small></b><i>↓</i></button>
+        <button type="button" class="title-menu-btn" data-action="open-settings"><span>06</span><b>设置<small>MODEL & DISPLAY</small></b><i>›</i></button>
+      </nav>
+    </div>
+    <footer class="title-footer"><div><span class="status-dot ${state.ui.storyStatus === 'error' ? 'bad' : ''}"></span><b>${state.ui.storyStatus === 'ready' ? `剧情索引已就绪 · ${state.storyIndex.length} 卷` : state.ui.storyStatus === 'error' ? '剧情索引加载失败' : '正在展开剧情索引…'}</b></div><p>${saved ? `本机草稿：${escapeHtml(state.draft.protagonist.name || '未命名旅人')} · ${escapeHtml(event?.title || '尚未选择事件')}` : '尚无本机草稿；选择“开始游戏”建立新的角色档案。'}</p></footer>
+  </section>`;
 }
 
 function render() {
+  if (state.ui.screen === 'title') {
+    app.innerHTML = `${renderTitleScreen()}<div data-chrome-layers></div>`;
+    renderChromeLayers();
+    return;
+  }
   const step = currentStep();
   const validation = validateDraft(state.draft);
-  app.innerHTML = `<div class="forge" data-motion="${state.settings.reducedMotion ? 'off' : 'on'}" style="--page-art:url('${PAGE_ART[state.ui.activeStep]}')">
+  app.innerHTML = `<div class="forge creator-screen" data-screen="creator" data-motion="${state.settings.reducedMotion ? 'off' : 'on'}" style="--page-art:url('${PAGE_ART[state.ui.activeStep]}')">
     <div class="atmosphere"></div>
     <div class="shell">
       <header class="topbar">
-        <div class="brand"><span class="brand-mark">零</span><span class="brand-copy"><strong>RE:ZERO / CHARACTER FORGE</strong><span>魔女茶会 · 创角向导</span></span></div>
+        <button type="button" class="back-to-title" data-action="return-title" aria-label="返回开局页">←</button><div class="brand"><span class="brand-mark">零</span><span class="brand-copy"><strong>RE:ZERO / CHARACTER FORGE</strong><span>魔女茶会 · 创角向导</span></span></div>
         <div class="session-pill"><span class="dot"></span><span>${safeReadStorage(DRAFT_STORAGE_KEY) ? '本机草稿已恢复' : '新草稿已建立'}</span></div>
         <div class="top-actions">
           <button type="button" class="icon-btn" data-action="save-draft" aria-label="保存草稿" title="保存草稿">⌁</button>
@@ -631,24 +760,21 @@ function render() {
           <button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button>
         </div>
       </header>
-      <section class="hero">
-        <div><p class="eyebrow">WITCH'S TEA PARTY · DOSSIER 00</p><h1>在故事开始前<span>CHOOSE WHO YOU BECOME</span></h1><p class="hero-copy">名字、愿望与一次准确的剧情落点，会决定世界第一次如何看见你。沿着五页档案写下答案，茶会会替你整理成可以带入故事的角色状态。</p></div>
-        <div class="hero-motto">“命运并不要求你一次答对。它只要求你在翻页时，仍认得自己的名字。”<small>ARCHIVE NOTE / ECHIDNA</small></div>
-      </section>
+      <section class="creator-ribbon"><div><small>WITCH'S TEA PARTY · DOSSIER 00</small><strong>在故事开始前，写下这一次的名字。</strong></div><span>${escapeHtml(storyVolumeLabel(currentVolume()) || '剧情锚点尚未选择')}</span></section>
       <nav class="progress" aria-label="创角步骤">${renderProgress()}</nav>
       <div class="workspace">
         <main class="stage">
           <header class="stage-head"><div><p class="stage-kicker">${escapeHtml(step.kicker)}</p><h2>${escapeHtml(step.title)}</h2><p>${pageDescription(step.id)}</p></div><span class="stage-count">PAGE ${String(step.index).padStart(2, '0')} / 05</span></header>
           ${renderPage()}
+          <nav class="footer-nav" aria-label="翻页控制">
+            <button type="button" class="nav-btn" data-action="previous-step"${state.ui.activeStep === 0 ? ' disabled' : ''}>← 上一页</button>
+            <div class="footer-status"><b>${escapeHtml(step.label)} · ${escapeHtml(step.title)}</b><small>${validation.ok ? 'READY TO DEPART' : `${validation.errors.length} REQUIRED FIELDS REMAIN`}</small></div>
+            <button type="button" class="nav-btn next" data-action="next-step"${state.ui.activeStep === STEP_DEFINITIONS.length - 1 ? ' disabled' : ''}>下一页 →</button>
+          </nav>
         </main>
         ${renderRail()}
       </div>
     </div>
-    <nav class="footer-nav" aria-label="翻页控制">
-      <button type="button" class="nav-btn" data-action="previous-step"${state.ui.activeStep === 0 ? ' disabled' : ''}>← 上一页</button>
-      <div class="footer-status"><b>${escapeHtml(step.label)} · ${escapeHtml(step.title)}</b><small>${validation.ok ? 'READY TO DEPART' : `${validation.errors.length} REQUIRED FIELDS REMAIN`}</small></div>
-      <button type="button" class="nav-btn next" data-action="next-step"${state.ui.activeStep === STEP_DEFINITIONS.length - 1 ? ' disabled' : ''}>下一页 →</button>
-    </nav>
   </div><div data-chrome-layers></div>`;
   renderChromeLayers();
 }
@@ -717,10 +843,26 @@ function addTrait() {
 function updateLivePreview() {
   const liveName = app.querySelector('[data-live-name]');
   if (liveName) liveName.textContent = state.draft.protagonist.name || '未命名旅人';
+  const liveIdentity = app.querySelector('[data-live-identity]');
+  if (liveIdentity) liveIdentity.textContent = `${state.draft.protagonist.identity || '身份尚未落笔'} · ${state.draft.protagonist.faction || '中立'}`;
+  const liveAppearance = app.querySelector('[data-live-appearance]');
+  if (liveAppearance) liveAppearance.textContent = state.draft.protagonist.appearance || '外貌尚未描写；可在第一页补充发色、瞳色与显眼特征。';
   const liveProgress = app.querySelector('[data-live-progress]');
   if (liveProgress) liveProgress.textContent = `${[0, 1, 2, 3, 4].filter(stepIsComplete).length} / 5 页完整`;
   const jsonPreview = app.querySelector('[data-json-preview]');
   if (jsonPreview) jsonPreview.value = JSON.stringify(buildExportBundle(state.ui.confirmed), null, 2);
+}
+
+function filterModelList(value) {
+  const needle = String(value || '').trim().toLowerCase();
+  let visible = 0;
+  app.querySelectorAll('[data-model-value]').forEach((button) => {
+    const match = !needle || String(button.dataset.modelValue || '').toLowerCase().includes(needle);
+    button.hidden = !match;
+    if (match) visible += 1;
+  });
+  const empty = app.querySelector('[data-model-empty]');
+  if (empty) empty.hidden = visible > 0;
 }
 
 async function copyText(text) {
@@ -755,35 +897,154 @@ function sanitizedFilename() {
   return (state.draft.protagonist.name || '未命名角色').replace(/[\\/:*?"<>|]/g, '_');
 }
 
-async function runAiFill() {
-  const stepId = currentStep().id;
-  state.ui.busy = state.settings.provider === 'remote' ? '正在询问远程灵感……' : '正在整理离线灵感……';
+async function fetchFromAvailableRealm(url, options) {
+  const realms = [window];
+  try { if (window.parent && window.parent !== window) realms.push(window.parent); } catch {}
+  try { if (window.top && window.top !== window && !realms.includes(window.top)) realms.push(window.top); } catch {}
+  let lastError;
+  for (const realm of realms) {
+    try {
+      if (typeof realm.fetch !== 'function') continue;
+      return await realm.fetch.call(realm, url, options);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error('当前运行环境没有可用的 fetch');
+}
+
+async function fetchModelCatalog() {
+  if (state.ui.modelLoading) return;
+  state.ui.modelLoading = true;
+  state.ui.modelTone = '';
+  state.ui.modelStatus = '正在连接模型目录并读取全部分页…';
   renderChromeLayers();
   try {
+    const result = await fetchAllModels({
+      apiUrl: state.settings.apiUrl,
+      apiKey: state.settings.apiKey,
+      fetchImpl: fetchFromAvailableRealm,
+      timeoutMs: 15000,
+    });
+    state.ui.modelOptions = result.models;
+    state.ui.modelFilter = '';
+    if (!state.settings.model || !result.models.includes(state.settings.model)) state.settings.model = result.models[0];
+    state.ui.modelTone = 'ok';
+    state.ui.modelStatus = `已完整读取 ${result.models.length} 个模型（${result.pages} 页），未做隐藏过滤。`;
+    safeWriteStorage(SETTINGS_STORAGE_KEY, JSON.stringify(state.settings));
+  } catch (error) {
+    state.ui.modelTone = 'bad';
+    state.ui.modelStatus = error?.message || '模型目录拉取失败；你仍可手动填写模型名。';
+  } finally {
+    state.ui.modelLoading = false;
+    renderChromeLayers();
+  }
+}
+
+async function runAiFill(scope = 'page', providerOverride = '') {
+  if (state.ui.busy) return;
+  const provider = providerOverride || state.settings.provider;
+  const stepId = scope === 'all' ? 'all-pages' : currentStep().id;
+  state.ui.lastAiScope = scope;
+  state.ui.aiTone = '';
+  state.ui.aiStatus = provider === 'offline' ? '正在生成离线建议…' : `请求已提交给${provider === 'tavern' ? '酒馆当前模型' : '独立兼容接口'}，正在等待回复…`;
+  state.ui.busy = provider === 'offline' ? '正在整理离线灵感…' : '请求已经发出，正在等待模型回复…';
+  render();
+  try {
+    const prompt = buildAiPrompt(state.draft, stepId, state.ui.aiIdea);
     let patch;
-    if (state.settings.provider === 'remote') {
-      if (!state.settings.apiUrl || !state.settings.model) throw new Error('请先在设置中填写接口地址与模型名称');
-      const prompt = buildAiPrompt(state.draft, stepId, state.ui.aiIdea);
+    if (provider === 'tavern') {
+      patch = await requestTavernHelper({ root: window, prompt, timeoutMs: 60000 });
+    } else if (provider === 'remote') {
+      if (!state.settings.apiUrl || !state.settings.model) throw new Error('请先在设置中填写接口地址，并选择或手动填写模型名称。');
       patch = await requestOpenAiCompatible({
         apiUrl: state.settings.apiUrl,
         apiKey: state.settings.apiKey,
         model: state.settings.model,
         prompt,
+        fetchImpl: fetchFromAvailableRealm,
+        timeoutMs: 60000,
       });
     } else {
       patch = suggestOffline(state.draft, stepId);
     }
     const result = mergeAiPatch(state.draft, patch);
-    state.draft = result.draft;
+    state.ui.aiPreview = {
+      patch,
+      draft: result.draft,
+      appliedPaths: result.appliedPaths,
+      skippedPaths: result.skippedPaths,
+      scope,
+      source: provider === 'tavern' ? '酒馆当前模型' : provider === 'remote' ? `独立接口 · ${state.settings.model}` : '离线灵感',
+    };
+    state.ui.aiTone = 'ok';
+    state.ui.aiStatus = `回复已收到：${result.appliedPaths.length} 处可补入，${result.skippedPaths.length} 处已有内容被保护。`;
     state.ui.busy = '';
-    saveDraft();
+    state.ui.modal = 'ai-preview';
     render();
-    showToast(result.appliedPaths.length ? `已补全 ${result.appliedPaths.length} 处空白；已有内容保持不变。` : '这一页没有可补的空白字段。', result.appliedPaths.length ? 'ok' : '');
   } catch (error) {
     state.ui.busy = '';
-    renderChromeLayers();
-    showToast(error?.message || 'AI 帮填失败，请检查设置。', 'bad');
+    state.ui.aiPreview = null;
+    state.ui.aiTone = 'bad';
+    state.ui.aiStatus = error?.message || 'AI 请求失败；没有改动任何字段。';
+    render();
+    showToast(state.ui.aiStatus, 'bad');
   }
+}
+
+function applyAiPreview() {
+  const preview = state.ui.aiPreview;
+  if (!preview) return;
+  const result = mergeAiPatch(state.draft, preview.patch);
+  state.draft = result.draft;
+  state.ui.aiPreview = null;
+  state.ui.modal = null;
+  state.ui.confirmed = false;
+  state.ui.aiTone = 'ok';
+  state.ui.aiStatus = result.appliedPaths.length ? `已确认补入 ${result.appliedPaths.length} 处空白；已有内容保持不变。` : '没有可补入的空白字段。';
+  saveDraft();
+  render();
+  showToast(state.ui.aiStatus, result.appliedPaths.length ? 'ok' : '');
+}
+
+function discardAiPreview() {
+  state.ui.aiPreview = null;
+  state.ui.modal = null;
+  state.ui.aiStatus = '已放弃本次模型建议，角色草稿没有改变。';
+  state.ui.aiTone = '';
+  render();
+}
+
+function beginNewDraft() {
+  state.draft = createDefaultDraft();
+  state.ui.screen = 'creator';
+  state.ui.modal = null;
+  state.ui.activeStep = 0;
+  state.ui.highestVisitedStep = 0;
+  state.ui.confirmed = false;
+  state.ui.openingEdited = false;
+  state.ui.openingOverride = '';
+  state.ui.aiPreview = null;
+  saveDraft();
+  render();
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  showToast('新的角色档案已经展开。', 'ok');
+}
+
+async function handlePortraitFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) throw new Error('请选择 PNG、JPEG、WebP 或 GIF 图片。');
+  if (file.size > 5 * 1024 * 1024) throw new Error('肖像文件请控制在 5 MB 以内。');
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('读取肖像文件失败。'));
+    reader.readAsDataURL(file);
+  });
+  state.portrait.customDataUrl = dataUrl;
+  const persisted = persistPortrait();
+  render();
+  showToast(persisted ? '自定义肖像已保存在本机。' : '肖像已用于本次页面，但浏览器存储空间不足，刷新后可能丢失。', persisted ? 'ok' : 'bad');
 }
 
 function candidateHostDocuments() {
@@ -857,9 +1118,12 @@ async function importDraft(file) {
     state.ui.confirmed = false;
     state.ui.openingEdited = false;
     state.ui.openingOverride = '';
+    state.ui.screen = 'creator';
+    state.ui.modal = null;
     syncStoryAnchor();
     saveDraft();
     render();
+    window.scrollTo({ top: 0, behavior: 'auto' });
     showToast('草稿已导入并恢复。', 'ok');
   } catch (error) {
     showToast(`导入失败：${error.message}`, 'bad');
@@ -867,6 +1131,18 @@ async function importDraft(file) {
 }
 
 async function handleAction(action, element) {
+  if (action === 'start-new') {
+    if (hasSavedDraft()) { state.ui.modal = 'new-confirm'; renderChromeLayers(); return; }
+    return beginNewDraft();
+  }
+  if (action === 'confirm-new') return beginNewDraft();
+  if (action === 'continue-draft') { state.ui.screen = 'creator'; state.ui.modal = null; render(); window.scrollTo({ top: 0, behavior: 'auto' }); return; }
+  if (action === 'return-title') { saveDraft(); state.ui.screen = 'title'; state.ui.modal = null; render(); window.scrollTo({ top: 0, behavior: 'auto' }); return; }
+  if (action === 'open-archive') { state.ui.modal = 'archive'; renderChromeLayers(); return; }
+  if (action === 'export-draft') {
+    downloadFile(`${sanitizedFilename()}-角色档案.json`, JSON.stringify(buildExportBundle(state.ui.confirmed), null, 2), 'application/json;charset=utf-8');
+    return;
+  }
   if (action === 'go-step') return goToStep(element.dataset.step);
   if (action === 'previous-step') return goToStep(state.ui.activeStep - 1);
   if (action === 'next-step') return goToStep(state.ui.activeStep + 1);
@@ -881,6 +1157,15 @@ async function handleAction(action, element) {
     showToast('设置已保存在本机。', 'ok');
     return;
   }
+  if (action === 'fetch-models') return fetchModelCatalog();
+  if (action === 'choose-model') {
+    state.settings.model = element.dataset.modelValue || '';
+    state.ui.modelFilter = state.settings.model;
+    state.ui.modelStatus = `已选择 ${state.settings.model}；也可以继续手动修改。`;
+    state.ui.modelTone = 'ok';
+    renderChromeLayers();
+    return;
+  }
   if (action === 'add-array-item') return addArrayItem(element.dataset.section);
   if (action === 'remove-array-item') return removeArrayItem(element.dataset.section, element.dataset.index);
   if (action === 'add-trait') return addTrait();
@@ -890,7 +1175,25 @@ async function handleAction(action, element) {
     render();
     return;
   }
-  if (action === 'run-ai') return runAiFill();
+  if (action === 'run-ai') return runAiFill('page');
+  if (action === 'run-ai-all') return runAiFill('all');
+  if (action === 'retry-ai') return runAiFill(state.ui.lastAiScope || 'page');
+  if (action === 'run-ai-offline') return runAiFill(state.ui.lastAiScope || 'page', 'offline');
+  if (action === 'apply-ai-preview') return applyAiPreview();
+  if (action === 'discard-ai-preview') return discardAiPreview();
+  if (action === 'choose-portrait') {
+    state.portrait.presetIndex = Math.max(0, Math.min(PORTRAIT_ART.length - 1, Number(element.dataset.portraitIndex) || 0));
+    state.portrait.customDataUrl = '';
+    persistPortrait();
+    render();
+    return;
+  }
+  if (action === 'clear-portrait') {
+    state.portrait.customDataUrl = '';
+    persistPortrait();
+    render();
+    return;
+  }
   if (action === 'reset-opening') {
     state.ui.openingEdited = false;
     state.ui.openingOverride = '';
@@ -967,6 +1270,10 @@ app.addEventListener('input', (event) => {
   if (target.matches('[data-setting]')) {
     const key = target.dataset.setting;
     state.settings[key] = target.type === 'checkbox' ? target.checked : target.value;
+    if (key === 'model') {
+      state.ui.modelFilter = target.value;
+      filterModelList(target.value);
+    }
   }
 });
 
@@ -991,14 +1298,21 @@ app.addEventListener('change', (event) => {
     target.value = '';
     return;
   }
+  if (target.matches('[data-portrait-file]')) {
+    Promise.resolve(handlePortraitFile(target.files?.[0])).catch((error) => showToast(error?.message || '肖像读取失败。', 'bad'));
+    target.value = '';
+    return;
+  }
   if (target.matches('[data-setting]')) {
     const key = target.dataset.setting;
     state.settings[key] = target.type === 'checkbox' ? target.checked : target.value;
+    if (key === 'provider') renderChromeLayers();
   }
 });
 
 app.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && state.ui.modal) {
+    if (state.ui.modal === 'ai-preview') state.ui.aiPreview = null;
     state.ui.modal = null;
     renderChromeLayers();
   }
@@ -1007,6 +1321,18 @@ app.addEventListener('keydown', (event) => {
     addTrait();
   }
 });
+
+app.addEventListener('error', (event) => {
+  const image = event.target;
+  if (!image?.matches?.('[data-portrait-image]')) return;
+  if (image.src === PORTRAIT_ART[1]) return;
+  state.portrait.customDataUrl = '';
+  state.portrait.presetIndex = 1;
+  image.src = PORTRAIT_ART[1];
+  image.alt = '默认银发少女肖像';
+  persistPortrait();
+  showToast('肖像加载失败，已恢复默认预设。', 'bad');
+}, true);
 
 async function initialize() {
   render();
