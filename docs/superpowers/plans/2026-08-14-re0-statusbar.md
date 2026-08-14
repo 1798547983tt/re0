@@ -581,33 +581,33 @@ git commit -m "feat: package importable status bar regex"
 - Modify only when a failing regression test requires it: `statusbar/src/*.mjs`, `statusbar/styles.css`, `tests/test_statusbar_*.mjs`
 - Create: `reports/statusbar-offline-qa.md`
 
-- [ ] **Step 1: Start the documented static preview**
+- [x] **Step 1: Start the documented static preview**
 
 Run: `python -m http.server 4174 --directory statusbar`
 
 Expected: the server remains active and `http://127.0.0.1:4174/?assets=local` returns the preview.
 
-- [ ] **Step 2: Inspect wide desktop behavior**
+- [x] **Step 2: Inspect wide desktop behavior**
 
 Verify the compact overview, all nine sections, day/night/auto control, relationship filters, character drawer, death-book disclosure, snapshot confirmation, portrait modal, keyboard focus, and absence of console errors at a wide viewport. Capture a screenshot for the QA report.
 
-- [ ] **Step 3: Inspect narrow and reduced-motion behavior**
+- [x] **Step 3: Inspect narrow and reduced-motion behavior**
 
 Verify approximately 320px width, 200% zoom/reflow, horizontal navigation, single-column cards, in-component bottom drawer, long CJK strings, 44px primary targets, no horizontal document overflow, and reduced-motion styles. Capture a narrow screenshot.
 
-- [ ] **Step 4: Inspect resilience and security fixtures**
+- [x] **Step 4: Inspect resilience and security fixtures**
 
 Load empty, malformed, stale, and hostile-string fixtures through the preview query. Confirm empty states, isolated errors, stale marker, inert hostile text, broken remote portrait fallback, and retry behavior.
 
-- [ ] **Step 5: Fix each discovered defect through RED-GREEN**
+- [x] **Step 5: Fix each discovered defect through RED-GREEN**
 
 For every defect, add the smallest failing Node contract or fixture assertion, run it to observe the intended failure, change the production source minimally, rerun the targeted test, then rerun the status-bar suite.
 
-- [ ] **Step 6: Write the offline QA report and stop the server**
+- [x] **Step 6: Write the offline QA report and stop the server**
 
 Record viewport sizes, screenshots, checked interactions, console state, limitations, and the exact commit. Stop the static-server process cleanly.
 
-- [ ] **Step 7: Commit verified polish**
+- [x] **Step 7: Commit verified polish**
 
 ```powershell
 git add statusbar tests reports/statusbar-offline-qa.md
