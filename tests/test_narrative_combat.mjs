@@ -55,7 +55,7 @@ test('resolveDefense returns reaction modifiers with safe fallback', () => {
 test('resolveDamage applies grade multipliers, guard floor and break-gate', () => {
   assert.deepEqual(resolveDamage({ grade: '失败', baseDamage: 10, defenderTierGap: 0, breakQualified: true }), { damage: 0, baseDamage: 10, multiplier: 0, reason: '检定失败' });
   assert.equal(resolveDamage({ grade: '强成功', baseDamage: 10, defenderTierGap: 0, breakQualified: true }).damage, 15);
-  assert.equal(resolveDamage({ grade: '暴击', baseDamage: 9, defenderTierGap: 0, breakQualified: true, damageMultiplier: 0.5 }).damage, 9);
+  assert.deepEqual(resolveDamage({ grade: '暴击', baseDamage: 9, defenderTierGap: 0, breakQualified: true, damageMultiplier: 0.5 }), { damage: 9, baseDamage: 9, multiplier: 1, reason: '命中' });
   assert.deepEqual(resolveDamage({ grade: '成功', baseDamage: 10, defenderTierGap: 4, breakQualified: false }), { damage: 0, baseDamage: 10, multiplier: 1, reason: '无法破阶' });
 });
 

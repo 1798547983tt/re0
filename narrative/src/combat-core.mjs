@@ -52,17 +52,19 @@ export function resolveDefense(reaction) {
 }
 
 export function resolveDamage({ grade, baseDamage, defenderTierGap = 0, breakQualified = false, damageMultiplier = 1 } = {}) {
-  const base = Number(baseDamage) || 0;
+  const rawBase = Number(baseDamage);
+  const base = Number.isFinite(rawBase) ? Math.max(0, rawBase) : 0;
   const gradeMultiplier = { 失败: 0, 成功: 1, 强成功: 1.5, 暴击: 2 }[grade] ?? 0;
+  const defenseMultiplier = Number.isFinite(Number(damageMultiplier)) ? Math.max(0, Number(damageMultiplier)) : 1;
+  const multiplier = gradeMultiplier * defenseMultiplier;
   if (gradeMultiplier === 0) return { damage: 0, baseDamage: base, multiplier: 0, reason: '检定失败' };
   if (Number(defenderTierGap) >= 4 && !breakQualified) {
-    return { damage: 0, baseDamage: base, multiplier: gradeMultiplier, reason: '无法破阶' };
+    return { damage: 0, baseDamage: base, multiplier, reason: '无法破阶' };
   }
-  const multiplier = gradeMultiplier * (Number(damageMultiplier) || 0);
   return {
     damage: Math.floor(base * multiplier),
     baseDamage: base,
-    multiplier: gradeMultiplier,
+    multiplier,
     reason: '命中',
   };
 }
