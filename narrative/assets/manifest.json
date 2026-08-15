@@ -218,9 +218,12 @@
       "portraitKey": "beatrice",
       "localPath": "./assets/avatars/beatrice.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "3de990d62f12d8ef18fbe8d77161b4400c7069570b59fe940e9390c92c06097a",
       "prompt": "static square portrait for 贝亚特丽丝, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "碧翠丝.webp"
@@ -231,9 +234,12 @@
       "portraitKey": "natsuki-subaru",
       "localPath": "./assets/avatars/natsuki-subaru.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "60b28ae4300ace1a6bd94ad45817c23eade5a82a0a8337668e127f0396bcfaa0",
       "prompt": "static square portrait for 菜月昴, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "菜月昴.webp"
@@ -244,9 +250,12 @@
       "portraitKey": "daphne",
       "localPath": "./assets/avatars/daphne.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "3adb401540612fd3e6a561ebbe1137b40a4e395d4604cb104268009fc455f981",
       "prompt": "static square portrait for 达芙妮, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "达芙妮 暴食魔女.webp"
@@ -257,9 +266,12 @@
       "portraitKey": "felix-argyle",
       "localPath": "./assets/avatars/felix-argyle.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "bc5a5c260d3d3336360709cb261c1742c1abf4f65d78aee16b179f74033d1603",
       "prompt": "static square portrait for 菲利克斯·阿盖尔, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "菲利克斯.webp"
@@ -270,9 +282,12 @@
       "portraitKey": "felt",
       "localPath": "./assets/avatars/felt.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "5226b5642c609828c2ab3fd58bb09d5e3878c5433bfde96e58a2a32d8c57a7a4",
       "prompt": "static square portrait for 菲鲁特, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "菲鲁特.webp"
@@ -283,9 +298,12 @@
       "portraitKey": "frederica-baumann",
       "localPath": "./assets/avatars/frederica-baumann.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "64640f3b9d9406922cbc1f6807fa88935e0c35532f42e5741967374b1803fc8e",
       "prompt": "static square portrait for 法兰德丽卡·鲍曼, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "弗雷德莉卡.webp"
@@ -296,9 +314,12 @@
       "portraitKey": "hector",
       "localPath": "./assets/avatars/hector.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "6554c2961495cb1c876807790c30edb81ae13f0d43380234ec0d664fd48d68bd",
       "prompt": "static square portrait for 赫克托尔, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "赫克托尔 忧郁魔人.webp"
@@ -309,9 +330,12 @@
       "portraitKey": "heinkel-astrea",
       "localPath": "./assets/avatars/heinkel-astrea.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "68c4fb351a8c286479dc0b622aff364b183a6b38dacec94099b88a2b49bb9ee3",
       "prompt": "static square portrait for 亨克尔·阿斯特雷亚, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "亨克尔.webp"
@@ -322,9 +346,12 @@
       "portraitKey": "garfiel-tinsel",
       "localPath": "./assets/avatars/garfiel-tinsel.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "cb0444ec3a760ec93552793f9b2679e8347822af6755941bf63d3a649b07311d",
       "prompt": "static square portrait for 加菲尔·汀泽尔, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "加菲尔.webp"
@@ -335,9 +362,12 @@
       "portraitKey": "carmilla",
       "localPath": "./assets/avatars/carmilla.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "81307522bc750ac718be2f17e59c1bc7280cccb55fec165bbac1071cfe28f67d",
       "prompt": "static square portrait for 卡蜜拉, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "卡蜜拉 色欲魔女.webp"
@@ -348,9 +378,12 @@
       "portraitKey": "capella-lugunica",
       "localPath": "./assets/avatars/capella-lugunica.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "613976ab6c0bd5b43be53006537e2da9d57b0a903aadf9d4f7b3dc277b2af65e",
       "prompt": "static square portrait for 卡佩拉·艾美拉达·露格尼卡, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "卡佩拉.webp"
@@ -361,9 +394,12 @@
       "portraitKey": "crusch-karsten",
       "localPath": "./assets/avatars/crusch-karsten.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "078e5ea4665c0980f7282676251230f1af7de8cd6f474afa73ba94d51e48836e",
       "prompt": "static square portrait for 库珥修·卡尔斯腾, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "库珥修.webp"
@@ -374,9 +410,12 @@
       "portraitKey": "ram",
       "localPath": "./assets/avatars/ram.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "3c04623d981c42b66dd4d4d32fa82182d5e59094f5f3761426e211fe6a6e11e5",
       "prompt": "static square portrait for 拉姆, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "拉姆.webp"
@@ -387,9 +426,12 @@
       "portraitKey": "ley-batenkaitos",
       "localPath": "./assets/avatars/ley-batenkaitos.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "464e7ab7a794d50ca58d008bccc1c8efb383989362db8030493663a3b9827125",
       "prompt": "static square portrait for 莱伊·巴登凯托斯, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "莱伊.webp"
@@ -400,9 +442,12 @@
       "portraitKey": "reinhard-astrea",
       "localPath": "./assets/avatars/reinhard-astrea.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "a299beb73d46ca07e39f135695f5cd4f6bbe3c0a5442c696ed483c30f2432708",
       "prompt": "static square portrait for 莱茵哈鲁特·范·阿斯特雷亚, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "莱茵哈鲁特.webp"
@@ -413,9 +458,12 @@
       "portraitKey": "reid-astrea",
       "localPath": "./assets/avatars/reid-astrea.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "4203074aa681a3bb8deedca5f5e83d39a3ab8cb713a39a6b69fa14049a135622",
       "prompt": "static square portrait for 雷德·阿斯特雷亚, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "雷德 初代剑圣.webp"
@@ -426,9 +474,12 @@
       "portraitKey": "regulus-corneas",
       "localPath": "./assets/avatars/regulus-corneas.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "3d13599c89964d2c2cd013208d4f6b495b47361020b3c3a6bcd5f6f08dcc5035",
       "prompt": "static square portrait for 雷古勒斯·柯尔尼亚斯, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "雷古勒斯.webp"
@@ -439,9 +490,12 @@
       "portraitKey": "rem",
       "localPath": "./assets/avatars/rem.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "3479a7e97851a42d69dcade3692127f88c017031e2a7dae48c8e4fff0370ab1e",
       "prompt": "static square portrait for 蕾姆, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "蕾姆.webp"
@@ -452,9 +506,12 @@
       "portraitKey": "ricardo-welkin",
       "localPath": "./assets/avatars/ricardo-welkin.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "d5dfdbd6f51ed38fde40e4b41fa3cb34fa845691efe8aeaa90a98233f833fa76",
       "prompt": "static square portrait for 里卡多·威尔金, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "里卡多.webp"
@@ -465,9 +522,12 @@
       "portraitKey": "rui-arneb",
       "localPath": "./assets/avatars/rui-arneb.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "7f48437cd6a09a8c2c04d4c68fba6e318de6762d3f8946ed5152460c4bc8a360",
       "prompt": "static square portrait for 鲁伊, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "鲁伊.webp"
@@ -478,9 +538,12 @@
       "portraitKey": "roy-alphard",
       "localPath": "./assets/avatars/roy-alphard.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "96e310f7cf7a9041c9fb9ec27589199c35eeac4f6ae5b35395dc2f7b45448630",
       "prompt": "static square portrait for 罗伊·阿尔法鲁多, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "罗伊.webp"
@@ -491,9 +554,12 @@
       "portraitKey": "roswaal-mathers",
       "localPath": "./assets/avatars/roswaal-mathers.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "46af3b554073ab037cdb452d953b9e561779e854da489bb94fff6731e00920a3",
       "prompt": "static square portrait for 罗兹瓦尔·L·梅扎斯, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "罗兹瓦尔.webp"
@@ -504,9 +570,12 @@
       "portraitKey": "meili-portroute",
       "localPath": "./assets/avatars/meili-portroute.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "1a78c048c5ed4f5463761ead726e61d1eb2779a1fdf6991767c5a328fafde830",
       "prompt": "static square portrait for 梅莉·波特鲁特, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "梅莉.webp"
@@ -517,9 +586,12 @@
       "portraitKey": "minerva",
       "localPath": "./assets/avatars/minerva.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "5eb0f88e15e48bd24a4c6a081209767afa9c7efcfd749f47f08e291ca0cc3f9a",
       "prompt": "static square portrait for 密涅瓦, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "密涅瓦 愤怒魔女.webp"
@@ -530,9 +602,12 @@
       "portraitKey": "puck",
       "localPath": "./assets/avatars/puck.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "85688662bde9271702117febcb5c495f72d7e46c789384f2a9e05992f660ec20",
       "prompt": "static square portrait for 帕克, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "帕克.webp"
@@ -543,9 +618,12 @@
       "portraitKey": "pandora",
       "localPath": "./assets/avatars/pandora.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "873e8bf8a3c2b55042744997f95bb4fe5118023aa61cfa4e9998caca4b5e16a0",
       "prompt": "static square portrait for 潘多拉, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "潘多拉 虚饰魔女.webp"
@@ -556,9 +634,12 @@
       "portraitKey": "petelgeuse-romaneeconti",
       "localPath": "./assets/avatars/petelgeuse-romaneeconti.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "2c2a00f3329916d381364e82d5a3921a163e562b8cb4fa69888760a4b45b2072",
       "prompt": "static square portrait for 培提尔其乌斯·罗曼尼康帝, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "培提尔其乌斯 怠惰大司教.webp"
@@ -569,9 +650,12 @@
       "portraitKey": "petra-leyte",
       "localPath": "./assets/avatars/petra-leyte.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "4e8fda5f166ad4fa0daebef380740498f3bb15e3956d2be41a6cfe1ed83ba3a9",
       "prompt": "static square portrait for 佩特拉, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "佩特拉.webp"
@@ -582,9 +666,12 @@
       "portraitKey": "priscilla-barielle",
       "localPath": "./assets/avatars/priscilla-barielle.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "57054a9a9c38dd313377de2759920ed7511d11d7df3be3f9c2516f9fb9582489",
       "prompt": "static square portrait for 普莉希拉·跋利耶尔, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "普莉希拉.webp"
@@ -595,9 +682,12 @@
       "portraitKey": "sekmet",
       "localPath": "./assets/avatars/sekmet.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "36988df68752782be5f86fdcd9476f75444e8853dda9c66b5eb0960c24560493",
       "prompt": "static square portrait for 塞赫麦特, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "塞赫麦特 怠惰魔女.webp"
@@ -608,9 +698,12 @@
       "portraitKey": "satella",
       "localPath": "./assets/avatars/satella.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "f89a5f8eaafb8d38b9bfcdd8c822ea16bed8b183ca4271d9ba97395bf1edb76d",
       "prompt": "static square portrait for 莎缇拉, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "莎缇拉 嫉妒魔女.webp"
@@ -621,9 +714,12 @@
       "portraitKey": "schult",
       "localPath": "./assets/avatars/schult.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "3b8f2689691552c816b69f6be90479aab09a6749af31d93cc431cdabecfcc4e2",
       "prompt": "static square portrait for 舒尔特, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "舒尔特.webp"
@@ -634,9 +730,12 @@
       "portraitKey": "typhon",
       "localPath": "./assets/avatars/typhon.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "33833bee8e24aa3680cd9497caa84b43fd413a39954537cee169e30e02d71a3d",
       "prompt": "static square portrait for 缇丰, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "缇丰 傲慢魔女.webp"
@@ -647,9 +746,12 @@
       "portraitKey": "wilhelm-astrea",
       "localPath": "./assets/avatars/wilhelm-astrea.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "a57c6eda58d90365a8403c3fe2ea223af706e3d84037855cb2e6e1cd6bbfc681",
       "prompt": "static square portrait for 威尔海姆·范·阿斯特雷亚, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "威尔海姆.webp"
@@ -660,9 +762,12 @@
       "portraitKey": "sirius-romaneeconti",
       "localPath": "./assets/avatars/sirius-romaneeconti.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "2b528bcf8aeb5da8cf09f7505970b9122ece76b72e899098fc3b0efa744a42c4",
       "prompt": "static square portrait for 西里乌斯·罗曼尼康帝, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "西里乌斯.webp"
@@ -673,9 +778,12 @@
       "portraitKey": "shaula",
       "localPath": "./assets/avatars/shaula.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "e25daed34be7a4bc37fdbe86f26a5c4ea28b48ff4a60a215b301433d0aba7eda",
       "prompt": "static square portrait for 夏乌拉, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "夏乌拉.webp"
@@ -686,9 +794,12 @@
       "portraitKey": "julius-juukulius",
       "localPath": "./assets/avatars/julius-juukulius.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "48cf945a291f30f30da54df3801c244bee1de8a2f7480fae2e7731228c89aab1",
       "prompt": "static square portrait for 尤里乌斯·尤克历乌斯, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "尤里乌斯.webp"
@@ -699,9 +810,12 @@
       "portraitKey": "joshua-juukulius",
       "localPath": "./assets/avatars/joshua-juukulius.webp",
       "releaseUrl": "",
-      "mime": null,
-      "dimensions": null,
-      "sha256": null,
+      "mime": "image/webp",
+      "dimensions": {
+        "width": 512,
+        "height": 512
+      },
+      "sha256": "8a0aa26f1fbb8614cb58163c07337eecae7c9516970546ab8bf278e34b53fdab",
       "prompt": "static square portrait for 约书亚·尤克历乌斯, RE0 dossier style, derived from supplied reference only",
       "sourceRole": "avatar",
       "reference": "约书亚webp.webp"

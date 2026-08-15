@@ -57,7 +57,7 @@ test('manifest entries expose honest metadata fields and never fabricate missing
   }
 });
 
-test('asset audit clearly reports the currently missing avatar binaries', () => {
+test('asset audit reports missing binaries honestly and becomes ready when none are missing', () => {
   const manifest = readManifest();
   const audit = auditManifest(manifest);
   const expectedMissing = manifest.assets.filter((asset) => !existsSync(resolve(ROOT, 'narrative', asset.localPath.slice(2))));

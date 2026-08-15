@@ -10,6 +10,8 @@
   --re0-panel-strong: #ffffff;
   --re0-accent: #5f9db8;
   --re0-danger: #9b4051;
+  --re0-card-wash: rgb(250 253 255 / 84%);
+  --re0-title-wash: rgb(250 253 255 / 72%);
   --re0-shadow: 0 22px 64px rgb(29 48 63 / 18%);
   display: block;
   inline-size: 100%;
@@ -36,6 +38,8 @@
   --re0-panel-strong: #ffffff;
   --re0-accent: #5f9db8;
   --re0-danger: #9b4051;
+  --re0-card-wash: rgb(250 253 255 / 84%);
+  --re0-title-wash: rgb(250 253 255 / 72%);
   --re0-shadow: 0 22px 64px rgb(29 48 63 / 18%);
 }
 
@@ -47,6 +51,8 @@
   --re0-panel-strong: #0b101b;
   --re0-accent: #d1a653;
   --re0-danger: #d76d82;
+  --re0-card-wash: rgb(5 9 18 / 84%);
+  --re0-title-wash: rgb(7 12 22 / 62%);
   --re0-shadow: 0 26px 78px rgb(0 0 0 / 52%);
 }
 
@@ -58,6 +64,8 @@
   --re0-panel-strong: #fff7e7;
   --re0-accent: #9a4935;
   --re0-danger: #8e3f42;
+  --re0-card-wash: rgb(248 238 217 / 80%);
+  --re0-title-wash: rgb(248 238 217 / 64%);
   --re0-shadow: 0 20px 58px rgb(83 54 26 / 20%);
 }
 
@@ -87,7 +95,7 @@
   border-radius: 8px;
   color: var(--re0-ink);
   background:
-    linear-gradient(rgb(255 255 255 / 84%), rgb(255 255 255 / 84%)),
+    linear-gradient(var(--re0-card-wash), var(--re0-card-wash)),
     var(--re0-background-image),
     linear-gradient(135deg, color-mix(in srgb, var(--re0-accent) 8%, transparent), transparent 42%),
     var(--re0-panel);
@@ -105,7 +113,7 @@
   padding: clamp(16px, 4vw, 32px);
   border-block-end: 1px solid var(--re0-line);
   background:
-    linear-gradient(color-mix(in srgb, var(--re0-panel) 72%, transparent), color-mix(in srgb, var(--re0-panel) 72%, transparent)),
+    linear-gradient(var(--re0-title-wash), var(--re0-title-wash)),
     var(--re0-title-plate-image),
     repeating-linear-gradient(90deg, transparent 0 35px, color-mix(in srgb, var(--re0-accent) 8%, transparent) 36px),
     linear-gradient(110deg, color-mix(in srgb, var(--re0-accent) 12%, transparent), transparent 68%);
@@ -115,13 +123,17 @@
 
 #re0-narrative-app[data-theme="night"] .re0-title-plate {
   background:
+    linear-gradient(var(--re0-title-wash), var(--re0-title-wash)),
     linear-gradient(125deg, transparent 0 54%, rgb(157 50 77 / 8%) 54.3% 64%, transparent 64.3%),
+    var(--re0-title-plate-image),
     repeating-linear-gradient(135deg, transparent 0 28px, rgb(209 166 83 / 6%) 29px);
 }
 
 #re0-narrative-app[data-theme="beige"] .re0-title-plate {
   background:
+    linear-gradient(var(--re0-title-wash), var(--re0-title-wash)),
     radial-gradient(circle at 14% 20%, rgb(154 73 53 / 12%), transparent 34%),
+    var(--re0-title-plate-image),
     repeating-linear-gradient(0deg, rgb(111 76 42 / 3%) 0 1px, transparent 1px 6px);
 }
 
@@ -433,6 +445,10 @@
   place-items: center;
   padding: 16px;
   color: var(--re0-ink);
+}
+
+#re0-narrative-overlay-root[hidden] {
+  display: none;
 }
 
 [data-re0-narrative-mount] :is(button, [tabindex]):focus-visible {

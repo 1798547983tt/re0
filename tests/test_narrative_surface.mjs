@@ -87,6 +87,24 @@ test('CSS is scoped, responsive to 320px, and honors reduced motion', () => {
   const css = read('narrative/styles.css');
   assert.match(css, /\[data-re0-narrative-mount\]/);
   assert.match(css, /#re0-narrative-overlay-root/);
+  assert.match(
+    css,
+    /#re0-narrative-overlay-root\[hidden\]\s*\{[^}]*display:\s*none/,
+    'the hidden detail overlay must not intercept theme controls',
+  );
+  assert.match(css, /--re0-card-wash:/, 'each theme needs a readable background wash');
+  assert.match(
+    css,
+    /\.re0-narrative-card\s*\{[^}]*var\(--re0-card-wash\)/s,
+    'the card must use the active theme wash',
+  );
+  for (const theme of ['night', 'beige']) {
+    assert.match(
+      css,
+      new RegExp(`#re0-narrative-app\\[data-theme="${theme}"\\] \\.re0-title-plate\\s*\\{[^}]*var\\(--re0-title-plate-image\\)`, 's'),
+      `${theme} must retain its generated title plate`,
+    );
+  }
   assert.match(css, /container-type:\s*inline-size/);
   assert.match(css, /@container[^\{]*\(max-width:\s*420px\)/);
   assert.match(css, /@container[^\{]*\(max-width:\s*340px\)/);
