@@ -55,10 +55,15 @@ test('事件.当前战斗 is short-lived state with safe defaults and no persist
   assert.doesNotMatch(schema, /当前战斗[\\s\\S]{0,1800}(?:骰池|完整战斗日志|战斗日志)/);
   assert.match(schema, /战斗ID: battleId/);
   assert.match(schema, /阶段: text\(''\)/);
-  assert.match(schema, /当前行动者: text\(''\)/);
+  assert.match(schema, /当前行动者: stableId/);
   const battleSchema = schema.slice(schema.indexOf('const checkSummary'), schema.indexOf('export const Schema'));
   assert.match(battleSchema, /superRefine/);
   assert.match(battleSchema, /battle\.进行中\s*&&\s*!battle\.战斗ID\.trim\(\)/);
+  assert.match(battleSchema, /const stableId = z\.string\(\)/);
+  assert.match(battleSchema, /进行中: z\.boolean\(\)/);
+  for (const field of ['参战者', '先攻顺序', '当前行动者']) assert.match(battleSchema, new RegExp(`${field}: (?:z\\.array\\(stableId\\)|stableId)`));
+  assert.match(battleSchema, /battle\.参战者\.every\(id => id\)/);
+  assert.match(battleSchema, /new Set\(battle\.先攻顺序\)\.size === battle\.先攻顺序\.length/);
   assert.doesNotMatch(battleSchema, /\.passthrough\(\)/);
   assert.match(battleSchema, /const checkSummary = z\.object/);
   for (const field of ['检定类型', '骰面', '目标DC', '修正', '总值', '结果等级', '目标', '时间']) assert.match(battleSchema, new RegExp(field));
