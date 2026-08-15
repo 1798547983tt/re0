@@ -1,7 +1,7 @@
 # RE0 正文渲染器离线 QA
 
 - 日期：2026-08-15
-- 分支：`codex/re0-combat-renderer`
+- 分支：`main`（已合并 `codex/re0-combat-renderer`）
 - 审查基线：`5553415`；最终内容以交付分支 HEAD 为准
 
 ## 结论
@@ -29,12 +29,12 @@
 | 重复重绘 | 通过 | 连续调用渲染 10 次后仍只有一个 `.re0-narrative-card`，没有重复挂载。 |
 | 减少动态效果 | 通过（静态契约） | CSS 明确在 `prefers-reduced-motion: reduce` 下将动画/过渡压至 `.001ms` 并关闭平滑滚动；Node 合同测试通过。当前浏览器驱动未提供 OS 媒体偏好仿真，因此仍列入真实宿主复验。 |
 | 控制台 | 通过 | 上述主题与边界场景完成后，浏览器 `error`/`warn` 日志均为空。 |
-| Tavern Helper iframe 捕获回归 | 通过 | 用同形态的外层 iframe 运行当前正则替换结果；捕获协议显示为 `第38卷 | 帕拉迪欧·曼内斯库` 与 `魔女历1234年05月06日`，唯一正文、对白和场景卡均可见，iframe 高度为 532px，脚本错误 0。 |
+| Tavern Helper iframe 捕获回归 | 通过 | 用本地 SillyTavern 1.17.0 / Tavern Helper 4.8.13 同形态 `srcdoc` 运行当前七段脚本产物；捕获协议显示为 `第01卷 | 开始的余温`，得到 1 个对白节点、`aria-busy=false`、`data-re0-runtime=ready`，脚本错误 0。 |
 
 ## 自动化发布检查
 
-- `node --test tests/*.mjs`：139/139 通过，0 失败。
-- `python -m unittest discover -s tests -p 'test_*.py' -v`：7/7 通过。
+- `node --test tests/*.mjs`：141/141 通过，0 失败。
+- `python -m unittest discover -s tests -p 'test_*.py' -v`：干净功能工作树 7/7 通过；主工作区现有的人物档案重命名/删除改动使其中 1 项代表性档案测试无法读取文件，未改动该用户变更。
 - `node tools/package_narrative_regex.mjs --check`：产物与源码逐字节一致。
 - `node tools/package_narrative_regex.mjs --audit-assets --strict`：51 项，缺失 0、不完整 0、不安全 URL 0、未固定版本 URL 0、`ready=true`。
 - `git diff --check`：通过。
@@ -44,8 +44,8 @@
 ## 交付指纹
 
 - 正则：`dist/regex-Re0·正文美化.json`
-- 字节数：`96581`
-- SHA-256：`8817008A29EE562738193D1B9A8A222D837EBA202F90CC924B4056BE9AEB92EB`
+- 字节数：`99789`（UTF-8 文件字节数）
+- SHA-256：`0C121F230706DDB869508CF908EF67DC35A437205F94ACFA10582174F708EAC2`
 - 资产清单 SHA-256：`aed1705276b7742a47044f4b74786e11e79706d7779f048daaf5ad3a2629e902`
 - 图像：51 个，共 `9650197` 字节；其中专属头像 44 个。
 
