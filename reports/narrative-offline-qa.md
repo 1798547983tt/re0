@@ -29,10 +29,11 @@
 | 重复重绘 | 通过 | 连续调用渲染 10 次后仍只有一个 `.re0-narrative-card`，没有重复挂载。 |
 | 减少动态效果 | 通过（静态契约） | CSS 明确在 `prefers-reduced-motion: reduce` 下将动画/过渡压至 `.001ms` 并关闭平滑滚动；Node 合同测试通过。当前浏览器驱动未提供 OS 媒体偏好仿真，因此仍列入真实宿主复验。 |
 | 控制台 | 通过 | 上述主题与边界场景完成后，浏览器 `error`/`warn` 日志均为空。 |
+| Tavern Helper iframe 捕获回归 | 通过 | 用同形态的外层 iframe 运行当前正则替换结果；捕获协议显示为 `第38卷 | 帕拉迪欧·曼内斯库` 与 `魔女历1234年05月06日`，唯一正文、对白和场景卡均可见，iframe 高度为 532px，脚本错误 0。 |
 
 ## 自动化发布检查
 
-- `node --test tests/*.mjs`：134/134 通过，0 失败。
+- `node --test tests/*.mjs`：137/137 通过，0 失败。
 - `python -m unittest discover -s tests -p 'test_*.py' -v`：7/7 通过。
 - `node tools/package_narrative_regex.mjs --check`：产物与源码逐字节一致。
 - `node tools/package_narrative_regex.mjs --audit-assets --strict`：51 项，缺失 0、不完整 0、不安全 URL 0、未固定版本 URL 0、`ready=true`。
@@ -43,8 +44,8 @@
 ## 交付指纹
 
 - 正则：`dist/regex-Re0·正文美化.json`
-- 字节数：`93998`
-- SHA-256：`2ab32113feeb0f97d723af7b9c5b5e9161ca89f6aaeaaaec44074c19745e086f`
+- 字节数：`95255`
+- SHA-256：`55CE829D9E73CC03D207415CDAF5F24CFADD849D6402BCCD2F69EB8A1CA19D72`
 - 资产清单 SHA-256：`aed1705276b7742a47044f4b74786e11e79706d7779f048daaf5ad3a2629e902`
 - 图像：51 个，共 `9650197` 字节；其中专属头像 44 个。
 

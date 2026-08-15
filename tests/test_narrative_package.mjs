@@ -27,7 +27,7 @@ test('narrative regex artifact follows AI-output conventions and content-only ma
     },
     {
       disabled: false,
-      findRegex: '/<content>[\\s\\S]*?<\\/content>/g',
+      findRegex: '/(<content>(?:(?!<\\/?textarea\\b)[\\s\\S])*?<\\/content>)/gi',
       markdownOnly: true,
       placement: [2],
       promptOnly: false,
@@ -42,6 +42,11 @@ test('narrative regex artifact follows AI-output conventions and content-only ma
   assert.ok(artifact.replaceString.startsWith('```html\n<!doctype html>'));
   assert.ok(artifact.replaceString.endsWith('\n```'));
   assert.equal((artifact.replaceString.match(/```html/g) || []).length, 1);
+  assert.match(artifact.replaceString, /<textarea id="re0-narrative-source" hidden>\$1<\/textarea>/);
+  assert.equal((artifact.replaceString.match(/\$1/g) || []).length, 1, 'the replacement token must only occur in the carrier');
+  for (const token of [/\$`/g, /\$'/g, /\$&/g, /\$</g, /\$\$/g]) {
+    assert.equal((artifact.replaceString.match(token) || []).length, 0, `replacement token ${token} must not occur in bundled code`);
+  }
 });
 
 test('packaged HTML embeds maintained narrative sources in dependency order without module syntax', () => {
@@ -75,12 +80,35 @@ test('packaged HTML embeds maintained narrative sources in dependency order with
 
 test('replacement preserves a trailing UpdateVariable suffix byte-for-byte', () => {
   const artifact = buildArtifact();
-  const original = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>正文</now_plot></content><UpdateVariable>{"sentinel":"保持"}</UpdateVariable>';
+  const content = '<content><story volume="38"></story><time>魔女历1234年05月06日</time><now_plot>{菜月昴}「必须显示这段正文。」</now_plot></content>';
+  const original = `${content}<UpdateVariable>{"sentinel":"保持"}</UpdateVariable>`;
   const replaced = simulateReplacement(original, artifact);
-  assert.ok(replaced.startsWith(artifact.replaceString));
+  const carrier = replaced.match(/<textarea id="re0-narrative-source" hidden>([\s\S]*?)<\/textarea>/);
+  assert.ok(carrier, 'the matched protocol must be carried into the message iframe');
+  assert.equal(carrier[1], content);
+  assert.match(replaced, /function readNarrativeSource/);
+  assert.match(replaced, /const source = readNarrativeSource\(mount\)/);
   assert.ok(replaced.endsWith('<UpdateVariable>{"sentinel":"保持"}</UpdateVariable>'));
   assert.equal((replaced.match(/<UpdateVariable>/g) || []).length, 1);
-  assert.equal(replaced.includes('<content><story'), false);
+});
+
+test('packaged renderer boots before Tavern Helper measures the iframe', () => {
+  const html = buildArtifact().replaceString;
+  assert.match(html, /if \(typeof document !== ['"]undefined['"]\) boot\(\);/);
+  assert.doesNotMatch(html, /addEventListener\(['"]DOMContentLoaded['"],\s*boot/);
+});
+
+test('packaged renderer asks Tavern Helper to resize after dynamic content is painted', () => {
+  const html = buildArtifact().replaceString;
+  assert.match(html, /function requestMessageFrameResize/);
+  assert.match(html, /frameElement[\s\S]*?style[\s\S]*?height/);
+  assert.match(html, /requestMessageFrameResize\(\)/);
+});
+
+test('unsafe textarea terminators cannot escape the inert protocol carrier', () => {
+  const artifact = buildArtifact();
+  const hostile = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot></textarea><script>globalThis.pwned=1</script></now_plot></content>';
+  assert.equal(simulateReplacement(hostile, artifact), hostile);
 });
 
 test('packager rejects dangerous embedded closing tags and serializes deterministically', () => {

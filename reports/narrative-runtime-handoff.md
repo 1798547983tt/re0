@@ -3,14 +3,20 @@
 ## 待验收产物
 
 - 导入文件：`dist/regex-Re0·正文美化.json`
-- SHA-256：`2ab32113feeb0f97d723af7b9c5b5e9161ca89f6aaeaaaec44074c19745e086f`
-- 大小：`93998` 字节
+- SHA-256：`55CE829D9E73CC03D207415CDAF5F24CFADD849D6402BCCD2F69EB8A1CA19D72`
+- 大小：`95255` 字节
 - 正文规则：`narrative/rules/正文输出格式.md`
 - 战斗规则：`narrative/rules/战斗规则.md`
 - 状态映射：`narrative/rules/状态字段映射.md`
 - ZOD/MVU schema：`变量/脚本/酒馆助手脚本-ZOD.json`
 
 该产物是 AI 输出正文美化正则，不是完整角色卡或世界书。导入正则之外，还需要把正文格式与战斗规则放入目标角色卡的提示/世界书链路，并由现有 MVU 更新提示执行末尾的 `<UpdateVariable>`。
+
+## 本次渲染故障修复
+
+旧产物只把 `<content>...</content>` 替换成固定开发样例，且渲染脚本等待 `DOMContentLoaded`；在 Tavern Helper 已经测量 iframe 高度后，通常只剩主题工具栏。新产物用带捕获组的正则把真实正文放入隐藏协议载体，打包脚本中唯一的替换令牌只出现在该载体；渲染器立即启动、读取载体，并在动态卡片完成后主动回写 iframe 高度。`<textarea>` 终止标签会被匹配器拒绝，避免载体逃逸。
+
+因此，已经导入旧 JSON 的 SillyTavern 会继续使用旧副本；请删除/覆盖旧的 `Re:0·正文美化` 后重新导入当前文件，再用新消息或重新绘制触发。不要只替换仓库文件名而不重新导入。
 
 ## 资产前置条件
 

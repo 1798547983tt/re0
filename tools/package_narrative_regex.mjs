@@ -9,6 +9,11 @@ const ROOT = resolve(TOOL_DIR, '..');
 export const OUTPUT = resolve(ROOT, 'dist', 'regex-Re0·正文美化.json');
 const MANIFEST_PATH = resolve(ROOT, 'narrative/assets/manifest.json');
 const SCRIPT_ID = '77df7cab-215d-42f5-b9a0-5ec7a60c9d6c';
+// The capture group is deliberately carried into the inert textarea below.
+// Tavern Helper expands `$1` while applying the regex replacement; the
+// renderer then reads that captured protocol instead of falling back to its
+// development sample.
+export const NARRATIVE_FIND_REGEX = '/(<content>(?:(?!<\\/?textarea\\b)[\\s\\S])*?<\\/content>)/gi';
 
 export const MODULE_ORDER = Object.freeze([
   'narrative/src/character-registry.mjs',
@@ -248,6 +253,7 @@ ${css}
 </head>
 <body>
 <div data-re0-narrative-mount>
+<textarea id="re0-narrative-source" hidden>$1</textarea>
 <nav class="re0-theme-toolbar" aria-label="正文主题">
 <button type="button" data-action="theme-auto" aria-label="自动主题" title="自动主题">◐</button>
 <button type="button" data-action="theme-day" aria-label="日间主题" title="日间主题">☼</button>
@@ -268,7 +274,7 @@ ${buildJavascript({ moduleOverrides })}
 export function buildArtifact(options = {}) {
   return {
     disabled: false,
-    findRegex: '/<content>[\\s\\S]*?<\\/content>/g',
+    findRegex: NARRATIVE_FIND_REGEX,
     id: SCRIPT_ID,
     markdownOnly: true,
     maxDepth: null,
@@ -288,7 +294,7 @@ export function buildSerializedArtifact(options = {}) {
 }
 
 export function simulateReplacement(original, artifact = buildArtifact()) {
-  return String(original).replace(/<content>[\s\S]*?<\/content>/g, artifact.replaceString);
+  return String(original).replace(/(<content>(?:(?!<\/?textarea\b)[\s\S])*?<\/content>)/gi, artifact.replaceString);
 }
 
 function writeArtifact() {

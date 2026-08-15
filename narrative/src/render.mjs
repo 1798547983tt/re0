@@ -214,6 +214,31 @@ export function applyNarrativeAssets(app, manifest, themeName) {
   applyCssImageAsset(app, '--re0-title-plate-image', titlePlate.url, 'title-plate');
 }
 
+function requestMessageFrameResize() {
+  const frame = typeof window !== 'undefined' ? window.frameElement : null;
+  if (!frame?.style || typeof document === 'undefined') return;
+  const measure = () => {
+    const bodyHeight = Number(document.body?.scrollHeight) || 0;
+    const documentHeight = Number(document.documentElement?.scrollHeight) || 0;
+    const height = Math.max(bodyHeight, documentHeight);
+    if (height > 0) frame.style.height = `${height}px`;
+  };
+  measure();
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(measure);
+  else if (typeof queueMicrotask === 'function') queueMicrotask(measure);
+}
+
+function readNarrativeSource(mount) {
+  const carrier = mount?.querySelector?.('#re0-narrative-source');
+  const value = typeof carrier?.value === 'string' ? carrier.value : carrier?.textContent;
+  const source = String(value ?? '').trim();
+  // Keep the replacement token out of the bundled JavaScript. Tavern Helper
+  // expands that token everywhere in the replacement string, so it may only
+  // occur in the inert protocol carrier in the outer HTML.
+  const replacementToken = String.fromCharCode(36, 49);
+  return source && source !== replacementToken ? source : mount?.dataset?.sampleProtocol || SAMPLE;
+}
+
 export function renderNarrative(target, source = SAMPLE, options = {}) {
   const app = target?.id === 're0-narrative-app' ? target : target?.querySelector?.('#re0-narrative-app') || target;
   if (!app?.ownerDocument) throw new TypeError('renderNarrative requires a DOM element target');
@@ -247,6 +272,7 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
     bindThemeControls(mount);
     updateThemeButtons(mount, { preference, themeName: theme.name });
   }
+  requestMessageFrameResize();
   return { parsed, theme };
 }
 
@@ -254,13 +280,11 @@ function boot() {
   const mount = document.querySelector('[data-re0-narrative-mount]');
   const app = document.querySelector('#re0-narrative-app');
   if (!mount || !app) return;
-  renderNarrative(app, mount.dataset.sampleProtocol || SAMPLE);
+  const source = readNarrativeSource(mount);
+  renderNarrative(app, source);
   loadNarrativeAssetManifest(mount).then((assetManifest) => {
-    if (assetManifest) renderNarrative(app, mount.dataset.sampleProtocol || SAMPLE, { assetManifest });
+    if (assetManifest) renderNarrative(app, source, { assetManifest });
   });
 }
 
-if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
-  else boot();
-}
+if (typeof document !== 'undefined') boot();
