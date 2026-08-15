@@ -135,6 +135,14 @@ test('battle state emits only canonical keys and normalizes participant objects 
   assert.equal('行动顺序' in state, false);
 });
 
+test('participant IDs are trimmed before canonical output and duplicate checks', () => {
+  const state = createBattleState({ id: 'trim', participants: [{ id: ' a ' }, ' b '] });
+  assert.deepEqual(state['参战者'], ['a', 'b']);
+  assert.deepEqual(state['先攻顺序'], ['a', 'b']);
+  assert.equal(state['当前行动者'], 'a');
+  assert.throws(() => createBattleState({ id: 'duplicate-trim', participants: ['a', ' a '] }), /重复|唯一/);
+});
+
 test('finishBattle returns only canonical empty state and drops forbidden history', () => {
   const finished = finishBattle({
     ...createBattleState({ id: 'x', participants: [{ id: 'alpha' }] }),

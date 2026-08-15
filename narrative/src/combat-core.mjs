@@ -118,8 +118,8 @@ export function resolveDying({ successes = 0, failures = 0, roll } = {}) {
 }
 
 function participantId(participant) {
-  if (typeof participant === 'string') return participant;
-  if (participant && typeof participant === 'object' && typeof participant.id === 'string') return participant.id;
+  if (typeof participant === 'string') return participant.trim();
+  if (participant && typeof participant === 'object' && typeof participant.id === 'string') return participant.id.trim();
   return null;
 }
 

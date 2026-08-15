@@ -64,6 +64,13 @@ test('事件.当前战斗 is short-lived state with safe defaults and no persist
   for (const field of ['参战者', '先攻顺序', '当前行动者']) assert.match(battleSchema, new RegExp(`${field}: (?:z\\.array\\(stableId\\)|stableId)`));
   assert.match(battleSchema, /battle\.参战者\.every\(id => id\)/);
   assert.match(battleSchema, /new Set\(battle\.先攻顺序\)\.size === battle\.先攻顺序\.length/);
+  assert.match(battleSchema, /!battle\.进行中/);
+  assert.match(battleSchema, /hasStaleBattleData/);
+  for (const field of ['行动额度', '距离', '掩体', '持续效果', '濒死计数']) assert.match(battleSchema, new RegExp(`${field}: (?!stateObject)`));
+  assert.match(battleSchema, /const actionQuotas = z\.record/);
+  assert.match(battleSchema, /const distanceMap = z\.record/);
+  assert.match(battleSchema, /const coverMap = z\.record/);
+  assert.match(battleSchema, /const dyingCounters = z\.record/);
   assert.doesNotMatch(battleSchema, /\.passthrough\(\)/);
   assert.match(battleSchema, /const checkSummary = z\.object/);
   for (const field of ['检定类型', '骰面', '目标DC', '修正', '总值', '结果等级', '目标', '时间']) assert.match(battleSchema, new RegExp(field));
