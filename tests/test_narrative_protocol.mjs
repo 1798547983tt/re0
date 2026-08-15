@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { performance } from 'node:perf_hooks';
 
 import {
   formatVolumeHeading,
@@ -122,6 +123,34 @@ test('parser accepts strict root order, visible heading/date, metadata, blocks a
   assert.equal(parsed.blocks[6].attributes.actor, '菜月昴');
 });
 
+test('parser rejects unknown, duplicate, case-smuggled, or partially parsed attributes', () => {
+  const cases = [
+    '<content><story volume="01" onclick="x"></story><time>魔女历1000年01月01日</time><now_plot>正文</now_plot></content>',
+    '<content><story volume="01"></story><time period="下午" style="x">魔女历1000年01月01日</time><now_plot>正文</now_plot></content>',
+    '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><scene location="王都" onclick="x">正文</scene></now_plot></content>',
+    '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><ability user="昴" name="权能" kind="权能" desc="说明" data-x="1">正文</ability></now_plot></content>',
+    '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><check type="攻击" actor="昴" Actor="艾尔莎">正文</check></now_plot></content>',
+    '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><restart deathId="a" checkpoint="b" checkpoint="c">正文</restart></now_plot></content>',
+    '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><scene location="王都" mood=坏>正文</scene></now_plot></content>',
+    '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><scene location="王都" STYLE="color:red">正文</scene></now_plot></content>',
+  ];
+  for (const source of cases) {
+    const parsed = parseNarrativeResponse(source);
+    assert.equal(parsed.ok, false, source);
+    assert.equal(parsed.type, 'fallback');
+  }
+});
+
+test('parser falls back quickly for many unclosed direct tags', () => {
+  const hostile = `<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>${'<scene location="王都">'.repeat(8000)}</now_plot></content>`;
+  const start = performance.now();
+  const parsed = parseNarrativeResponse(hostile);
+  const elapsed = performance.now() - start;
+  assert.equal(parsed.ok, false);
+  assert.equal(parsed.type, 'fallback');
+  assert.ok(elapsed < 500, `unclosed tag fallback took ${elapsed}ms`);
+});
+
 test('parser decodes display entities but keeps malformed input inert and does not infer prose speakers', () => {
   const parsed = parseNarrativeResponse(`<content>
 <story volume="25">■■&#8226;■</story>
@@ -148,11 +177,13 @@ test('parser decodes display entities but keeps malformed input inert and does n
 });
 
 test('invalid HTML entities never throw and remain inert display text', () => {
-  assert.doesNotThrow(() => parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>坏实体 &#x110000; 与 &#9999999999; 不得炸掉解析。</now_plot></content>'));
-  const parsed = parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>坏实体 &#x110000; 与 &#9999999999; 保留。</now_plot></content>');
+  assert.doesNotThrow(() => parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>坏实体 &#x110000;、&#9999999999; 与 &#xD800; 不得炸掉解析。</now_plot></content>'));
+  const parsed = parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>坏实体 &#x110000;、&#9999999999; 与 &#xD800; 保留。</now_plot></content>');
   assert.equal(parsed.ok, true);
   assert.equal(parsed.blocks[0].text.includes('&#x110000;'), true);
   assert.equal(parsed.blocks[0].text.includes('&#9999999999;'), true);
+  assert.equal(parsed.blocks[0].text.includes('&#xD800;'), true);
+  assert.equal(parsed.blocks[0].text.includes('\uD800'), false);
 });
 
 test('speaker resolution is exact, alias-safe, ambiguity-aware, and first-grapheme for unknowns', () => {

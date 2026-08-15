@@ -37,10 +37,17 @@ export const NARRATIVE_THEMES = Object.freeze({
 });
 
 const NIGHT_PERIODS = new Set(['傍晚', '夜间', '深夜', '凌晨']);
-const ROLE_MOTIFS = Object.freeze({
+export const ROLE_MOTIFS = Object.freeze({
   witch: 'radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--re0-bubble-accent) 34%, transparent), transparent 32%)',
   archbishop: 'repeating-linear-gradient(135deg, color-mix(in srgb, var(--re0-bubble-accent) 18%, transparent) 0 2px, transparent 2px 10px)',
   knight: 'linear-gradient(115deg, color-mix(in srgb, var(--re0-bubble-accent) 20%, transparent), transparent 52%)',
+  shinobi: 'repeating-linear-gradient(150deg, color-mix(in srgb, var(--re0-bubble-accent) 16%, transparent) 0 2px, transparent 2px 9px)',
+  thief: 'linear-gradient(70deg, color-mix(in srgb, var(--re0-bubble-accent) 22%, transparent), transparent 46%)',
+  warlock: 'radial-gradient(circle at 18% 82%, color-mix(in srgb, var(--re0-bubble-accent) 30%, transparent), transparent 38%)',
+  swordmaster: 'linear-gradient(100deg, transparent 0 42%, color-mix(in srgb, var(--re0-bubble-accent) 28%, transparent) 42% 47%, transparent 47%)',
+  mercenary: 'repeating-linear-gradient(0deg, color-mix(in srgb, var(--re0-bubble-accent) 14%, transparent) 0 3px, transparent 3px 13px)',
+  mage: 'radial-gradient(ellipse at 72% 28%, color-mix(in srgb, var(--re0-bubble-accent) 28%, transparent), transparent 42%)',
+  beastmaster: 'repeating-linear-gradient(30deg, color-mix(in srgb, var(--re0-bubble-accent) 15%, transparent) 0 5px, transparent 5px 18px)',
   maid: 'repeating-linear-gradient(90deg, color-mix(in srgb, var(--re0-bubble-accent) 12%, transparent) 0 1px, transparent 1px 12px)',
   spirit: 'radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--re0-bubble-accent) 28%, transparent), transparent 34%)',
   merchant: 'linear-gradient(90deg, color-mix(in srgb, var(--re0-bubble-accent) 16%, transparent), transparent 70%)',

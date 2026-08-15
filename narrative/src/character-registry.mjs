@@ -26,6 +26,7 @@ export function decodeTextEntities(value) {
         ? Number.parseInt(lower.slice(2), 16)
         : Number.parseInt(lower.slice(1), 10);
       if (!Number.isInteger(codePoint) || codePoint < 0 || codePoint > 0x10FFFF) return match;
+      if (codePoint >= 0xD800 && codePoint <= 0xDFFF) return match;
       try {
         return String.fromCodePoint(codePoint);
       } catch (_error) {

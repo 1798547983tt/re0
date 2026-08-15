@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 
 import {
   NARRATIVE_THEMES,
+  ROLE_MOTIFS,
   resolveBubble,
   resolveTheme,
 } from '../narrative/src/theme-core.mjs';
@@ -118,5 +119,16 @@ test('all 44 registry entries produce CSS-consumable role, accent and motif valu
     assert.match(bubble.styleProperties['--re0-bubble-accent'], /^#[0-9a-f]{6}$/i);
     assert.match(bubble.styleProperties['--re0-avatar-accent'], /^#[0-9a-f]{6}$/i);
     assert.ok(bubble.motif && bubble.styleProperties['--re0-bubble-motif']);
+  }
+});
+
+test('registry role set is covered by motif resolver and concrete CSS rules', () => {
+  const css = readFileSync(resolve(ROOT, 'narrative/styles.css'), 'utf8');
+  const roles = new Set(registry.map((entry) => entry.identityTokens.find((token) => token.startsWith('role:'))?.slice('role:'.length)));
+  roles.add('generic');
+  for (const role of roles) {
+    assert.ok(ROLE_MOTIFS[role], `missing motif for role ${role}`);
+    assert.match(ROLE_MOTIFS[role], /linear-gradient|radial-gradient|repeating-linear-gradient/, `role ${role} needs a visible motif`);
+    assert.match(css, new RegExp(`\\.re0-dialogue\\[data-role="${role}"\\]`), `missing CSS rule for role ${role}`);
   }
 });

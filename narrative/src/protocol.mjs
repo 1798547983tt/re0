@@ -11,6 +11,15 @@ const REQUIRED_ATTRIBUTES = {
   check: ['type', 'actor'],
   restart: ['deathId', 'checkpoint'],
 };
+const ATTRIBUTE_WHITELISTS = {
+  story: ['volume'],
+  time: ['period', 'layer', 'basis'],
+  scene: ['location', 'time', 'mood'],
+  ability: ['user', 'name', 'kind', 'desc'],
+  check: ['type', 'actor', 'target'],
+  restart: ['deathId', 'checkpoint'],
+};
+const DIRECT_TAG_RE = /<\/?([A-Za-z][\w:-]*)\b[^>]*>/gu;
 
 function pad2(value) {
   return String(value).padStart(2, '0');
@@ -59,10 +68,29 @@ function fallback(rawText, reason) {
   return { ok: false, type: 'fallback', reason, rawText: String(rawText ?? '') };
 }
 
-function parseAttributes(source) {
+function parseAttributes(source, allowedNames = []) {
   const attributes = {};
-  const re = /([A-Za-z_][\w:-]*)\s*=\s*"([^"]*)"/gu;
-  for (const match of source.matchAll(re)) attributes[match[1]] = decodeTextEntities(match[2]);
+  const allowed = new Set(allowedNames);
+  const seenLower = new Set();
+  const text = String(source || '');
+  const re = /([A-Za-z_][\w:-]*)\s*=\s*"([^"]*)"/y;
+  let index = 0;
+  while (index < text.length) {
+    const before = index;
+    while (index < text.length && /\s/u.test(text[index])) index += 1;
+    if (index >= text.length) break;
+    if (index === before && before > 0) return null;
+    re.lastIndex = index;
+    const match = re.exec(text);
+    if (!match) return null;
+    const name = match[1];
+    const lower = name.toLowerCase();
+    if (!allowed.has(name)) return null;
+    if (seenLower.has(lower)) return null;
+    seenLower.add(lower);
+    attributes[name] = decodeTextEntities(match[2]);
+    index = re.lastIndex;
+  }
   return attributes;
 }
 
@@ -87,13 +115,6 @@ function parseTime(text, attributes) {
   };
 }
 
-function validateTagSurface(plot) {
-  for (const match of plot.matchAll(/<\/?([A-Za-z][\w:-]*)\b[^>]*>/gu)) {
-    if (!DIRECT_TAGS.has(match[1])) return false;
-  }
-  return true;
-}
-
 function pushTextBlocks(blocks, text) {
   for (const paragraph of text.split(/\n\s*\n/gu)) {
     const value = decodeTextEntities(paragraph).trim();
@@ -114,26 +135,38 @@ function pushTextBlocks(blocks, text) {
 }
 
 function parsePlot(plot) {
-  if (!validateTagSurface(plot)) return null;
   const blocks = [];
-  const tagRe = /<(scene|ability|check|restart)\b([^>]*)>([\s\S]*?)<\/\1>/giu;
   let cursor = 0;
-  for (const match of plot.matchAll(tagRe)) {
-    pushTextBlocks(blocks, plot.slice(cursor, match.index));
-    const type = match[1];
-    const attributes = parseAttributes(match[2]);
+  while (cursor < plot.length) {
+    DIRECT_TAG_RE.lastIndex = cursor;
+    const match = DIRECT_TAG_RE.exec(plot);
+    if (!match) {
+      pushTextBlocks(blocks, plot.slice(cursor));
+      return blocks;
+    }
+    const [rawTag, type] = match;
+    if (!DIRECT_TAGS.has(type)) return null;
+    if (rawTag.startsWith('</')) return null;
+    const openStart = match.index;
+    const openEnd = DIRECT_TAG_RE.lastIndex;
+    const closeTag = `</${type}>`;
+    const closeIndex = plot.indexOf(closeTag, openEnd);
+    if (closeIndex < 0) return null;
+    pushTextBlocks(blocks, plot.slice(cursor, openStart));
+    const innerText = plot.slice(openEnd, closeIndex);
+    DIRECT_TAG_RE.lastIndex = 0;
+    if (DIRECT_TAG_RE.test(innerText)) return null;
+    DIRECT_TAG_RE.lastIndex = 0;
+    const attributes = parseAttributes(rawTag.slice(type.length + 1, -1), ATTRIBUTE_WHITELISTS[type]);
+    if (!attributes) return null;
     if ((REQUIRED_ATTRIBUTES[type] || []).some((name) => !String(attributes[name] || '').trim())) return null;
-    if (validateTagSurface(match[3]) && /<\/?(scene|ability|check|restart)\b/iu.test(match[3])) return null;
     blocks.push({
       type,
       attributes,
-      text: decodeTextEntities(match[3]).trim(),
+      text: decodeTextEntities(innerText).trim(),
     });
-    cursor = match.index + match[0].length;
+    cursor = closeIndex + closeTag.length;
   }
-  const rest = plot.slice(cursor);
-  if (/<\/?(scene|ability|check|restart)\b/iu.test(rest)) return null;
-  pushTextBlocks(blocks, rest);
   return blocks;
 }
 
@@ -144,11 +177,14 @@ export function parseNarrativeResponse(input) {
   const root = split.narrative.match(/^<content>\s*<story\b([^>]*)>([\s\S]*?)<\/story>\s*<time\b([^>]*)>([\s\S]*?)<\/time>\s*<now_plot>\s*([\s\S]*?)\s*<\/now_plot>\s*<\/content>$/u);
   if (!root) return fallback(raw, 'invalid-root-order');
 
-  const storyAttributes = parseAttributes(root[1]);
+  const storyAttributes = parseAttributes(root[1], ATTRIBUTE_WHITELISTS.story);
+  if (!storyAttributes) return fallback(raw, 'invalid-story-attributes');
   const storyText = decodeTextEntities(root[2]).trim();
   const storyVolume = normalizeVolume(storyAttributes.volume || storyText);
   const entry = VOLUMES.get(storyVolume) || null;
-  const time = parseTime(root[4], parseAttributes(root[3]));
+  const timeAttributes = parseAttributes(root[3], ATTRIBUTE_WHITELISTS.time);
+  if (!timeAttributes) return fallback(raw, 'invalid-time-attributes');
+  const time = parseTime(root[4], timeAttributes);
   if (!time) return fallback(raw, 'invalid-time');
   const blocks = parsePlot(root[5]);
   if (!blocks) return fallback(raw, 'invalid-plot-tags');
