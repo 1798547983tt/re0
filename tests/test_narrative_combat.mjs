@@ -13,10 +13,10 @@ import {
 
 test('consumeRoll consumes rolls left to right and rejects an exhausted pool', () => {
   const pool = [7, 12];
-  assert.equal(consumeRoll(pool), 7);
-  assert.equal(consumeRoll(pool), 12);
-  assert.deepEqual(pool, []);
-  assert.throws(() => consumeRoll(pool), /骰池耗尽/);
+  assert.deepEqual(consumeRoll(pool), { roll: 7, remaining: [12] });
+  assert.deepEqual(pool, [7, 12]);
+  assert.deepEqual(consumeRoll(pool), { roll: 7, remaining: [12] });
+  assert.throws(() => consumeRoll([]), /骰池耗尽/);
 });
 
 test('deriveTierValue maps seven levels and only upper/lower positions', () => {
@@ -34,11 +34,13 @@ test('resolveCheck computes margin, grades, natural one failure and natural twen
   assert.deepEqual(resolveCheck({ roll: 1, dc: 1, modifiers: [10] }), {
     roll: 1, dc: 1, modifiers: [10], total: 11, margin: 10, grade: '失败', natural: 1, success: false,
   });
+  assert.equal(resolveCheck({ roll: 10, dc: 10, modifiers: [{ label: '加成', value: 2 }, { label: '惩罚', value: -1 }] }).total, 11);
+  assert.equal(resolveCheck({ roll: 10, dc: 10, modifiers: 2 }).total, 12);
   assert.equal(resolveCheck({ roll: 10, dc: 10, modifiers: [] }).grade, '成功');
   assert.equal(resolveCheck({ roll: 15, dc: 10, modifiers: [] }).grade, '强成功');
   assert.equal(resolveCheck({ roll: 20, dc: 20, modifiers: [] }).grade, '强成功');
   assert.equal(resolveCheck({ roll: 20, dc: 10, modifiers: [] }).grade, '暴击');
-  assert.equal(resolveCheck({ roll: 20, dc: 100, modifiers: [] }).success, true);
+  assert.equal(resolveCheck({ roll: 20, dc: 30, modifiers: [] }).success, false);
 });
 
 test('resolveDefense returns reaction modifiers with safe fallback', () => {
@@ -56,26 +58,26 @@ test('resolveDamage applies grade multipliers, guard floor and break-gate', () =
 });
 
 test('resolveDying preserves counters and applies natural outcomes', () => {
-  assert.deepEqual(resolveDying({ successes: 0, failures: 0, roll: 20 }), { successes: 0, failures: 0, status: '存活', hp: 1 });
-  assert.deepEqual(resolveDying({ successes: 0, failures: 0, roll: 1 }), { successes: 0, failures: 2, status: '濒死' });
-  assert.deepEqual(resolveDying({ successes: 2, failures: 1, roll: 10 }), { successes: 3, failures: 1, status: '昏迷' });
-  assert.deepEqual(resolveDying({ successes: 1, failures: 2, roll: 2 }), { successes: 1, failures: 3, status: '死亡' });
-  assert.deepEqual(resolveDying({ successes: 1, failures: 1, roll: 10 }), { successes: 2, failures: 1, status: '濒死' });
+  assert.deepEqual(resolveDying({ successes: 0, failures: 0, roll: 20 }), { successes: 0, failures: 0, state: '存活', hp: 1 });
+  assert.deepEqual(resolveDying({ successes: 0, failures: 0, roll: 1 }), { successes: 0, failures: 2, state: '濒死' });
+  assert.deepEqual(resolveDying({ successes: 2, failures: 1, roll: 10 }), { successes: 3, failures: 1, state: '昏迷' });
+  assert.deepEqual(resolveDying({ successes: 1, failures: 2, roll: 2 }), { successes: 1, failures: 3, state: '死亡' });
+  assert.deepEqual(resolveDying({ successes: 1, failures: 1, roll: 10 }), { successes: 2, failures: 1, state: '濒死' });
 });
 
 test('battle state initializes and finishBattle clears short-lived fields', () => {
   const participants = [{ id: 'a' }, { id: 'b' }];
   const state = createBattleState({ id: 'battle-1', participants });
-  assert.equal(state.inProgress, true);
+  assert.equal(state['进行中'], true);
   assert.equal(state.id, 'battle-1');
-  assert.equal(state.round, 1);
-  assert.deepEqual(state.participants, participants);
-  assert.deepEqual(state.actionOrder, ['a', 'b']);
-  assert.equal(state.currentActor, 'a');
+  assert.equal(state['轮数'], 1);
+  assert.deepEqual(state['参战者'], participants);
+  assert.deepEqual(state['行动顺序'], ['a', 'b']);
+  assert.equal(state['当前行动者'], 'a');
   assert.deepEqual(finishBattle(state), {
     ...state,
-    inProgress: false, round: 0, participants: [], actionOrder: [], currentActor: '',
-    actionBudget: {}, distance: {}, cover: {}, ongoingEffects: {}, dyingCounters: {}, lastCheck: null,
+    '进行中': false, '轮数': 0, '参战者': [], '行动顺序': [], '当前行动者': '',
+    '行动额度': {}, '距离': {}, '掩体': {}, '持续效果': {}, '濒死计数': {}, '最近一次检定': null,
   });
-  assert.deepEqual(state.participants, participants);
+  assert.deepEqual(state['参战者'], participants);
 });

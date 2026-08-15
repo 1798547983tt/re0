@@ -2,7 +2,7 @@ const GRADES = ['失败', '成功', '强成功', '暴击'];
 
 export function consumeRoll(pool) {
   if (!Array.isArray(pool) || pool.length === 0) throw new Error('骰池耗尽');
-  return pool.shift();
+  return { roll: pool[0], remaining: pool.slice(1) };
 }
 
 export function deriveTierValue({ level, position } = {}) {
@@ -17,13 +17,18 @@ export function deriveTierValue({ level, position } = {}) {
 }
 
 export function resolveCheck({ roll, dc, modifiers = [] } = {}) {
-  const safeModifiers = Array.isArray(modifiers) ? modifiers.slice() : [];
-  const total = Number(roll) + safeModifiers.reduce((sum, value) => sum + Number(value || 0), 0);
+  const safeModifiers = Array.isArray(modifiers)
+    ? structuredClone(modifiers)
+    : modifiers == null ? [] : [structuredClone(modifiers)];
+  const total = Number(roll) + safeModifiers.reduce((sum, value) => {
+    if (typeof value === 'object' && value !== null) return sum + Number(value.value || 0);
+    return sum + Number(value || 0);
+  }, 0);
   const margin = total - Number(dc);
   const natural = Number(roll);
   let grade = margin < 0 ? '失败' : margin <= 4 ? '成功' : margin <= 9 ? '强成功' : '暴击';
   if (natural === 1) grade = '失败';
-  else if (natural === 20) grade = GRADES[Math.min(GRADES.indexOf(grade) + 1, 3)];
+  else if (natural === 20 && grade !== '失败') grade = GRADES[Math.min(GRADES.indexOf(grade) + 1, 3)];
   return {
     roll: natural,
     dc: Number(dc),
@@ -64,13 +69,13 @@ export function resolveDying({ successes = 0, failures = 0, roll } = {}) {
   let s = Math.max(0, Number(successes) || 0);
   let f = Math.max(0, Number(failures) || 0);
   const natural = Number(roll);
-  if (natural === 20) return { successes: s, failures: f, status: '存活', hp: 1 };
+  if (natural === 20) return { successes: s, failures: f, state: '存活', hp: 1 };
   if (natural === 1) f += 2;
   else if (natural >= 10) s += 1;
   else f += 1;
-  if (s >= 3) return { successes: s, failures: f, status: '昏迷' };
-  if (f >= 3) return { successes: s, failures: f, status: '死亡' };
-  return { successes: s, failures: f, status: '濒死' };
+  if (s >= 3) return { successes: s, failures: f, state: '昏迷' };
+  if (f >= 3) return { successes: s, failures: f, state: '死亡' };
+  return { successes: s, failures: f, state: '濒死' };
 }
 
 function participantId(participant) {
@@ -86,18 +91,18 @@ export function createBattleState({ id = '', participants = [] } = {}) {
   const cover = Object.fromEntries(actionOrder.map((key) => [key, false]));
   const dyingCounters = Object.fromEntries(actionOrder.map((key) => [key, { successes: 0, failures: 0 }]));
   return {
-    inProgress: true,
+    '进行中': true,
     id,
-    round: 1,
-    participants: copiedParticipants,
-    actionOrder,
-    currentActor: actionOrder[0] ?? '',
-    actionBudget,
-    distance,
-    cover,
-    ongoingEffects: {},
-    dyingCounters,
-    lastCheck: null,
+    '轮数': 1,
+    '参战者': copiedParticipants,
+    '行动顺序': actionOrder,
+    '当前行动者': actionOrder[0] ?? '',
+    '行动额度': actionBudget,
+    '距离': distance,
+    '掩体': cover,
+    '持续效果': {},
+    '濒死计数': dyingCounters,
+    '最近一次检定': null,
   };
 }
 
@@ -105,17 +110,16 @@ export function finishBattle(state = {}) {
   const finished = structuredClone(state);
   return {
     ...finished,
-    inProgress: false,
-    round: 0,
-    participants: [],
-    actionOrder: [],
-    currentActor: '',
-    actionBudget: {},
-    distance: {},
-    cover: {},
-    ongoingEffects: {},
-    dyingCounters: {},
-    lastCheck: null,
+    '进行中': false,
+    '轮数': 0,
+    '参战者': [],
+    '行动顺序': [],
+    '当前行动者': '',
+    '行动额度': {},
+    '距离': {},
+    '掩体': {},
+    '持续效果': {},
+    '濒死计数': {},
+    '最近一次检定': null,
   };
 }
-
