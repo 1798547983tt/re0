@@ -33,6 +33,8 @@ test('all actor shapes expose shared bounded combat fields', () => {
   assert.match(schema, /精神稳定:[^,}]*percent\(/);
   assert.match(schema, /当前目标:[^,}]*text\(/);
   assert.match(schema, /当前行动:[^,}]*text\(/);
+  assert.match(schema, /生命:[^,}]*percent\(/);
+  assert.match(schema, /伤势:\s*z\.record\(z\.string\(\), injury\)/);
 });
 
 test('abilities and equipment have optional structured combat metadata', () => {
@@ -50,10 +52,13 @@ test('事件.当前战斗 is short-lived state with safe defaults and no persist
     assert.match(schema, new RegExp(field));
   }
   assert.doesNotMatch(schema, /当前战斗[\\s\\S]{0,1800}(?:骰池|完整战斗日志|战斗日志)/);
+  assert.match(schema, /战斗ID: text\(''\)/);
+  assert.match(schema, /阶段: text\(''\)/);
+  assert.match(schema, /当前行动者: text\(''\)/);
 });
 
 test('initialization text declares empty battle and shared actor defaults', () => {
-  for (const snippet of ['事件:', '当前战斗:', '进行中: false', '战斗ID:', '轮数: 0', '参战者: []', '先攻顺序: []', '行动额度: {}', '距离: {}', '掩体: {}', '持续效果: {}', '濒死计数: {}', '最近一次检定: null']) assert.match(init, new RegExp(snippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  for (const snippet of ['事件:', '当前战斗:', '进行中: false', "战斗ID: ''", '轮数: 0', "阶段: ''", '参战者: []', '先攻顺序: []', "当前行动者: ''", '行动额度: {}', '距离: {}', '掩体: {}', '持续效果: {}', '濒死计数: {}', '最近一次检定: null']) assert.match(init, new RegExp(snippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   for (const field of ['战斗状态', '战力等阶', '可战状态', '体力', '魔力', '精神稳定', '当前目标', '当前行动']) assert.match(init, new RegExp(field));
   assert.doesNotMatch(init, /骰池|完整战斗日志|战斗日志/);
 });

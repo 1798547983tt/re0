@@ -123,10 +123,11 @@ export function createBattleState({ id = '', participants = [] } = {}) {
   const dyingCounters = Object.fromEntries(actionOrder.map((key) => [key, { successes: 0, failures: 0 }]));
   return {
     '进行中': true,
-    id,
+    '战斗ID': typeof id === 'string' ? id : '',
     '轮数': 1,
-    '参战者': copiedParticipants,
-    '行动顺序': actionOrder,
+    '阶段': '准备',
+    '参战者': actionOrder,
+    '先攻顺序': [...actionOrder],
     '当前行动者': actionOrder[0] ?? '',
     '行动额度': actionBudget,
     '距离': distance,
@@ -138,13 +139,16 @@ export function createBattleState({ id = '', participants = [] } = {}) {
 }
 
 export function finishBattle(state = {}) {
-  const finished = structuredClone(state);
+  const cloned = structuredClone(state);
+  const { id: _legacyId, ['行动顺序']: _legacyOrder, ...finished } = cloned;
   return {
     ...finished,
     '进行中': false,
+    '战斗ID': '',
     '轮数': 0,
+    '阶段': '',
     '参战者': [],
-    '行动顺序': [],
+    '先攻顺序': [],
     '当前行动者': '',
     '行动额度': {},
     '距离': {},

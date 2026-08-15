@@ -98,10 +98,11 @@ test('battle state initializes and finishBattle clears short-lived fields', () =
   const participants = [{ id: 'a' }, { id: 'b' }];
   const state = createBattleState({ id: 'battle-1', participants });
   assert.equal(state['进行中'], true);
-  assert.equal(state.id, 'battle-1');
+  assert.equal(state['战斗ID'], 'battle-1');
   assert.equal(state['轮数'], 1);
-  assert.deepEqual(state['参战者'], participants);
-  assert.deepEqual(state['行动顺序'], ['a', 'b']);
+  assert.deepEqual(state['参战者'], ['a', 'b']);
+  assert.deepEqual(state['先攻顺序'], ['a', 'b']);
+  assert.equal(state['阶段'], '准备');
   assert.equal(state['当前行动者'], 'a');
   assert.deepEqual(state['行动额度'], {
     a: { '主行动': 1, '移动': 1, '防御反应': 1 },
@@ -109,10 +110,18 @@ test('battle state initializes and finishBattle clears short-lived fields', () =
   });
   assert.deepEqual(finishBattle(state), {
     ...state,
-    '进行中': false, '轮数': 0, '参战者': [], '行动顺序': [], '当前行动者': '',
+    '进行中': false, '战斗ID': '', '轮数': 0, '阶段': '', '参战者': [], '先攻顺序': [], '当前行动者': '',
     '行动额度': {}, '距离': {}, '掩体': {}, '持续效果': {}, '濒死计数': {}, '最近一次检定': null,
   });
-  assert.deepEqual(state['参战者'], participants);
+  assert.deepEqual(state['参战者'], ['a', 'b']);
+});
+
+test('battle state emits only canonical keys and normalizes participant objects to IDs', () => {
+  const state = createBattleState({ id: 'x', participants: [{ id: 'alpha', hp: 10 }, 'beta'] });
+  assert.deepEqual(Object.keys(state).sort(), ['进行中', '战斗ID', '轮数', '阶段', '参战者', '先攻顺序', '当前行动者', '行动额度', '距离', '掩体', '持续效果', '濒死计数', '最近一次检定'].sort());
+  assert.deepEqual(state['参战者'], ['alpha', 'beta']);
+  assert.equal('id' in state, false);
+  assert.equal('行动顺序' in state, false);
 });
 
 test('battle state rejects empty, non-string, or duplicate participant ids', () => {
