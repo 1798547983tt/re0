@@ -64,6 +64,7 @@ test('resolveCheck computes margin, grades, natural one failure and natural twen
   assert.throws(() => resolveCheck({ roll: 10, dc: NaN, modifiers: [] }), /DC|有限/);
   assert.throws(() => resolveCheck({ roll: 10, dc: 10, modifiers: [Infinity] }), /修正|有限/);
   assert.throws(() => resolveCheck({ roll: 10, dc: 10, modifiers: [true] }), /修正|有限/);
+  assert.throws(() => resolveCheck({ roll: 10, dc: 10, modifiers: null }), /修正|数组/);
 });
 
 test('resolveDefense returns reaction modifiers with safe fallback', () => {

@@ -36,6 +36,7 @@ export function resolveCheck({ roll, dc, modifiers = [] } = {}) {
   const natural = assertDie(roll);
   if (typeof dc !== 'number' || !Number.isFinite(dc)) throw new Error('DC 必须是有限数');
   const numericDc = dc;
+  if (modifiers === null) throw new Error('检定修正必须是数组或数字，不能为 null');
   const safeModifiers = Array.isArray(modifiers)
     ? structuredClone(modifiers)
     : modifiers == null ? [] : [structuredClone(modifiers)];
