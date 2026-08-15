@@ -92,7 +92,7 @@ function participantId(participant) {
 export function createBattleState({ id = '', participants = [] } = {}) {
   const copiedParticipants = structuredClone(Array.isArray(participants) ? participants : []);
   const actionOrder = copiedParticipants.map(participantId).filter(Boolean);
-  const actionBudget = Object.fromEntries(actionOrder.map((key) => [key, 1]));
+  const actionBudget = Object.fromEntries(actionOrder.map((key) => [key, { '主行动': 1, '移动': 1, '防御反应': 1 }]));
   const distance = Object.fromEntries(actionOrder.map((key) => [key, '近距']));
   const cover = Object.fromEntries(actionOrder.map((key) => [key, false]));
   const dyingCounters = Object.fromEntries(actionOrder.map((key) => [key, { successes: 0, failures: 0 }]));

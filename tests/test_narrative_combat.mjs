@@ -79,6 +79,10 @@ test('battle state initializes and finishBattle clears short-lived fields', () =
   assert.deepEqual(state['参战者'], participants);
   assert.deepEqual(state['行动顺序'], ['a', 'b']);
   assert.equal(state['当前行动者'], 'a');
+  assert.deepEqual(state['行动额度'], {
+    a: { '主行动': 1, '移动': 1, '防御反应': 1 },
+    b: { '主行动': 1, '移动': 1, '防御反应': 1 },
+  });
   assert.deepEqual(finishBattle(state), {
     ...state,
     '进行中': false, '轮数': 0, '参战者': [], '行动顺序': [], '当前行动者': '',
