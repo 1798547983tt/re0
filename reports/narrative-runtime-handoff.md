@@ -4,7 +4,7 @@
 
 - 导入文件：`dist/regex-Re0·正文美化.json`
 - SHA-256：`0C121F230706DDB869508CF908EF67DC35A437205F94ACFA10582174F708EAC2`
-- 大小：`95568` 字节
+- 大小：`99789` 字节（UTF-8 文件字节数）
 - 正文规则：`narrative/rules/正文输出格式.md`
 - 战斗规则：`narrative/rules/战斗规则.md`
 - 状态映射：`narrative/rules/状态字段映射.md`
