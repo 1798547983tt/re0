@@ -32,6 +32,9 @@ const DRAFT_STORAGE_KEY = 're0.creator.draft.v1';
 const SETTINGS_STORAGE_KEY = 're0.creator.settings.v1';
 const FINAL_STORAGE_KEY = 're0.creator.final.v1';
 const PORTRAIT_STORAGE_KEY = 're0.creator.portrait.v1';
+const MUSIC_STORAGE_KEY = 're0.creator.music.v1';
+const OPENING_MUSIC_URL = 'https://raw.githubusercontent.com/1798547983tt/re0/fbb2bde8ac7fe8ba894731cb33f6cdd85f62d968/music/MYTH%2B%26%2BROID%2B-%2BSTYX%2BHELIX.mp3';
+const MUSIC_DEFAULT_VOLUME = 0.45;
 const MAX_REPEATERS = 12;
 const CUSTOM_OPTION = '__custom__';
 
@@ -95,6 +98,127 @@ const appScope = document.currentScript?.closest('[data-re0-creator-mount]') ?? 
 const app = appScope.querySelector('#re0-creator-app');
 
 if (!app) throw new Error('找不到创角向导挂载点 #re0-creator-app');
+
+function persistMusicPreference() {
+  return safeWriteStorage(MUSIC_STORAGE_KEY, JSON.stringify({ enabled: music.enabled, volume: music.volume }));
+}
+
+function musicIsPlaying() {
+  return Boolean(music.audio && !music.audio.paused && !music.audio.ended);
+}
+
+function musicButtonState() {
+  if (musicIsPlaying()) return { label: '暂停音乐', glyph: '♫', playing: true };
+  if (music.status === 'blocked') return { label: '点击播放音乐', glyph: '♪', playing: false };
+  if (music.status === 'error') return { label: '音乐加载失败，重试', glyph: '♪', playing: false };
+  return { label: music.enabled ? '播放音乐' : '开启音乐', glyph: '♪', playing: false };
+}
+
+function updateMusicControls() {
+  const controls = appScope.querySelectorAll?.('[data-action="toggle-music"]') || [];
+  const buttonState = musicButtonState();
+  controls.forEach((control) => {
+    control.classList.toggle('is-playing', buttonState.playing);
+    control.dataset.musicState = buttonState.playing ? 'playing' : music.status;
+    control.setAttribute('aria-label', buttonState.label);
+    control.setAttribute('title', buttonState.label);
+    control.setAttribute('aria-pressed', String(buttonState.playing));
+    const glyph = control.querySelector('.music-glyph');
+    if (glyph) glyph.textContent = buttonState.glyph;
+  });
+}
+
+function ensureMusicAudio() {
+  if (music.audio) return music.audio;
+  const existing = appScope.querySelector?.('[data-re0-music]');
+  if (existing) {
+    music.audio = existing;
+    return existing;
+  }
+  const audio = document.createElement('audio');
+  audio.dataset.re0Music = '';
+  audio.src = OPENING_MUSIC_URL;
+  audio.loop = true;
+  audio.preload = 'metadata';
+  audio.volume = music.volume;
+  audio.setAttribute('aria-hidden', 'true');
+  audio.tabIndex = -1;
+  audio.style.display = 'none';
+  audio.addEventListener('play', () => {
+    if (!music.enabled || audio.paused) return;
+    music.status = 'playing';
+    music.error = '';
+    updateMusicControls();
+  });
+  audio.addEventListener('pause', () => {
+    if (musicIsPlaying()) return;
+    if (music.status === 'playing') music.status = 'paused';
+    updateMusicControls();
+  });
+  audio.addEventListener('error', () => {
+    if (!music.enabled || musicIsPlaying()) {
+      if (!music.enabled) music.status = 'paused';
+      music.error = '';
+      updateMusicControls();
+      return;
+    }
+    music.status = 'error';
+    music.error = '音频文件无法加载。';
+    updateMusicControls();
+  });
+  const host = appScope.nodeType === 1 ? appScope : document.body;
+  host.append(audio);
+  music.audio = audio;
+  return audio;
+}
+
+async function attemptMusicPlayback({ silent = false } = {}) {
+  const audio = ensureMusicAudio();
+  const attempt = ++music.playAttempt;
+  music.enabled = true;
+  audio.volume = music.volume;
+  try {
+    await audio.play();
+    if (attempt !== music.playAttempt || !music.enabled || audio.paused) return false;
+    music.status = 'playing';
+    music.error = '';
+    persistMusicPreference();
+    updateMusicControls();
+    return true;
+  } catch (error) {
+    if (attempt !== music.playAttempt || !music.enabled || error?.name === 'AbortError') {
+      if (!music.enabled) music.status = 'paused';
+      updateMusicControls();
+      return false;
+    }
+    music.status = error?.name === 'NotAllowedError' ? 'blocked' : 'error';
+    music.error = error?.name === 'NotAllowedError' ? '浏览器等待用户手势。' : '音乐暂时无法播放。';
+    updateMusicControls();
+    if (!silent && music.status === 'error') showToast(music.error, 'bad');
+    return false;
+  }
+}
+
+async function toggleMusic() {
+  const audio = ensureMusicAudio();
+  if (musicIsPlaying()) {
+    music.playAttempt += 1;
+    music.enabled = false;
+    audio.pause();
+    music.status = 'paused';
+    persistMusicPreference();
+    updateMusicControls();
+    return;
+  }
+  if (music.status === 'error') {
+    audio.load();
+    music.status = 'idle';
+    music.error = '';
+  }
+  music.enabled = true;
+  persistMusicPreference();
+  await attemptMusicPlayback();
+}
 
 function escapeHtml(value = '') {
   // Build entity values at runtime instead of embedding literal `&...;`
@@ -178,6 +302,22 @@ function loadPortrait() {
   }
 }
 
+function loadMusicPreference() {
+  const fallback = { enabled: true, volume: MUSIC_DEFAULT_VOLUME };
+  const serialized = safeReadStorage(MUSIC_STORAGE_KEY);
+  if (!serialized) return fallback;
+  try {
+    const value = JSON.parse(serialized);
+    const volume = Number(value?.volume);
+    return {
+      enabled: value?.enabled !== false,
+      volume: Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : fallback.volume,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 const state = {
   draft: loadSavedDraft(),
   storyIndex: [],
@@ -209,6 +349,14 @@ const state = {
     arsenalTab: 'combat',
     customFields: new Set(),
   },
+};
+
+const music = {
+  ...loadMusicPreference(),
+  audio: null,
+  status: 'idle',
+  error: '',
+  playAttempt: 0,
 };
 
 function valueOf(path, fallback = '') {
@@ -807,12 +955,17 @@ function renderChromeLayers() {
   layers.innerHTML = `${renderSettingsModal()}${renderHelpModal()}${renderAiPreviewModal()}${renderArchiveModal()}${renderNewConfirmModal()}${state.ui.toast ? `<div class="toast ${escapeHtml(state.ui.toast.tone)}" role="status">${escapeHtml(state.ui.toast.message)}</div>` : ''}${state.ui.busy ? `<div class="busy" role="status" aria-live="assertive"><div class="busy-card"><span class="spinner"></span><span>${escapeHtml(state.ui.busy)}</span><small>请求最长等待 60 秒；超时后会显示可重试原因。</small></div></div>` : ''}`;
 }
 
+function renderMusicButton() {
+  const buttonState = musicButtonState();
+  return `<button type="button" class="icon-btn music-toggle${buttonState.playing ? ' is-playing' : ''}" data-action="toggle-music" data-music-state="${buttonState.playing ? 'playing' : music.status}" aria-label="${escapeHtml(buttonState.label)}" aria-pressed="${String(buttonState.playing)}" title="${escapeHtml(buttonState.label)}"><span class="music-glyph" aria-hidden="true">${buttonState.glyph}</span></button>`;
+}
+
 function renderTitleScreen() {
   const saved = hasSavedDraft();
   return `<section class="title-screen" data-screen="title" data-motion="${state.settings.reducedMotion ? 'off' : 'on'}">
     <div class="title-art"><img src="${escapeHtml(PAGE_ART[0])}" alt="月夜茶会中的银发少女"><div class="title-art-wash"></div></div>
     <div class="title-frame" aria-hidden="true"></div>
-    <header class="title-topbar"><div class="brand" aria-label="Re0"><span class="brand-mark">零</span></div><button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button></header>
+    <header class="title-topbar"><div class="brand" aria-label="Re0"><span class="brand-mark">零</span></div><div class="title-top-actions">${renderMusicButton()}<button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button></div></header>
     <div class="title-main">
       <div class="title-copy"><h1>Re0：从零开始的异世界生活</h1></div>
       <nav class="title-menu" aria-label="开始游戏菜单">
@@ -842,7 +995,7 @@ function render() {
         <button type="button" class="back-to-title" data-action="return-title" aria-label="返回开局页">←</button><div class="brand"><span class="brand-mark">零</span><span class="brand-copy"><strong>RE:ZERO / CHARACTER FORGE</strong><span>魔女茶会 · 创角向导</span></span></div>
         <div class="session-pill"><span class="dot"></span><span>${safeReadStorage(DRAFT_STORAGE_KEY) ? '本机草稿已恢复' : '新草稿已建立'}</span></div>
         <div class="top-actions">
-          <button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button>
+          ${renderMusicButton()}<button type="button" class="icon-btn" data-action="open-settings" aria-label="设置" title="设置">⚙</button>
         </div>
       </header>
       <section class="creator-ribbon"><div><small>WITCH'S TEA PARTY · DOSSIER 00</small><strong>在故事开始前，写下这一次的名字。</strong></div><span>${escapeHtml(storyVolumeLabel(currentVolume()) || '剧情锚点尚未选择')}</span></section>
@@ -1273,6 +1426,7 @@ async function handleAction(action, element) {
   if (action === 'previous-step') return goToStep(state.ui.activeStep - 1);
   if (action === 'next-step') return goToStep(state.ui.activeStep + 1);
   if (action === 'save-draft') return saveDraft({ announce: true });
+  if (action === 'toggle-music') return toggleMusic();
   if (action === 'open-settings') { state.ui.modal = 'settings'; renderChromeLayers(); return; }
   if (action === 'open-help') { state.ui.modal = 'help'; renderChromeLayers(); return; }
   if (action === 'set-arsenal-tab') {
@@ -1353,6 +1507,12 @@ async function handleAction(action, element) {
     return goToStep(stepMap[element.dataset.errorPath] ?? 0);
   }
 }
+
+app.addEventListener('pointerdown', (event) => {
+  if (!music.enabled || musicIsPlaying() || music.status === 'error') return;
+  if (event.target.closest?.('[data-action="toggle-music"]')) return;
+  void attemptMusicPlayback({ silent: true });
+});
 
 app.addEventListener('click', (event) => {
   const choice = event.target.closest('[data-choice-path]');
@@ -1508,6 +1668,7 @@ app.addEventListener('error', (event) => {
 
 async function initialize() {
   render();
+  if (music.enabled) void attemptMusicPlayback({ silent: true });
   try {
     state.storyIndex = await loadStoryIndex();
     state.ui.storyStatus = 'ready';

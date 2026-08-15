@@ -25,6 +25,56 @@ test('title screen keeps one Re:0 title, uniform menu arrows, and no status foot
   assert.match(CSS, /--title-menu-glass:/);
 });
 
+test('opening page exposes a persistent music toggle beside settings', () => {
+  assert.match(APP, /const MUSIC_STORAGE_KEY = 're0\.creator\.music\.v1'/);
+  assert.match(APP, /const OPENING_MUSIC_URL = 'https:\/\/raw\.githubusercontent\.com\/1798547983tt\/re0\/fbb2bde8ac7fe8ba894731cb33f6cdd85f62d968\/music\/MYTH%2B%26%2BROID%2B-%2BSTYX%2BHELIX\.mp3'/);
+  assert.match(APP, /function ensureMusicAudio\(\)/);
+  assert.match(APP, /audio\.loop = true/);
+  assert.match(APP, /audio\.preload = 'metadata'/);
+  assert.match(APP, /class="title-top-actions"[\s\S]*\$\{renderMusicButton\(\)\}[\s\S]*data-action="open-settings"/);
+  assert.match(APP, /data-action="toggle-music"/);
+  assert.match(CSS, /\.title-top-actions \{/);
+  assert.match(CSS, /\.music-toggle\.is-playing/);
+});
+
+test('music starts enabled, remembers the preference, and retries after autoplay is blocked', () => {
+  assert.match(APP, /enabled: true/);
+  assert.match(APP, /audio\.play\(\)/);
+  assert.match(APP, /safeWriteStorage\(MUSIC_STORAGE_KEY/);
+  assert.match(APP, /addEventListener\(['"]pointerdown['"]/);
+  assert.match(APP, /NotAllowedError|autoplay/i);
+});
+
+test('music play attempts cannot overwrite a later explicit pause', () => {
+  assert.match(APP, /playAttempt: 0/);
+  assert.match(APP, /const attempt = \+\+music\.playAttempt/);
+  assert.match(APP, /attempt !== music\.playAttempt \|\| !music\.enabled \|\| error\?\.name === 'AbortError'/);
+  assert.match(APP, /music\.playAttempt \+= 1/);
+});
+
+test('late media events cannot overwrite an explicit music opt-out', () => {
+  assert.match(APP, /audio\.addEventListener\('play', \(\) => \{\s*if \(!music\.enabled \|\| audio\.paused\) return;/);
+  assert.match(APP, /audio\.addEventListener\('pause', \(\) => \{\s*if \(musicIsPlaying\(\)\) return;/);
+  assert.match(APP, /audio\.addEventListener\('error', \(\) => \{\s*if \(!music\.enabled \|\| musicIsPlaying\(\)\) \{\s*if \(!music\.enabled\) music\.status = 'paused';\s*music\.error = '';\s*updateMusicControls\(\);\s*return;/);
+});
+
+test('disabled music stays lazy and an errored source is reloaded before retry', () => {
+  const initialize = APP.match(/async function initialize\(\) \{([\s\S]*?)\n\}/)?.[1] ?? '';
+  assert.doesNotMatch(initialize, /ensureMusicAudio\(\)/);
+  assert.match(initialize, /render\(\);\s*if \(music\.enabled\) void attemptMusicPlayback/);
+  assert.match(APP, /if \(music\.status === 'error'\) \{\s*audio\.load\(\)/);
+});
+
+test('blocked playback and narrow creator headers have visible, bounded states', () => {
+  assert.match(CSS, /\.music-toggle\[data-music-state='blocked'\]/);
+  assert.match(CSS, /\.music-toggle\[data-music-state='blocked'\]::after/);
+  assert.match(CSS, /\.brand-copy strong, \.brand-copy span \{ overflow: hidden; text-overflow: ellipsis; \}/);
+});
+
+test('music activity animation honors the in-app reduced-motion setting', () => {
+  assert.match(CSS, /\.title-screen\[data-motion='off'\] \.music-toggle \.music-glyph \{ animation: none !important; \}/);
+});
+
 test('title screen height stays intrinsic inside auto-sizing message iframes', () => {
   const titleScreenRules = [...CSS.matchAll(/\.title-screen\s*\{([^}]*)\}/g)]
     .map((match) => match[1])
