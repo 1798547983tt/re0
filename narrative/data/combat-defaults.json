@@ -1,7 +1,7 @@
 {
   "dicePool": { "count": 12, "sides": 20, "consumption": "按叙事顺序从左到右，每次检定消耗一枚" },
   "difficultyClasses": { "普通": 10, "困难": 15, "极难": 20, "传说": 25 },
-  "actionBudget": { "perTurn": 1, "main": 1, "move": 1, "reaction": 1 },
+  "actionBudget": { "main": 1, "move": 1, "reaction": 1 },
   "distanceBands": ["接触", "近距", "中距", "远距"],
   "lifeScale": { "min": 0, "max": 100, "thresholds": { "zero": "濒死候选，需进入濒死流程", "recoveryOnNatural20": 1 } },
   "injuryScale": { "min": 0, "max": 100, "thresholds": { "notable": 50, "severe": 75 } },

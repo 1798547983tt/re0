@@ -56,6 +56,9 @@ test('resolveDamage applies grade multipliers, guard floor and break-gate', () =
   assert.deepEqual(resolveDamage({ grade: '失败', baseDamage: 10, defenderTierGap: 0, breakQualified: true }), { damage: 0, baseDamage: 10, multiplier: 0, reason: '检定失败' });
   assert.equal(resolveDamage({ grade: '强成功', baseDamage: 10, defenderTierGap: 0, breakQualified: true }).damage, 15);
   assert.deepEqual(resolveDamage({ grade: '暴击', baseDamage: 9, defenderTierGap: 0, breakQualified: true, damageMultiplier: 0.5 }), { damage: 9, baseDamage: 9, multiplier: 1, reason: '命中' });
+  const extreme = resolveDamage({ grade: '暴击', baseDamage: Number.MAX_VALUE, defenderTierGap: 0, breakQualified: true, damageMultiplier: Number.MAX_VALUE });
+  assert.ok(Number.isFinite(extreme.damage) && extreme.damage >= 0);
+  assert.ok(Number.isFinite(extreme.multiplier) && extreme.multiplier >= 0);
   assert.deepEqual(resolveDamage({ grade: '成功', baseDamage: 10, defenderTierGap: 4, breakQualified: false }), { damage: 0, baseDamage: 10, multiplier: 1, reason: '无法破阶' });
 });
 
