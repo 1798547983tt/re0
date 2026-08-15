@@ -25,6 +25,13 @@ test('consumeRoll consumes rolls left to right and rejects an exhausted pool', (
   assert.deepEqual(pool, [7, 12]);
   assert.deepEqual(consumeRoll(pool), { roll: 7, remaining: [12] });
   assert.throws(() => consumeRoll([]), /骰池耗尽/);
+  for (const bad of [[0], [21], [NaN], [Infinity], [{ nested: true }]]) {
+    assert.throws(() => consumeRoll(bad), /骰面|d20/);
+  }
+  const objectPool = [{ value: 7, nested: { source: 'test' } }, 12];
+  const consumed = consumeRoll(objectPool);
+  consumed.roll.nested.source = 'changed';
+  assert.equal(objectPool[0].nested.source, 'test');
 });
 
 test('deriveTierValue maps seven levels and only upper/lower positions', () => {
@@ -51,6 +58,9 @@ test('resolveCheck computes margin, grades, natural one failure and natural twen
   assert.equal(resolveCheck({ roll: 20, dc: 20, modifiers: [] }).grade, '强成功');
   assert.equal(resolveCheck({ roll: 20, dc: 10, modifiers: [] }).grade, '暴击');
   assert.equal(resolveCheck({ roll: 20, dc: 30, modifiers: [] }).success, false);
+  for (const badRoll of [0, 21, NaN, Infinity]) assert.throws(() => resolveCheck({ roll: badRoll, dc: 10, modifiers: [] }), /骰面|d20/);
+  assert.throws(() => resolveCheck({ roll: 10, dc: NaN, modifiers: [] }), /DC|有限/);
+  assert.throws(() => resolveCheck({ roll: 10, dc: 10, modifiers: [Infinity] }), /修正|有限/);
 });
 
 test('resolveDefense returns reaction modifiers with safe fallback', () => {
@@ -76,6 +86,7 @@ test('resolveDying preserves counters and applies natural outcomes', () => {
   assert.deepEqual(resolveDying({ successes: 2, failures: 1, roll: 10 }), { successes: 3, failures: 1, state: '昏迷' });
   assert.deepEqual(resolveDying({ successes: 1, failures: 2, roll: 2 }), { successes: 1, failures: 3, state: '死亡' });
   assert.deepEqual(resolveDying({ successes: 1, failures: 1, roll: 10 }), { successes: 2, failures: 1, state: '濒死' });
+  for (const badRoll of [0, 21, NaN, Infinity]) assert.throws(() => resolveDying({ successes: 0, failures: 0, roll: badRoll }), /骰面|d20/);
 });
 
 test('battle state initializes and finishBattle clears short-lived fields', () => {
@@ -97,4 +108,10 @@ test('battle state initializes and finishBattle clears short-lived fields', () =
     '行动额度': {}, '距离': {}, '掩体': {}, '持续效果': {}, '濒死计数': {}, '最近一次检定': null,
   });
   assert.deepEqual(state['参战者'], participants);
+});
+
+test('battle state rejects empty, non-string, or duplicate participant ids', () => {
+  assert.throws(() => createBattleState({ id: 'x', participants: [{ id: '' }] }), /参战者|ID/);
+  assert.throws(() => createBattleState({ id: 'x', participants: [{ id: 1 }] }), /参战者|ID/);
+  assert.throws(() => createBattleState({ id: 'x', participants: [{ id: 'a' }, { id: 'a' }] }), /重复|唯一/);
 });

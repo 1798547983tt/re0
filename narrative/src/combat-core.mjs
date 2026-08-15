@@ -1,8 +1,21 @@
 const GRADES = ['失败', '成功', '强成功', '暴击'];
 
+function dieValue(entry) {
+  if (typeof entry === 'number') return entry;
+  if (entry && typeof entry === 'object' && Object.hasOwn(entry, 'value')) return entry.value;
+  return NaN;
+}
+
+function assertDie(value) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 20) throw new Error('骰面必须是 1..20 的有限 d20 整数');
+  return n;
+}
+
 export function consumeRoll(pool) {
   if (!Array.isArray(pool) || pool.length === 0) throw new Error('骰池耗尽');
-  return { roll: pool[0], remaining: pool.slice(1) };
+  for (const entry of pool) assertDie(dieValue(entry));
+  return { roll: structuredClone(pool[0]), remaining: structuredClone(pool.slice(1)) };
 }
 
 export function deriveTierValue(input = {}) {
@@ -19,21 +32,25 @@ export function deriveTierValue(input = {}) {
 }
 
 export function resolveCheck({ roll, dc, modifiers = [] } = {}) {
+  const natural = assertDie(roll);
+  const numericDc = Number(dc);
+  if (!Number.isFinite(numericDc)) throw new Error('DC 必须是有限数');
   const safeModifiers = Array.isArray(modifiers)
     ? structuredClone(modifiers)
     : modifiers == null ? [] : [structuredClone(modifiers)];
   const total = Number(roll) + safeModifiers.reduce((sum, value) => {
-    if (typeof value === 'object' && value !== null) return sum + Number(value.value || 0);
-    return sum + Number(value || 0);
+    const modifierValue = typeof value === 'object' && value !== null ? value.value : value;
+    if (!Number.isFinite(Number(modifierValue))) throw new Error('检定修正必须是有限数');
+    return sum + Number(modifierValue);
   }, 0);
-  const margin = total - Number(dc);
-  const natural = Number(roll);
+  if (!Number.isFinite(total)) throw new Error('检定总值必须是有限数');
+  const margin = total - numericDc;
   let grade = margin < 0 ? '失败' : margin <= 4 ? '成功' : margin <= 9 ? '强成功' : '暴击';
   if (natural === 1) grade = '失败';
   else if (natural === 20 && grade !== '失败') grade = GRADES[Math.min(GRADES.indexOf(grade) + 1, 3)];
   return {
     roll: natural,
-    dc: Number(dc),
+    dc: numericDc,
     modifiers: safeModifiers,
     total,
     margin,
@@ -74,7 +91,7 @@ export function resolveDamage({ grade, baseDamage, defenderTierGap = 0, breakQua
 export function resolveDying({ successes = 0, failures = 0, roll } = {}) {
   let s = Math.max(0, Number(successes) || 0);
   let f = Math.max(0, Number(failures) || 0);
-  const natural = Number(roll);
+  const natural = assertDie(roll);
   if (natural === 20) return { successes: s, failures: f, state: '存活', hp: 1 };
   if (natural === 1) f += 2;
   else if (natural >= 10) s += 1;
@@ -86,12 +103,15 @@ export function resolveDying({ successes = 0, failures = 0, roll } = {}) {
 
 function participantId(participant) {
   if (typeof participant === 'string') return participant;
-  return participant && (participant.id ?? participant.name ?? '') || '';
+  if (participant && typeof participant === 'object' && typeof participant.id === 'string') return participant.id;
+  return null;
 }
 
 export function createBattleState({ id = '', participants = [] } = {}) {
   const copiedParticipants = structuredClone(Array.isArray(participants) ? participants : []);
-  const actionOrder = copiedParticipants.map(participantId).filter(Boolean);
+  const actionOrder = copiedParticipants.map(participantId);
+  if (actionOrder.some((id) => !id || !id.trim())) throw new Error('参战者 ID 必须是非空字符串');
+  if (new Set(actionOrder).size !== actionOrder.length) throw new Error('参战者 ID 必须唯一，禁止重复');
   const actionBudget = Object.fromEntries(actionOrder.map((key) => [key, { '主行动': 1, '移动': 1, '防御反应': 1 }]));
   const distance = Object.fromEntries(actionOrder.map((key) => [key, '近距']));
   const cover = Object.fromEntries(actionOrder.map((key) => [key, false]));
