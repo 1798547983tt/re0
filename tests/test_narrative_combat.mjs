@@ -84,6 +84,17 @@ test('resolveDamage applies grade multipliers, guard floor and break-gate', () =
   assert.deepEqual(resolveDamage({ grade: '成功', baseDamage: 10, defenderTierGap: 4, breakQualified: false }), { damage: 0, baseDamage: 10, multiplier: 1, reason: '无法破阶' });
 });
 
+test('resolveDamage rejects invalid grades and non-finite or loosely typed inputs', () => {
+  const valid = { grade: '成功', baseDamage: 10, defenderTierGap: 0, breakQualified: true, damageMultiplier: 1 };
+  for (const bad of [
+    { ...valid, grade: '未知' },
+    { ...valid, baseDamage: '10' }, { ...valid, baseDamage: -1 }, { ...valid, baseDamage: NaN }, { ...valid, baseDamage: Infinity },
+    { ...valid, defenderTierGap: '0' }, { ...valid, defenderTierGap: NaN }, { ...valid, defenderTierGap: Infinity },
+    { ...valid, damageMultiplier: '1' }, { ...valid, damageMultiplier: -1 }, { ...valid, damageMultiplier: NaN }, { ...valid, damageMultiplier: Infinity },
+    { ...valid, breakQualified: 'false' }, { ...valid, breakQualified: null },
+  ]) assert.throws(() => resolveDamage(bad), /检定等级|基础伤害|等阶差|伤害倍率|破阶/);
+});
+
 test('resolveDying preserves counters and applies natural outcomes', () => {
   assert.deepEqual(resolveDying({ successes: 0, failures: 0, roll: 20 }), { successes: 0, failures: 0, state: '存活', hp: 1 });
   assert.deepEqual(resolveDying({ successes: 0, failures: 0, roll: 1 }), { successes: 0, failures: 2, state: '濒死' });
@@ -124,6 +135,22 @@ test('battle state emits only canonical keys and normalizes participant objects 
   assert.equal('行动顺序' in state, false);
 });
 
+test('finishBattle returns only canonical empty state and drops forbidden history', () => {
+  const finished = finishBattle({
+    ...createBattleState({ id: 'x', participants: [{ id: 'alpha' }] }),
+    骰池: [20],
+    完整战斗日志: [{ event: 'hit' }],
+    unknown: true,
+  });
+  assert.deepEqual(finished, {
+    '进行中': false, '战斗ID': '', '轮数': 0, '阶段': '', '参战者': [], '先攻顺序': [], '当前行动者': '',
+    '行动额度': {}, '距离': {}, '掩体': {}, '持续效果': {}, '濒死计数': {}, '最近一次检定': null,
+  });
+  assert.equal('骰池' in finished, false);
+  assert.equal('完整战斗日志' in finished, false);
+  assert.equal('unknown' in finished, false);
+});
+
 test('battle state rejects empty, non-string, or duplicate participant ids', () => {
   assert.throws(() => createBattleState({ id: 'x', participants: [] }), /参战者|至少/);
   assert.throws(() => createBattleState({ id: 'x', participants: null }), /参战者|数组/);
@@ -137,4 +164,17 @@ test('battle state requires a non-empty battle ID before becoming active', () =>
   for (const badId of [undefined, '', '   ', null, 42, {}]) {
     assert.throws(() => createBattleState({ id: badId, participants }), /战斗ID|ID.*非空|字符串/);
   }
+});
+
+test('combat core behavior stays aligned with documented defaults', () => {
+  const defaults = JSON.parse(readFileSync(resolve(import.meta.dirname, '../narrative/data/combat-defaults.json'), 'utf8'));
+  const state = createBattleState({ id: 'defaults', participants: [{ id: 'a' }] });
+  assert.deepEqual(state['行动额度'].a, {
+    '主行动': defaults.actionBudget.main,
+    '移动': defaults.actionBudget.move,
+    '防御反应': defaults.actionBudget.reaction,
+  });
+  assert.equal(state['距离'].a, defaults.distanceBands[1]);
+  assert.equal(resolveDamage({ grade: '强成功', baseDamage: 10, defenderTierGap: 0, breakQualified: true }).multiplier, defaults.damage.gradeMultipliers['强成功']);
+  assert.equal(resolveDamage({ grade: '成功', baseDamage: 10, defenderTierGap: defaults.tier.breakTierGap, breakQualified: false }).reason, '无法破阶');
 });

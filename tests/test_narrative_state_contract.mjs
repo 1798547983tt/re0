@@ -9,6 +9,7 @@ const schema = zod.content;
 const init = readFileSync(resolve(root, '变量/世界书/[initvar] 初始.txt'), 'utf8');
 const format = readFileSync(resolve(root, '变量/世界书/[mvu_update]变量输出格式.txt'), 'utf8');
 const rules = readFileSync(resolve(root, '变量/世界书/[mvu_update]变量更新规则.txt'), 'utf8');
+const battleRules = readFileSync(resolve(root, 'narrative/rules/战斗规则.md'), 'utf8');
 const mappingPath = resolve(root, 'narrative/rules/状态字段映射.md');
 let mapping = '';
 try { mapping = readFileSync(mappingPath, 'utf8'); } catch { /* RED until the mapping is added. */ }
@@ -52,9 +53,23 @@ test('事件.当前战斗 is short-lived state with safe defaults and no persist
     assert.match(schema, new RegExp(field));
   }
   assert.doesNotMatch(schema, /当前战斗[\\s\\S]{0,1800}(?:骰池|完整战斗日志|战斗日志)/);
-  assert.match(schema, /战斗ID: text\(''\)/);
+  assert.match(schema, /战斗ID: battleId/);
   assert.match(schema, /阶段: text\(''\)/);
   assert.match(schema, /当前行动者: text\(''\)/);
+  const battleSchema = schema.slice(schema.indexOf('const checkSummary'), schema.indexOf('export const Schema'));
+  assert.match(battleSchema, /superRefine/);
+  assert.match(battleSchema, /battle\.进行中\s*&&\s*!battle\.战斗ID\.trim\(\)/);
+  assert.doesNotMatch(battleSchema, /\.passthrough\(\)/);
+  assert.match(battleSchema, /const checkSummary = z\.object/);
+  for (const field of ['检定类型', '骰面', '目标DC', '修正', '总值', '结果等级', '目标', '时间']) assert.match(battleSchema, new RegExp(field));
+  assert.match(battleSchema, /checkSummary[^\n]*\.strip\(\)/);
+  assert.doesNotMatch(battleSchema, /z\.unknown\(/);
+  assert.doesNotMatch(battleSchema, /行动顺序/);
+});
+
+test('combat rules use only canonical initiative terminology', () => {
+  assert.match(battleRules, /先攻顺序/);
+  assert.doesNotMatch(battleRules, /行动顺序/);
 });
 
 test('initialization text declares empty battle and shared actor defaults', () => {

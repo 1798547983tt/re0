@@ -1,4 +1,6 @@
 const GRADES = ['失败', '成功', '强成功', '暴击'];
+const GRADE_MULTIPLIERS = { 失败: 0, 成功: 1, 强成功: 1.5, 暴击: 2 };
+const BREAK_TIER_GAP = 4;
 
 function dieValue(entry) {
   if (typeof entry === 'number') return entry;
@@ -9,6 +11,13 @@ function dieValue(entry) {
 function assertDie(value) {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 20) {
     throw new Error('骰面必须是 1..20 的有限 d20 整数');
+  }
+  return value;
+}
+
+function assertFiniteNumber(value, label, { nonNegative = false } = {}) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || (nonNegative && value < 0)) {
+    throw new Error(`${label}必须是${nonNegative ? '非负' : ''}有限数`);
   }
   return value;
 }
@@ -71,15 +80,18 @@ export function resolveDefense(reaction) {
 }
 
 export function resolveDamage({ grade, baseDamage, defenderTierGap = 0, breakQualified = false, damageMultiplier = 1 } = {}) {
-  const rawBase = Number(baseDamage);
-  const base = Number.isFinite(rawBase) ? Math.min(Number.MAX_VALUE, Math.max(0, rawBase)) : 0;
-  const gradeMultiplier = Math.min(Number.MAX_VALUE, Math.max(0, Number({ 失败: 0, 成功: 1, 强成功: 1.5, 暴击: 2 }[grade] ?? 0)));
-  const rawDefense = Number(damageMultiplier);
-  const defenseMultiplier = Number.isFinite(rawDefense) ? Math.min(Number.MAX_VALUE, Math.max(0, rawDefense)) : 1;
+  if (!GRADES.includes(grade)) throw new Error('检定等级必须是失败、成功、强成功或暴击');
+  assertFiniteNumber(baseDamage, '基础伤害', { nonNegative: true });
+  assertFiniteNumber(defenderTierGap, '等阶差');
+  assertFiniteNumber(damageMultiplier, '伤害倍率', { nonNegative: true });
+  if (typeof breakQualified !== 'boolean') throw new Error('破阶条件必须是布尔值');
+  const base = Math.min(Number.MAX_VALUE, baseDamage);
+  const gradeMultiplier = GRADE_MULTIPLIERS[grade];
+  const defenseMultiplier = Math.min(Number.MAX_VALUE, damageMultiplier);
   const product = gradeMultiplier * defenseMultiplier;
   const multiplier = Number.isFinite(product) ? product : Number.MAX_VALUE;
   if (gradeMultiplier === 0) return { damage: 0, baseDamage: base, multiplier: 0, reason: '检定失败' };
-  if (Number(defenderTierGap) >= 4 && !breakQualified) {
+  if (defenderTierGap >= BREAK_TIER_GAP && !breakQualified) {
     return { damage: 0, baseDamage: base, multiplier, reason: '无法破阶' };
   }
   return {
@@ -141,10 +153,8 @@ export function createBattleState({ id = '', participants = [] } = {}) {
 }
 
 export function finishBattle(state = {}) {
-  const cloned = structuredClone(state);
-  const { id: _legacyId, ['行动顺序']: _legacyOrder, ...finished } = cloned;
+  void state;
   return {
-    ...finished,
     '进行中': false,
     '战斗ID': '',
     '轮数': 0,
