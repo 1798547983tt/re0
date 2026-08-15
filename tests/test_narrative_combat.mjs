@@ -131,3 +131,10 @@ test('battle state rejects empty, non-string, or duplicate participant ids', () 
   assert.throws(() => createBattleState({ id: 'x', participants: [{ id: 1 }] }), /参战者|ID/);
   assert.throws(() => createBattleState({ id: 'x', participants: [{ id: 'a' }, { id: 'a' }] }), /重复|唯一/);
 });
+
+test('battle state requires a non-empty battle ID before becoming active', () => {
+  const participants = [{ id: 'a' }];
+  for (const badId of [undefined, '', '   ', null, 42, {}]) {
+    assert.throws(() => createBattleState({ id: badId, participants }), /战斗ID|ID.*非空|字符串/);
+  }
+});

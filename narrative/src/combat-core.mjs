@@ -112,7 +112,9 @@ function participantId(participant) {
 }
 
 export function createBattleState({ id = '', participants = [] } = {}) {
+  if (typeof id !== 'string' || !id.trim()) throw new Error('战斗ID 必须是非空字符串');
   if (!Array.isArray(participants) || participants.length === 0) throw new Error('参战者必须是至少一名的数组');
+  const battleId = id.trim();
   const copiedParticipants = structuredClone(Array.isArray(participants) ? participants : []);
   const actionOrder = copiedParticipants.map(participantId);
   if (actionOrder.some((id) => !id || !id.trim())) throw new Error('参战者 ID 必须是非空字符串');
@@ -123,7 +125,7 @@ export function createBattleState({ id = '', participants = [] } = {}) {
   const dyingCounters = Object.fromEntries(actionOrder.map((key) => [key, { successes: 0, failures: 0 }]));
   return {
     '进行中': true,
-    '战斗ID': typeof id === 'string' ? id : '',
+    '战斗ID': battleId,
     '轮数': 1,
     '阶段': '准备',
     '参战者': actionOrder,
