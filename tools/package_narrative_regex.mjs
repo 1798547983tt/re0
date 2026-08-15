@@ -213,28 +213,108 @@ export function auditManifest(manifest = readJson('narrative/assets/manifest.jso
   };
 }
 
-function buildJavascript({ moduleOverrides = {} } = {}) {
+function moduleBody(path, moduleOverrides) {
+  const source = moduleOverrides[path] ?? read(path);
+  assertSafeEmbeddedSource(source, '</script', path);
+  return stripModuleSyntax(source);
+}
+
+function moduleWrapper({ path, prelude = '', exports, source }) {
+  const body = source ?? moduleBody(path, {});
+  const returnBody = exports.map((name) => `${name}: ${name}`).join(',\n');
+  const script = `(() => {
+'use strict';
+// ${path}
+${prelude}
+const api = (() => {
+${body}
+return {
+${returnBody}
+};
+})();
+Object.assign(globalThis.Re0NarrativeCore, api);
+})();`;
+  assertSafeEmbeddedSource(script, '</script', `${path} staged wrapper`);
+  return script;
+}
+
+function buildJavascriptParts({ moduleOverrides = {} } = {}) {
   const volumeHeadings = readJson('narrative/data/volume-headings.json');
   const characterRegistry = readJson('narrative/data/character-registry.json');
   const assetManifest = existsSync(MANIFEST_PATH) ? readJson('narrative/assets/manifest.json') : refreshManifestData();
-  const sources = MODULE_ORDER.map((path) => {
-    const source = moduleOverrides[path] ?? read(path);
-    assertSafeEmbeddedSource(source, '</script', path);
-    return `// ${path}\n${stripModuleSyntax(source)}`;
+  const config = `(() => {
+'use strict';
+globalThis.Re0NarrativeCore = Object.create(null);
+const EMBEDDED_VOLUME_HEADINGS = ${serializeJavascript(volumeHeadings)};
+const EMBEDDED_CHARACTER_REGISTRY = ${serializeJavascript(characterRegistry)};
+const EMBEDDED_ASSET_MANIFEST = ${serializeJavascript(assetManifest)};
+globalThis.Re0NarrativeBoot = Object.freeze({
+  version: 're0-narrative-staged-v1',
+  volumeHeadings: EMBEDDED_VOLUME_HEADINGS,
+  characterRegistry: EMBEDDED_CHARACTER_REGISTRY,
+  assetManifest: EMBEDDED_ASSET_MANIFEST,
+});
+const mount = document.querySelector('[data-re0-narrative-mount]');
+if (mount) mount.dataset.re0ScriptSeen = 'true';
+})();`;
+
+  const character = moduleWrapper({
+    path: 'narrative/src/character-registry.mjs',
+    prelude: 'const registryData = globalThis.Re0NarrativeBoot.characterRegistry;',
+    exports: ['CHARACTER_REGISTRY', 'decodeTextEntities', 'normalizeAlias', 'firstGrapheme', 'resolveSpeaker'],
+    source: moduleBody('narrative/src/character-registry.mjs', moduleOverrides),
   });
-  const bundled = [
-    "'use strict';",
-    `const EMBEDDED_VOLUME_HEADINGS = ${serializeJavascript(volumeHeadings)};`,
-    'const volumeHeadings = EMBEDDED_VOLUME_HEADINGS;',
-    `const EMBEDDED_CHARACTER_REGISTRY = ${serializeJavascript(characterRegistry)};`,
-    'const registryData = EMBEDDED_CHARACTER_REGISTRY;',
-    `const EMBEDDED_ASSET_MANIFEST = ${serializeJavascript(assetManifest)};`,
-    ...sources,
-  ].join('\n\n');
-  if (/^\s*(?:import|export)\s/m.test(bundled)) throw new Error('封装脚本仍含模块语法');
-  if (/\bwith\s*\{\s*type:\s*['"]json['"]\s*\}/u.test(bundled)) throw new Error('封装脚本仍含 JSON import assertion');
-  assertSafeEmbeddedSource(bundled, '</script', '封装脚本');
-  return `(() => {\n${bundled}\n})();`;
+  const theme = moduleWrapper({
+    path: 'narrative/src/theme-core.mjs',
+    prelude: 'const { resolveSpeaker } = globalThis.Re0NarrativeCore;',
+    exports: ['NARRATIVE_THEMES', 'ROLE_MOTIFS', 'resolveTheme', 'resolveBubble'],
+    source: moduleBody('narrative/src/theme-core.mjs', moduleOverrides),
+  });
+  const protocol = moduleWrapper({
+    path: 'narrative/src/protocol.mjs',
+    prelude: [
+      'const volumeHeadings = globalThis.Re0NarrativeBoot.volumeHeadings;',
+      'const { decodeTextEntities, resolveSpeaker } = globalThis.Re0NarrativeCore;',
+    ].join('\n'),
+    exports: ['formatVolumeHeading', 'formatWitchCalendarDate', 'splitUpdateVariable', 'parseNarrativeResponse'],
+    source: moduleBody('narrative/src/protocol.mjs', moduleOverrides),
+  });
+  const assets = moduleWrapper({
+    path: 'narrative/src/assets.mjs',
+    prelude: 'const EMBEDDED_ASSET_MANIFEST = globalThis.Re0NarrativeBoot.assetManifest;',
+    exports: ['isHttpsReleaseUrl', 'isPinnedReleaseUrl', 'findNarrativeAsset', 'resolveNarrativeAsset', 'applyCssImageAsset', 'loadNarrativeAssetManifest', 'themeAssetId'],
+    source: moduleBody('narrative/src/assets.mjs', moduleOverrides),
+  });
+  const renderSource = moduleBody('narrative/src/render.mjs', moduleOverrides)
+    .replace(/\nif \(typeof document !== 'undefined'\) boot\(\);\s*$/u, '');
+  const render = moduleWrapper({
+    path: 'narrative/src/render.mjs',
+    prelude: [
+      'const { parseNarrativeResponse } = globalThis.Re0NarrativeCore;',
+      'const { resolveBubble, resolveTheme } = globalThis.Re0NarrativeCore;',
+      'const { applyCssImageAsset, loadNarrativeAssetManifest, resolveNarrativeAsset, themeAssetId } = globalThis.Re0NarrativeCore;',
+    ].join('\n'),
+    exports: ['resolveDialogueSide', 'getThemeButtonState', 'applyNarrativeAssets', 'renderNarrative', 'boot'],
+    source: renderSource,
+  });
+  const entry = `(() => {
+'use strict';
+const start = globalThis.Re0NarrativeCore?.boot;
+if (typeof document !== 'undefined' && typeof start === 'function') {
+  try { start(); }
+  catch (_error) {
+    const mount = document.querySelector('[data-re0-narrative-mount]');
+    if (mount) mount.dataset.re0Runtime = 'error';
+  }
+}
+})();`;
+  const parts = [config, character, theme, protocol, assets, render, entry];
+  for (const [index, part] of parts.entries()) {
+    if (/^\s*(?:import|export)\s/m.test(part)) throw new Error(`封装脚本仍含模块语法：第${index + 1}段`);
+    if (/\bwith\s*\{\s*type:\s*['"]json['"]\s*\}/u.test(part)) throw new Error(`封装脚本仍含 JSON import assertion：第${index + 1}段`);
+    assertSafeEmbeddedSource(part, '</script', `封装脚本第${index + 1}段`);
+  }
+  return parts;
 }
 
 function buildHtml({ cssOverride = null, moduleOverrides = {} } = {}) {
@@ -279,9 +359,7 @@ ${css}
 <noscript>此正文渲染器需要 JavaScript 才能展示协议内容。</noscript>
 <textarea id="re0-narrative-source" data-re0-source="content" inert hidden aria-hidden="true">$1</textarea>
 </div>
-<script>
-${buildJavascript({ moduleOverrides })}
-</script>
+${buildJavascriptParts({ moduleOverrides }).map((part) => `<script>\n${part}\n</script>`).join('\n')}
 </body>
 </html>`;
 }

@@ -125,8 +125,29 @@ test('generated narrative HTML is not recursively replaced during edit or rerend
 
 test('packaged renderer boots before Tavern Helper measures the iframe', () => {
   const html = buildArtifact().replaceString;
-  assert.match(html, /if \(typeof document !== ['"]undefined['"]\) boot\(\);/);
+  assert.match(html, /const start = globalThis\.Re0NarrativeCore\?\.boot/);
+  assert.match(html, /if \(typeof document !== ['"]undefined['"] && typeof start === ['"]function['"]\)/);
   assert.doesNotMatch(html, /addEventListener\(['"]DOMContentLoaded['"],\s*boot/);
+});
+
+test('packaged renderer uses a reference-style staged script boundary', () => {
+  const html = buildArtifact().replaceString;
+  const scripts = [...html.matchAll(/<script\b[^>]*>[\s\S]*?<\/script>/gi)];
+  assert.ok(scripts.length >= 3, 'the reader must not depend on one monolithic script block');
+  assert.match(html, /globalThis\.Re0NarrativeBoot/);
+  assert.match(html, /globalThis\.Re0NarrativeCore/);
+  assert.match(html, /globalThis\.Re0NarrativeBoot\??\./);
+});
+
+test('each staged script is independently parseable and the entry is last', () => {
+  const html = buildArtifact().replaceString;
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((match) => match[1]);
+  assert.ok(scripts.length >= 3);
+  for (const [index, source] of scripts.entries()) {
+    assert.doesNotThrow(() => new Function(source), `staged script ${index + 1} must parse`);
+  }
+  assert.match(scripts.at(-1), /Re0NarrativeCore\?\.boot/);
+  assert.match(scripts[0], /dataset\.re0ScriptSeen/);
 });
 
 test('packaged renderer asks Tavern Helper to resize after dynamic content is painted', () => {

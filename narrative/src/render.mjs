@@ -288,18 +288,29 @@ function renderBootFailure(app, source) {
 
 function boot() {
   const mount = document.querySelector('[data-re0-narrative-mount]');
-  const app = document.querySelector('#re0-narrative-app');
+  const app = mount?.querySelector?.('#re0-narrative-app');
   if (!mount || !app) return;
+  if (mount.dataset.re0Booted === 'true') return;
+  mount.dataset.re0Booted = 'true';
+  mount.dataset.re0Runtime = 'booting';
   const source = readNarrativeSource(mount);
   try {
     renderNarrative(app, source);
+    mount.dataset.re0Runtime = 'ready';
   } catch (_error) {
+    mount.dataset.re0Runtime = 'error';
     renderBootFailure(app, source);
   }
   loadNarrativeAssetManifest(mount)
     .then((assetManifest) => {
       if (!assetManifest) return;
-      try { renderNarrative(app, source, { assetManifest }); } catch (_error) { renderBootFailure(app, source); }
+      try {
+        renderNarrative(app, source, { assetManifest });
+        mount.dataset.re0Runtime = 'ready';
+      } catch (_error) {
+        mount.dataset.re0Runtime = 'error';
+        renderBootFailure(app, source);
+      }
     })
     .catch(() => {});
 }
