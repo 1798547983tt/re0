@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Re:Zero 正文档案渲染</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div data-re0-narrative-mount>
+      <nav class="re0-theme-toolbar" aria-label="正文主题">
+        <button type="button" data-action="theme-auto" aria-label="自动主题" title="自动主题">◐</button>
+        <button type="button" data-action="theme-day" aria-label="日间主题" title="日间主题">☼</button>
+        <button type="button" data-action="theme-night" aria-label="夜间主题" title="夜间主题">☾</button>
+        <button type="button" data-action="theme-beige" aria-label="羊皮纸主题" title="羊皮纸主题">▤</button>
+      </nav>
+      <main id="re0-narrative-app" aria-live="polite" aria-busy="true">
+        <article class="re0-narrative-card">
+          <header class="re0-title-plate">
+            <div class="re0-logo-slot" data-logo-slot="message-card" aria-hidden="true"><span>RE0</span></div>
+            <div class="re0-title-plate__text">
+              <p class="re0-title-plate__kicker">王都档案 × 魔女残香</p>
+              <h1>正文协议读取中</h1>
+              <time>魔女历1000年01月01日</time>
+            </div>
+          </header>
+        </article>
+      </main>
+      <div id="re0-narrative-overlay-root" hidden></div>
+      <noscript>此正文渲染器需要 JavaScript 才能展示协议内容。</noscript>
+    </div>
+    <script type="module" src="./src/render.mjs"></script>
+  </body>
+</html>
