@@ -3,7 +3,7 @@
   "difficultyClasses": { "普通": 10, "困难": 15, "极难": 20, "传说": 25 },
   "actionBudget": { "main": 1, "move": 1, "reaction": 1 },
   "distanceBands": ["接触", "近距", "中距", "远距"],
-  "lifeScale": { "min": 0, "max": 100, "thresholds": { "zero": "濒死候选，需进入濒死流程", "recoveryOnNatural20": 1 } },
+  "lifeScale": { "min": 0, "max": 100, "thresholds": { "zero": 0, "recoveryOnNatural20": 1 }, "zeroMeaning": "濒死候选，需进入濒死流程" },
   "injuryScale": { "min": 0, "max": 100, "thresholds": { "notable": 50, "severe": 75 } },
   "resourceScales": { "生命": { "min": 0, "max": 100 }, "伤势": { "min": 0, "max": 100, "notableAt": 50, "severeAt": 75 }, "体力": { "min": 0, "max": 100, "depletedAt": 0 }, "魔力": { "min": 0, "max": 100, "depletedAt": 0 }, "精神": { "min": 0, "max": 100, "depletedAt": 0 }, "门负荷": { "min": 0, "max": 100, "warningAt": 75, "breakAt": 100 } },
   "vitality": { "dyingSuccesses": 3, "dyingFailures": 3 },

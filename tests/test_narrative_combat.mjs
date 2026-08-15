@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   consumeRoll,
   deriveTierValue,
@@ -10,6 +12,12 @@ import {
   createBattleState,
   finishBattle,
 } from '../narrative/src/combat-core.mjs';
+
+test('combat defaults expose numeric life zero threshold', () => {
+  const defaults = JSON.parse(readFileSync(resolve(import.meta.dirname, '../narrative/data/combat-defaults.json'), 'utf8'));
+  assert.equal(defaults.lifeScale.thresholds.zero, 0);
+  assert.equal(typeof defaults.lifeScale.zeroMeaning, 'string');
+});
 
 test('consumeRoll consumes rolls left to right and rejects an exhausted pool', () => {
   const pool = [7, 12];
