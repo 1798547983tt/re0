@@ -18,14 +18,11 @@ function makeElement(documentRef, tagName, className = '', text = '') {
   return element;
 }
 
-function setText(element, text) {
-  element.textContent = String(text ?? '');
-}
-
 function renderAvatar(documentRef, bubble) {
   const avatar = makeElement(documentRef, 'div', 're0-dialogue__avatar');
   avatar.dataset.portraitKey = bubble.portraitKey;
   avatar.dataset.icon = bubble.icon;
+  avatar.style.setProperty('--re0-avatar-accent', bubble.styleProperties['--re0-avatar-accent']);
   const initial = makeElement(documentRef, 'span', 're0-dialogue__initial', bubble.initial || '?');
   avatar.append(initial);
   return avatar;
@@ -35,11 +32,27 @@ function renderNarration(documentRef, block) {
   return makeElement(documentRef, 'p', 're0-narration', block.text);
 }
 
-function renderDialogue(documentRef, block, themeName) {
+export function resolveDialogueSide(block, { playerName = '' } = {}) {
+  return String(block?.speakerName || '').trim() && String(block.speakerName).trim() === String(playerName).trim()
+    ? 'player'
+    : 'npc';
+}
+
+function applyBubbleStyle(element, bubble) {
+  element.style.setProperty('--re0-bubble-accent', bubble.styleProperties['--re0-bubble-accent']);
+  element.style.setProperty('--re0-avatar-accent', bubble.styleProperties['--re0-avatar-accent']);
+  element.style.setProperty('--re0-bubble-motif', bubble.styleProperties['--re0-bubble-motif']);
+}
+
+function renderDialogue(documentRef, block, themeName, options) {
   const bubble = resolveBubble(block.speaker, themeName);
   const article = makeElement(documentRef, 'article', ['re0-dialogue', ...bubble.classNames].join(' '));
+  applyBubbleStyle(article, bubble);
   article.dataset.portraitKey = bubble.portraitKey;
-  article.dataset.bubbleCode = bubble.code;
+  article.dataset.side = resolveDialogueSide(block, options);
+  article.dataset.role = bubble.role;
+  article.dataset.accent = bubble.accent;
+  article.dataset.code = bubble.code;
   article.dataset.borderToken = bubble.border;
   article.dataset.textureToken = bubble.texture;
   article.append(renderAvatar(documentRef, bubble));
@@ -125,10 +138,10 @@ function renderHeader(documentRef, parsed) {
   return header;
 }
 
-function renderBlocks(documentRef, blocks, themeName) {
+function renderBlocks(documentRef, blocks, themeName, options) {
   const fragment = documentRef.createDocumentFragment();
   for (const block of blocks) {
-    if (block.type === 'dialogue') fragment.append(renderDialogue(documentRef, block, themeName));
+    if (block.type === 'dialogue') fragment.append(renderDialogue(documentRef, block, themeName, options));
     else if (block.type === 'scene') fragment.append(renderScene(documentRef, block));
     else if (block.type === 'ability') fragment.append(renderAbility(documentRef, block));
     else if (block.type === 'check') fragment.append(renderCheck(documentRef, block));
@@ -138,14 +151,35 @@ function renderBlocks(documentRef, blocks, themeName) {
   return fragment;
 }
 
-function bindThemeControls(mount, app, parsed, sourceText) {
+export function getThemeButtonState(action, { preference = 'auto', themeName = 'day' } = {}) {
+  const mode = String(action || '').replace('theme-', '');
+  const pressed = preference === 'auto' ? mode === 'auto' : mode === preference;
+  return {
+    ariaPressed: String(pressed),
+    mode,
+    label: mode === 'auto' ? `自动主题：${themeName}` : `手动主题：${mode}`,
+  };
+}
+
+function updateThemeButtons(mount, state) {
   mount.querySelectorAll('[data-action]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const action = button.dataset.action || 'theme-auto';
-      const preference = action.replace('theme-', '');
-      try { globalThis.localStorage?.setItem('re0:narrative-theme', preference); } catch (_error) {}
-      renderNarrative(app, parsed.ok ? parsed : sourceText, { themePreference: preference });
-    });
+    const buttonState = getThemeButtonState(button.dataset.action, state);
+    button.setAttribute('aria-pressed', buttonState.ariaPressed);
+    button.dataset.themeMode = buttonState.mode;
+  });
+}
+
+function bindThemeControls(mount) {
+  if (mount.getAttribute('data-re0-theme-bound') === 'true') return;
+  mount.setAttribute('data-re0-theme-bound', 'true');
+  mount.addEventListener('click', (event) => {
+    const button = event.target?.closest?.('[data-action]');
+    if (!button || !mount.contains(button)) return;
+    const state = mount.__re0NarrativeState;
+    if (!state?.app) return;
+    const preference = String(button.dataset.action || 'theme-auto').replace('theme-', '');
+    try { globalThis.localStorage?.setItem('re0:narrative-theme', preference); } catch (_error) {}
+    renderNarrative(state.app, state.source, { ...state.options, themePreference: preference });
   });
 }
 
@@ -158,7 +192,8 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
   const storedPreference = (() => {
     try { return globalThis.localStorage?.getItem('re0:narrative-theme') || null; } catch (_error) { return null; }
   })();
-  const theme = resolveTheme({ preference: options.themePreference || storedPreference || 'auto', period });
+  const preference = options.themePreference || storedPreference || 'auto';
+  const theme = resolveTheme({ preference, period });
   app.dataset.theme = theme.name;
   app.dataset.themeSource = theme.source;
   app.setAttribute('aria-busy', 'false');
@@ -166,14 +201,18 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
   if (parsed.ok) {
     card.append(renderHeader(documentRef, parsed));
     const story = makeElement(documentRef, 'section', 're0-story-flow');
-    story.append(renderBlocks(documentRef, parsed.blocks, theme.name));
+    story.append(renderBlocks(documentRef, parsed.blocks, theme.name, options));
     card.append(story);
   } else {
     card.append(renderFallback(documentRef, parsed));
   }
   app.replaceChildren(card);
   const mount = app.closest?.('[data-re0-narrative-mount]');
-  if (mount) bindThemeControls(mount, app, parsed, source);
+  if (mount) {
+    mount.__re0NarrativeState = { app, source, options };
+    bindThemeControls(mount);
+    updateThemeButtons(mount, { preference, themeName: theme.name });
+  }
   return { parsed, theme };
 }
 

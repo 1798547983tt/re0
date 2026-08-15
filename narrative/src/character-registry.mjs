@@ -21,8 +21,17 @@ const COMMON_ENTITIES = new Map([
 export function decodeTextEntities(value) {
   return String(value ?? '').replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/giu, (match, entity) => {
     const lower = entity.toLowerCase();
-    if (lower.startsWith('#x')) return String.fromCodePoint(Number.parseInt(lower.slice(2), 16));
-    if (lower.startsWith('#')) return String.fromCodePoint(Number.parseInt(lower.slice(1), 10));
+    if (lower.startsWith('#x') || lower.startsWith('#')) {
+      const codePoint = lower.startsWith('#x')
+        ? Number.parseInt(lower.slice(2), 16)
+        : Number.parseInt(lower.slice(1), 10);
+      if (!Number.isInteger(codePoint) || codePoint < 0 || codePoint > 0x10FFFF) return match;
+      try {
+        return String.fromCodePoint(codePoint);
+      } catch (_error) {
+        return match;
+      }
+    }
     return COMMON_ENTITIES.get(lower) ?? match;
   });
 }

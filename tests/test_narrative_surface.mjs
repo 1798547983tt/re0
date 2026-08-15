@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { renderNarrative } from '../narrative/src/render.mjs';
+import {
+  getThemeButtonState,
+  renderNarrative,
+  resolveDialogueSide,
+} from '../narrative/src/render.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const read = (path) => readFileSync(resolve(ROOT, path), 'utf8');
@@ -26,12 +30,35 @@ test('narrative surface exposes one namespaced mount, overlay, logo slot and acc
   assert.match(html, /<script type="module" src="\.\/src\/render\.mjs"><\/script>/);
 });
 
+test('theme button helper marks aria-pressed for auto and manual states', () => {
+  assert.equal(getThemeButtonState('theme-auto', { preference: 'auto', themeName: 'night' }).ariaPressed, 'true');
+  assert.equal(getThemeButtonState('theme-night', { preference: 'auto', themeName: 'night' }).ariaPressed, 'false');
+  assert.equal(getThemeButtonState('theme-beige', { preference: 'beige', themeName: 'beige' }).ariaPressed, 'true');
+  assert.equal(getThemeButtonState('theme-day', { preference: 'day', themeName: 'day' }).ariaPressed, 'true');
+});
+
+test('dialogue side uses exact structured playerName only and never prose inference', () => {
+  assert.equal(resolveDialogueSide({ speakerName: '菜月昴', text: '对白' }, { playerName: '菜月昴' }), 'player');
+  assert.equal(resolveDialogueSide({ speakerName: '菜月·昴', text: '对白' }, { playerName: '菜月昴' }), 'npc');
+  assert.equal(resolveDialogueSide({ text: '菜月昴在旁白里出现' }, { playerName: '菜月昴' }), 'npc');
+  assert.equal(resolveDialogueSide({ speakerName: '艾尔莎', text: '对白' }, { playerName: '菜月昴' }), 'npc');
+});
+
 test('renderer source uses safe DOM construction and no executable HTML sinks', () => {
   const render = read('narrative/src/render.mjs');
   assert.match(render, /createElement/);
   assert.match(render, /textContent/);
   assert.match(render, /createDocumentFragment/);
   assert.match(render, /dataset\.action|setAttribute\('data-action'/);
+  assert.match(render, /data-re0-theme-bound|AbortController/);
+  assert.match(render, /aria-pressed/);
+  assert.match(render, /resolveDialogueSide/);
+  assert.match(render, /dataset\.side|setAttribute\('data-side'/);
+  assert.match(render, /dataset\.role|setAttribute\('data-role'/);
+  assert.match(render, /dataset\.accent|setAttribute\('data-accent'/);
+  assert.match(render, /dataset\.code|setAttribute\('data-code'/);
+  assert.match(render, /style\.setProperty\('--re0-bubble-accent'/);
+  assert.match(render, /style\.setProperty\('--re0-bubble-motif'/);
   assert.match(render, /renderDialogue/);
   assert.match(render, /renderScene/);
   assert.match(render, /renderAbility/);
@@ -71,6 +98,12 @@ test('CSS is scoped, responsive to 320px, and honors reduced motion', () => {
   assert.match(css, /\.re0-narrative-card/);
   assert.match(css, /\.re0-title-plate/);
   assert.match(css, /\.re0-dialogue/);
+  for (const role of ['witch', 'archbishop', 'knight', 'maid', 'spirit', 'merchant', 'returner', 'assassin', 'warrior', 'healer', 'lord', 'guardian', 'attendant', 'generic']) {
+    assert.match(css, new RegExp(`data-role="${role}"`), `missing CSS for role ${role}`);
+  }
+  assert.match(css, /--re0-bubble-accent/);
+  assert.match(css, /--re0-bubble-motif/);
+  assert.match(css, /--re0-avatar-accent/);
   assert.doesNotMatch(css, /^body\s*\{/m);
   assert.doesNotMatch(css, /^html\s*\{/m);
   assert.doesNotMatch(css, /(^|[\s,{])\.card\b/);

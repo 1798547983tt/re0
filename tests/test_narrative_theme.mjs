@@ -25,8 +25,10 @@ test('character registry contains exactly 44 stable portrait-backed entries', ()
     assert.ok(entry.aliases.includes(entry.displayName) || entry.aliases.includes(entry.rosterName), `${entry.displayName} must be exact-match addressable`);
     assert.ok(entry.identityTokens.length >= 2, `${entry.displayName} needs role and individual tokens`);
     assert.ok(entry.bubbleTokens.length >= 2, `${entry.displayName} needs bubble code tokens`);
+    assert.ok(entry.identityTokens.some((token) => token.startsWith('accent:') && token !== 'accent:generic'), `${entry.displayName} needs an individual accent token`);
     assert.doesNotMatch(entry.aliases.join('|'), /丝琵卡阶段|及其分身|回廊投影/);
   }
+  assert.equal(new Set(registry.map((entry) => entry.identityTokens.find((token) => token.startsWith('accent:')))).size, 44);
 });
 
 test('required roster names resolve to dedicated portraits and source files', () => {
@@ -89,6 +91,11 @@ test('bubble resolver combines theme contrast with identity and code tokens', ()
   assert.equal(subaru.contrast.text, NARRATIVE_THEMES.day.contrast.text);
   assert.match(subaru.border, /crystal|silver|archive/);
   assert.match(subaru.icon, /return|restart|archive/);
+  assert.equal(subaru.role, 'returner');
+  assert.equal(subaru.accent, 'subaru');
+  assert.ok(subaru.motif.length > 0);
+  assert.match(subaru.styleProperties['--re0-bubble-accent'], /^#[0-9a-f]{6}$/i);
+  assert.match(subaru.styleProperties['--re0-bubble-motif'], /linear-gradient|radial-gradient|repeating-linear-gradient/);
 
   const witch = resolveBubble(resolveSpeaker('艾姬多娜'), 'night');
   assert.ok(witch.classNames.includes('bubble-role-witch'));
@@ -100,4 +107,16 @@ test('bubble resolver combines theme contrast with identity and code tokens', ()
   assert.ok(unknown.classNames.includes('bubble-role-generic'));
   assert.equal(unknown.initial, '陌');
   assert.equal(unknown.contrast.text, NARRATIVE_THEMES.beige.contrast.text);
+});
+
+test('all 44 registry entries produce CSS-consumable role, accent and motif values', () => {
+  for (const entry of registry) {
+    const bubble = resolveBubble(resolveSpeaker(entry.displayName), 'day');
+    assert.notEqual(bubble.role, 'generic', `${entry.displayName} should keep its role`);
+    assert.notEqual(bubble.accent, 'generic', `${entry.displayName} should keep its individual accent`);
+    assert.match(bubble.classNames.join(' '), new RegExp(`bubble-accent-${bubble.accent}`));
+    assert.match(bubble.styleProperties['--re0-bubble-accent'], /^#[0-9a-f]{6}$/i);
+    assert.match(bubble.styleProperties['--re0-avatar-accent'], /^#[0-9a-f]{6}$/i);
+    assert.ok(bubble.motif && bubble.styleProperties['--re0-bubble-motif']);
+  }
 });

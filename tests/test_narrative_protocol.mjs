@@ -7,6 +7,7 @@ import {
   formatVolumeHeading,
   formatWitchCalendarDate,
   parseNarrativeResponse,
+  resolveSpeaker as resolveSpeakerFromProtocol,
   splitUpdateVariable,
 } from '../narrative/src/protocol.mjs';
 import { resolveSpeaker } from '../narrative/src/character-registry.mjs';
@@ -31,6 +32,28 @@ test('heading and witch-calendar formatters preserve exact visible text', () => 
   assert.equal(formatVolumeHeading(25), '第25卷 | ■■•■');
   assert.equal(formatVolumeHeading('98'), '第00卷 | 卷外记录');
   assert.equal(formatWitchCalendarDate({ year: 1000, month: 1, day: 1 }), '魔女历1000年01月01日');
+});
+
+test('protocol module re-exports the speaker resolver as a public seam', () => {
+  assert.equal(resolveSpeakerFromProtocol('菜月昴').stableId, 'natsuki-subaru');
+  assert.equal(resolveSpeakerFromProtocol, resolveSpeaker);
+});
+
+test('witch-calendar validation rejects impossible dates and unsafe years', () => {
+  for (const date of [
+    { year: -1, month: 1, day: 1 },
+    { year: 1000.5, month: 1, day: 1 },
+    { year: 1000, month: 0, day: 1 },
+    { year: 1000, month: 13, day: 1 },
+    { year: 1000, month: 1, day: 0 },
+    { year: 1000, month: 1, day: 31 },
+  ]) {
+    assert.throws(() => formatWitchCalendarDate(date), /魔女历|月份|日期/);
+  }
+
+  const badMonth = parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年13月01日</time><now_plot>正文</now_plot></content>');
+  assert.equal(badMonth.ok, false);
+  assert.equal(badMonth.type, 'fallback');
 });
 
 test('splitUpdateVariable separates one raw suffix and rejects duplicate variable blocks', () => {
@@ -122,6 +145,14 @@ test('parser decodes display entities but keeps malformed input inert and does n
 
   const nested = parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot><scene location="王都"><check type="攻击" actor="昴">1d20=1</check></scene></now_plot></content>');
   assert.equal(nested.ok, false);
+});
+
+test('invalid HTML entities never throw and remain inert display text', () => {
+  assert.doesNotThrow(() => parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>坏实体 &#x110000; 与 &#9999999999; 不得炸掉解析。</now_plot></content>'));
+  const parsed = parseNarrativeResponse('<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>坏实体 &#x110000; 与 &#9999999999; 保留。</now_plot></content>');
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.blocks[0].text.includes('&#x110000;'), true);
+  assert.equal(parsed.blocks[0].text.includes('&#9999999999;'), true);
 });
 
 test('speaker resolution is exact, alias-safe, ambiguity-aware, and first-grapheme for unknowns', () => {

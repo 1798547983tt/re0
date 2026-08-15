@@ -1,6 +1,8 @@
 import volumeHeadings from '../data/volume-headings.json' with { type: 'json' };
 import { decodeTextEntities, resolveSpeaker } from './character-registry.mjs';
 
+export { resolveSpeaker } from './character-registry.mjs';
+
 const VOLUMES = new Map(volumeHeadings.map((entry) => [entry.volume, entry]));
 const DIRECT_TAGS = new Set(['scene', 'ability', 'check', 'restart']);
 const REQUIRED_ATTRIBUTES = {
@@ -30,9 +32,11 @@ export function formatWitchCalendarDate({ year, month, day } = {}) {
   const y = Number(year);
   const m = Number(month);
   const d = Number(day);
-  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) {
+  if (!Number.isInteger(y) || y < 0 || y > 9999 || !Number.isInteger(m) || !Number.isInteger(d)) {
     throw new TypeError('魔女历日期必须包含整数 year/month/day');
   }
+  if (m < 1 || m > 12) throw new RangeError('魔女历月份必须在 1..12');
+  if (d < 1 || d > 30) throw new RangeError('魔女历日期必须在 1..30');
   return `魔女历${String(y).padStart(4, '0')}年${pad2(m)}月${pad2(d)}日`;
 }
 
@@ -67,6 +71,11 @@ function parseTime(text, attributes) {
   const match = decoded.match(/^魔女历(\d{4})年(\d{2})月(\d{2})日$/u);
   if (!match) return null;
   const date = { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+  try {
+    formatWitchCalendarDate(date);
+  } catch (_error) {
+    return null;
+  }
   return {
     ...date,
     visible: formatWitchCalendarDate(date),
