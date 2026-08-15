@@ -3,8 +3,8 @@
 ## 待验收产物
 
 - 导入文件：`dist/regex-Re0·正文美化.json`
-- SHA-256：`55CE829D9E73CC03D207415CDAF5F24CFADD849D6402BCCD2F69EB8A1CA19D72`
-- 大小：`95255` 字节
+- SHA-256：`DD695D49F34FC736BEE6B06C18F408F4B387E076B1BD94613882284AD6FFBF45`
+- 大小：`95293` 字节
 - 正文规则：`narrative/rules/正文输出格式.md`
 - 战斗规则：`narrative/rules/战斗规则.md`
 - 状态映射：`narrative/rules/状态字段映射.md`
@@ -14,7 +14,7 @@
 
 ## 本次渲染故障修复
 
-旧产物只把 `<content>...</content>` 替换成固定开发样例，且渲染脚本等待 `DOMContentLoaded`；在 Tavern Helper 已经测量 iframe 高度后，通常只剩主题工具栏。新产物用带捕获组的正则把真实正文放入隐藏协议载体，打包脚本中唯一的替换令牌只出现在该载体；渲染器立即启动、读取载体，并在动态卡片完成后主动回写 iframe 高度。`<textarea>` 终止标签会被匹配器拒绝，避免载体逃逸。
+旧产物只把 `<content>...</content>` 替换成固定开发样例，且编辑路径会再次运行展示正则；在 Tavern Helper 重绘后会递归嵌套脚本与挂载点，最终常见为只剩主题工具栏。新产物参考《龙族》正式版的单次替换链：用带捕获组的正则把真实正文放入隐藏协议载体，`runOnEdit=false`，并在输入已经含有 `data-re0-narrative-mount` 时跳过；打包脚本中唯一的替换令牌只出现在该载体。渲染器立即启动、读取载体，并在动态卡片完成后主动回写 iframe 高度。`<textarea>` 终止标签仍会被匹配器拒绝，避免载体逃逸。
 
 因此，已经导入旧 JSON 的 SillyTavern 会继续使用旧副本；请删除/覆盖旧的 `Re:0·正文美化` 后重新导入当前文件，再用新消息或重新绘制触发。不要只替换仓库文件名而不重新导入。
 
@@ -27,7 +27,7 @@
 ## 真实 SillyTavern 验收顺序
 
 1. 记录 SillyTavern、Tavern Helper、MVU、ZOD 与提示模板的精确版本，并核对 ZOD 脚本的既有 `name`、`id`、`export_with` 和固定 loader 未被宿主改写。
-2. 导入正则，确认只匹配完整 `<content>...</content>`，`runOnEdit=true`，且不会把 `<UpdateVariable>` 包进展示 HTML。
+2. 导入正则，确认只匹配完整 `<content>...</content>`，`runOnEdit=false`；对已生成的消息编辑/重绘时不再重复包裹，且不会把 `<UpdateVariable>` 包进展示 HTML。
 3. 发送一条严格协议的新消息，确认标题为 `第XX卷 | 标题`、日期为 `魔女历YYYY年MM月DD日`，左上角每条卡片各有一个 Logo。
 4. 分别验证日间、夜间、自动时段切换和手动米色；刷新后检查主题偏好；键盘焦点应能到达四个至少 44px 的主题按钮。
 5. 验证结构化对白的主角右侧/NPC 左侧、44 个安全别名专属头像、冲突别名通用回退，以及未知人物姓名首字头像。旁白中出现人名不得触发气泡。

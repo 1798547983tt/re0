@@ -234,7 +234,7 @@ Resolve fixed-version remote URLs only when a release revision is configured; ot
 
 - [ ] **Step 5: Implement the project packager**
 
-Read the maintained narrative modules and stylesheet in dependency order, strip module syntax, reject unsafe closing tags, embed volume/character data safely, and emit one regex JSON object. The check mode must compare in-memory serialization byte-for-byte without writing. Use the existing AI-output regex conventions, `runOnEdit: true`, and preserve the original message plus UpdateVariable suffix.
+Read the maintained narrative modules and stylesheet in dependency order, strip module syntax, reject unsafe closing tags, embed volume/character data safely, and emit one regex JSON object. The check mode must compare in-memory serialization byte-for-byte without writing. Use the existing AI-output regex conventions, preserve the original message plus UpdateVariable suffix, and keep the display transform single-pass (`runOnEdit: false` with an already-rendered mount guard) so edits cannot recursively nest the iframe.
 
 - [ ] **Step 6: Run focused asset/package tests and all offline tests**
 

@@ -12,8 +12,9 @@ const SCRIPT_ID = '77df7cab-215d-42f5-b9a0-5ec7a60c9d6c';
 // The capture group is deliberately carried into the inert textarea below.
 // Tavern Helper expands `$1` while applying the regex replacement; the
 // renderer then reads that captured protocol instead of falling back to its
-// development sample.
-export const NARRATIVE_FIND_REGEX = '/(<content>(?:(?!<\\/?textarea\\b)[\\s\\S])*?<\\/content>)/gi';
+// development sample. The leading guard makes the display transform
+// idempotent if a host re-runs regexes over an already-rendered message.
+export const NARRATIVE_FIND_REGEX = '/(?![\\s\\S]*data-re0-narrative-mount)(<content>(?:(?!<\\/?textarea\\b)[\\s\\S])*?<\\/content>)/is';
 
 export const MODULE_ORDER = Object.freeze([
   'narrative/src/character-registry.mjs',
@@ -282,7 +283,9 @@ export function buildArtifact(options = {}) {
     placement: [2],
     promptOnly: false,
     replaceString: `\`\`\`html\n${buildHtml(options)}\n\`\`\``,
-    runOnEdit: true,
+    // The source message remains the canonical input. Re-running this
+    // display-only wrapper over generated HTML nests scripts and mounts.
+    runOnEdit: false,
     scriptName: 'Re:0·正文美化',
     substituteRegex: 0,
     trimStrings: [],
@@ -294,7 +297,10 @@ export function buildSerializedArtifact(options = {}) {
 }
 
 export function simulateReplacement(original, artifact = buildArtifact()) {
-  return String(original).replace(/(<content>(?:(?!<\/?textarea\b)[\s\S])*?<\/content>)/gi, artifact.replaceString);
+  return String(original).replace(
+    /(?![\s\S]*data-re0-narrative-mount)(<content>(?:(?!<\/?textarea\b)[\s\S])*?<\/content>)/is,
+    artifact.replaceString,
+  );
 }
 
 function writeArtifact() {

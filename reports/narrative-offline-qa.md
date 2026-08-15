@@ -33,7 +33,7 @@
 
 ## 自动化发布检查
 
-- `node --test tests/*.mjs`：137/137 通过，0 失败。
+- `node --test tests/*.mjs`：138/138 通过，0 失败。
 - `python -m unittest discover -s tests -p 'test_*.py' -v`：7/7 通过。
 - `node tools/package_narrative_regex.mjs --check`：产物与源码逐字节一致。
 - `node tools/package_narrative_regex.mjs --audit-assets --strict`：51 项，缺失 0、不完整 0、不安全 URL 0、未固定版本 URL 0、`ready=true`。
@@ -44,8 +44,8 @@
 ## 交付指纹
 
 - 正则：`dist/regex-Re0·正文美化.json`
-- 字节数：`95255`
-- SHA-256：`55CE829D9E73CC03D207415CDAF5F24CFADD849D6402BCCD2F69EB8A1CA19D72`
+- 字节数：`95293`
+- SHA-256：`DD695D49F34FC736BEE6B06C18F408F4B387E076B1BD94613882284AD6FFBF45`
 - 资产清单 SHA-256：`aed1705276b7742a47044f4b74786e11e79706d7779f048daaf5ad3a2629e902`
 - 图像：51 个，共 `9650197` 字节；其中专属头像 44 个。
 

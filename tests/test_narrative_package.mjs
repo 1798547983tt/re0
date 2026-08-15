@@ -13,6 +13,17 @@ import {
 
 const ROOT = resolve(import.meta.dirname, '..');
 
+function applyTavernRegex(raw, artifact, { isEdit = false } = {}) {
+  if (isEdit && !artifact.runOnEdit) return raw;
+  const match = artifact.findRegex.match(/^\/(.*)\/([a-z]*)$/is);
+  assert.ok(match, 'findRegex must use /pattern/flags form');
+  const regex = new RegExp(match[1], match[2]);
+  return String(raw).replace(regex, (...args) => artifact.replaceString.replaceAll(/\$(\d+)|\$<([^>]+)>/g, (_token, number, name) => {
+    const value = number ? args[Number(number)] : args.at(-1)?.[name];
+    return value == null ? '' : String(value);
+  }));
+}
+
 test('narrative regex artifact follows AI-output conventions and content-only matching', () => {
   const artifact = JSON.parse(readFileSync(resolve(ROOT, 'dist/regex-Re0·正文美化.json'), 'utf8'));
   assert.deepEqual(
@@ -27,11 +38,11 @@ test('narrative regex artifact follows AI-output conventions and content-only ma
     },
     {
       disabled: false,
-      findRegex: '/(<content>(?:(?!<\\/?textarea\\b)[\\s\\S])*?<\\/content>)/gi',
+      findRegex: '/(?![\\s\\S]*data-re0-narrative-mount)(<content>(?:(?!<\\/?textarea\\b)[\\s\\S])*?<\\/content>)/is',
       markdownOnly: true,
       placement: [2],
       promptOnly: false,
-      runOnEdit: true,
+      runOnEdit: false,
       substituteRegex: 0,
     },
   );
@@ -90,6 +101,18 @@ test('replacement preserves a trailing UpdateVariable suffix byte-for-byte', () 
   assert.match(replaced, /const source = readNarrativeSource\(mount\)/);
   assert.ok(replaced.endsWith('<UpdateVariable>{"sentinel":"保持"}</UpdateVariable>'));
   assert.equal((replaced.match(/<UpdateVariable>/g) || []).length, 1);
+});
+
+test('generated narrative HTML is not recursively replaced during edit or rerender', () => {
+  const artifact = buildArtifact();
+  const content = '<content><story volume="38"></story><time>魔女历1234年05月06日</time><now_plot>{菜月昴}「正文只出现一次。」</now_plot></content>';
+  const first = applyTavernRegex(content, artifact);
+  const edited = applyTavernRegex(first, artifact, { isEdit: true });
+  const rerendered = applyTavernRegex(first, artifact);
+  assert.equal(edited, first, '编辑路径必须保留既有 mount');
+  assert.equal(rerendered, first, '幂等保护必须阻止对已生成 HTML 的再次包裹');
+  assert.equal((first.match(/<div data-re0-narrative-mount>/g) || []).length, 1);
+  assert.equal((first.match(/<nav class="re0-theme-toolbar"/g) || []).length, 1);
 });
 
 test('packaged renderer boots before Tavern Helper measures the iframe', () => {
