@@ -5,7 +5,9 @@ export function consumeRoll(pool) {
   return { roll: pool[0], remaining: pool.slice(1) };
 }
 
-export function deriveTierValue({ level, position } = {}) {
+export function deriveTierValue(input = {}) {
+  if (!input || typeof input !== 'object') return null;
+  const { level, position } = input;
   let n = level;
   if (typeof n === 'string') {
     const match = n.match(/^(?:([1-7])阶|([1-7]))$/);

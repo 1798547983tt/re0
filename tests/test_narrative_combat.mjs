@@ -23,6 +23,8 @@ test('deriveTierValue maps seven levels and only upper/lower positions', () => {
   assert.equal(deriveTierValue({ level: '1阶', position: '下位' }), 1);
   assert.equal(deriveTierValue({ level: '7阶', position: '上位' }), 14);
   assert.equal(deriveTierValue({ level: 3, position: '上位' }), 6);
+  assert.equal(deriveTierValue(), null);
+  assert.equal(deriveTierValue(null), null);
   for (const value of [
     { level: '3阶', position: '中位' }, { level: '未定', position: '上位' },
     { level: '不入阶', position: '下位' }, { level: 'x', position: '上位' },
