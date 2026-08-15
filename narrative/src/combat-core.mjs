@@ -7,9 +7,10 @@ function dieValue(entry) {
 }
 
 function assertDie(value) {
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 1 || n > 20) throw new Error('骰面必须是 1..20 的有限 d20 整数');
-  return n;
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 20) {
+    throw new Error('骰面必须是 1..20 的有限 d20 整数');
+  }
+  return value;
 }
 
 export function consumeRoll(pool) {
@@ -33,15 +34,15 @@ export function deriveTierValue(input = {}) {
 
 export function resolveCheck({ roll, dc, modifiers = [] } = {}) {
   const natural = assertDie(roll);
-  const numericDc = Number(dc);
-  if (!Number.isFinite(numericDc)) throw new Error('DC 必须是有限数');
+  if (typeof dc !== 'number' || !Number.isFinite(dc)) throw new Error('DC 必须是有限数');
+  const numericDc = dc;
   const safeModifiers = Array.isArray(modifiers)
     ? structuredClone(modifiers)
     : modifiers == null ? [] : [structuredClone(modifiers)];
   const total = Number(roll) + safeModifiers.reduce((sum, value) => {
     const modifierValue = typeof value === 'object' && value !== null ? value.value : value;
-    if (!Number.isFinite(Number(modifierValue))) throw new Error('检定修正必须是有限数');
-    return sum + Number(modifierValue);
+    if (typeof modifierValue !== 'number' || !Number.isFinite(modifierValue)) throw new Error('检定修正必须是有限数');
+    return sum + modifierValue;
   }, 0);
   if (!Number.isFinite(total)) throw new Error('检定总值必须是有限数');
   const margin = total - numericDc;
@@ -89,8 +90,10 @@ export function resolveDamage({ grade, baseDamage, defenderTierGap = 0, breakQua
 }
 
 export function resolveDying({ successes = 0, failures = 0, roll } = {}) {
-  let s = Math.max(0, Number(successes) || 0);
-  let f = Math.max(0, Number(failures) || 0);
+  if (typeof successes !== 'number' || !Number.isInteger(successes) || !Number.isFinite(successes) || successes < 0) throw new Error('成功计数必须是非负有限整数');
+  if (typeof failures !== 'number' || !Number.isInteger(failures) || !Number.isFinite(failures) || failures < 0) throw new Error('失败计数必须是非负有限整数');
+  let s = successes;
+  let f = failures;
   const natural = assertDie(roll);
   if (natural === 20) return { successes: s, failures: f, state: '存活', hp: 1 };
   if (natural === 1) f += 2;
@@ -108,6 +111,7 @@ function participantId(participant) {
 }
 
 export function createBattleState({ id = '', participants = [] } = {}) {
+  if (!Array.isArray(participants) || participants.length === 0) throw new Error('参战者必须是至少一名的数组');
   const copiedParticipants = structuredClone(Array.isArray(participants) ? participants : []);
   const actionOrder = copiedParticipants.map(participantId);
   if (actionOrder.some((id) => !id || !id.trim())) throw new Error('参战者 ID 必须是非空字符串');
