@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { isPinnedReleaseUrl } from '../narrative/src/assets.mjs';
 
 const TOOL_DIR = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(TOOL_DIR, '..');
@@ -179,6 +180,7 @@ export function auditManifest(manifest = readJson('narrative/assets/manifest.jso
   const missing = [];
   const incomplete = [];
   const insecureReleaseUrls = [];
+  const unpinnedReleaseUrls = [];
   for (const asset of manifest.assets || []) {
     const exists = existsSync(assetFilePath(asset.localPath || ''));
     if (!exists) missing.push(asset);
@@ -186,6 +188,7 @@ export function auditManifest(manifest = readJson('narrative/assets/manifest.jso
     if (asset.releaseUrl) {
       try {
         if (new URL(asset.releaseUrl).protocol !== 'https:') insecureReleaseUrls.push(asset);
+        else if (!isPinnedReleaseUrl(asset.releaseUrl, manifest.releaseRevision)) unpinnedReleaseUrls.push(asset);
       } catch (_error) {
         insecureReleaseUrls.push(asset);
       }
@@ -196,7 +199,11 @@ export function auditManifest(manifest = readJson('narrative/assets/manifest.jso
     missing,
     incomplete,
     insecureReleaseUrls,
-    ready: missing.length === 0 && incomplete.length === 0 && insecureReleaseUrls.length === 0,
+    unpinnedReleaseUrls,
+    ready: missing.length === 0
+      && incomplete.length === 0
+      && insecureReleaseUrls.length === 0
+      && unpinnedReleaseUrls.length === 0,
   };
 }
 
@@ -307,6 +314,7 @@ function printAudit({ strict = false } = {}) {
     missing: audit.missing.map((asset) => asset.localPath),
     incomplete: audit.incomplete.map((asset) => asset.localPath),
     insecureReleaseUrls: audit.insecureReleaseUrls.map((asset) => asset.localPath),
+    unpinnedReleaseUrls: audit.unpinnedReleaseUrls.map((asset) => asset.localPath),
     ready: audit.ready,
   }, null, 2));
   if (strict && !audit.ready) process.exitCode = 1;

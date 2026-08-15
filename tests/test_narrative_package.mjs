@@ -96,3 +96,15 @@ test('checked artifact is byte-for-byte current and check mode has not written e
   assert.equal(existsSync(resolve(ROOT, 'dist/regex-Re0·魔女茶会创角向导.json')), true);
   assert.equal(existsSync(resolve(ROOT, 'dist/regex-Re0·全变量状态栏.json')), true);
 });
+
+test('narrative source and artifact line endings are pinned for deterministic Windows checkouts', () => {
+  const attributes = readFileSync(resolve(ROOT, '.gitattributes'), 'utf8');
+  for (const rule of [
+    '/narrative/**/*.mjs text eol=lf',
+    '/narrative/**/*.json text eol=lf',
+    '/narrative/*.css text eol=lf',
+    '/dist/regex-Re0·正文美化.json text eol=lf',
+    '/tools/package_narrative_regex.mjs text eol=lf',
+    '/tests/test_narrative_*.mjs text eol=lf',
+  ]) assert.ok(attributes.includes(rule), `missing .gitattributes rule: ${rule}`);
+});

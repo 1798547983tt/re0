@@ -140,8 +140,8 @@
 .re0-logo-slot {
   display: grid;
   place-items: center;
-  inline-size: 58px;
-  block-size: 58px;
+  inline-size: clamp(132px, 16vw, 180px);
+  block-size: clamp(64px, 8vw, 84px);
   border: 1px solid var(--re0-accent);
   border-radius: 8px;
   color: var(--re0-accent);
@@ -380,6 +380,7 @@
 .re0-dialogue__text {
   margin: 0;
   overflow-wrap: anywhere;
+  white-space: pre-line;
   line-height: 1.8;
 }
 
@@ -460,11 +461,6 @@
   .re0-title-plate {
     grid-template-columns: minmax(0, 1fr);
     min-block-size: 118px;
-  }
-
-  .re0-logo-slot {
-    inline-size: 48px;
-    block-size: 48px;
   }
 
   .re0-dialogue {

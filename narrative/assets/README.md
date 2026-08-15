@@ -24,7 +24,7 @@ Rules:
 
 - Existing binary files get real MIME, dimensions, and SHA-256 values.
 - Missing binary files keep `mime`, `dimensions`, and `sha256` as `null`.
-- `releaseUrl` stays empty until a fixed HTTPS release URL is known.
+- `releaseUrl` stays empty until a fixed HTTPS release URL is known; remote selection also requires a non-empty `releaseRevision`, and every URL must contain that revision.
 - Avatar files belong under `./assets/avatars/{portraitKey}.webp`.
 - This manifest must never contain secrets, API keys, user chat text, or variable payloads.
 - The regex package embeds the manifest and renderer, not the roughly 9.65 MB of image binaries. Local preview paths work under `narrative/index.html`; an isolated SillyTavern import falls back to CSS and first-grapheme avatars until pinned HTTPS URLs are configured.

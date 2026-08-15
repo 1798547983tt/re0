@@ -8,6 +8,10 @@ import {
   auditManifest,
   refreshManifestData,
 } from '../tools/package_narrative_regex.mjs';
+import {
+  applyCssImageAsset,
+  resolveNarrativeAsset,
+} from '../narrative/src/assets.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const manifestPath = resolve(ROOT, 'narrative/assets/manifest.json');
@@ -90,4 +94,62 @@ test('renderer and CSS include asset resolver hooks plus graceful fallbacks', ()
   assert.match(css, /--re0-logo-image/);
   assert.match(css, /data-asset-fallback/);
   assert.match(html, /data-asset-manifest-url="\.\/assets\/manifest\.json"/);
+});
+
+test('remote assets require an explicit release revision', () => {
+  const revision = 'release-2026-08-15';
+  const asset = {
+    id: 'background:day',
+    localPath: './assets/background-day.webp',
+    releaseUrl: 'https://cdn.example.test/floating/background-day.webp',
+  };
+  assert.equal(resolveNarrativeAsset({ releaseRevision: '', assets: [asset] }, asset.id).reason, 'local-path');
+  assert.equal(resolveNarrativeAsset({ releaseRevision: revision, assets: [asset] }, asset.id).reason, 'local-path');
+
+  const pinned = { ...asset, releaseUrl: `https://cdn.example.test/${revision}/background-day.webp` };
+  assert.equal(resolveNarrativeAsset({ releaseRevision: revision, assets: [pinned] }, asset.id).reason, 'release-url');
+
+  const audit = auditManifest({ releaseRevision: revision, assets: [asset] });
+  assert.equal(audit.unpinnedReleaseUrls.length, 1);
+  assert.equal(audit.ready, false);
+});
+
+test('CSS image probes retain a readable fallback on an actual load failure', async () => {
+  class BrokenImage {
+    set src(value) {
+      this.currentSrc = value;
+      queueMicrotask(() => this.onerror?.(new Error('missing')));
+    }
+  }
+  class LoadedImage {
+    set src(value) {
+      this.currentSrc = value;
+      queueMicrotask(() => this.onload?.());
+    }
+  }
+  const makeTarget = () => {
+    const values = new Map();
+    return {
+      dataset: {},
+      style: {
+        getPropertyValue: (name) => values.get(name) || '',
+        removeProperty: (name) => values.delete(name),
+        setProperty: (name, value) => values.set(name, value),
+      },
+    };
+  };
+
+  const broken = makeTarget();
+  const pending = applyCssImageAsset(broken, '--re0-logo-image', 'https://cdn.example.test/missing.png', 'logo', { ImageConstructor: BrokenImage });
+  assert.equal(pending.status, 'loading');
+  assert.equal(broken.dataset.assetFallback, 'logo');
+  await Promise.resolve();
+  assert.equal(broken.style.getPropertyValue('--re0-logo-image'), '');
+  assert.equal(broken.dataset.assetFallback, 'logo');
+
+  const loaded = makeTarget();
+  applyCssImageAsset(loaded, '--re0-background-image', 'https://cdn.example.test/background.webp', 'background', { ImageConstructor: LoadedImage });
+  await Promise.resolve();
+  assert.equal(loaded.dataset.assetFallback, undefined);
+  assert.match(loaded.style.getPropertyValue('--re0-background-image'), /^url\(/);
 });

@@ -1,6 +1,7 @@
 import { parseNarrativeResponse } from './protocol.mjs';
 import { resolveBubble, resolveTheme } from './theme-core.mjs';
 import {
+  applyCssImageAsset,
   loadNarrativeAssetManifest,
   resolveNarrativeAsset,
   themeAssetId,
@@ -149,8 +150,7 @@ function renderHeader(documentRef, parsed, assetManifest) {
   logo.dataset.logoSlot = 'message-card';
   logo.setAttribute('aria-hidden', 'true');
   const logoAsset = resolveNarrativeAsset(assetManifest, 'logo:transparent');
-  if (logoAsset.url) logo.style.setProperty('--re0-logo-image', `url("${logoAsset.url}")`);
-  else logo.dataset.assetFallback = 'logo';
+  applyCssImageAsset(logo, '--re0-logo-image', logoAsset.url, 'logo');
   logo.append(makeElement(documentRef, 'span', '', 'RE0'));
   const text = makeElement(documentRef, 'div', 're0-title-plate__text');
   text.append(
@@ -210,10 +210,8 @@ function bindThemeControls(mount) {
 export function applyNarrativeAssets(app, manifest, themeName) {
   const background = resolveNarrativeAsset(manifest, themeAssetId('background', themeName));
   const titlePlate = resolveNarrativeAsset(manifest, themeAssetId('titlePlate', themeName));
-  if (background.url) app.style.setProperty('--re0-background-image', `url("${background.url}")`);
-  else app.dataset.assetFallback = 'background';
-  if (titlePlate.url) app.style.setProperty('--re0-title-plate-image', `url("${titlePlate.url}")`);
-  else app.dataset.assetFallback = [app.dataset.assetFallback, 'title-plate'].filter(Boolean).join(' ');
+  applyCssImageAsset(app, '--re0-background-image', background.url, 'background');
+  applyCssImageAsset(app, '--re0-title-plate-image', titlePlate.url, 'title-plate');
 }
 
 export function renderNarrative(target, source = SAMPLE, options = {}) {

@@ -123,6 +123,33 @@ test('parser accepts strict root order, visible heading/date, metadata, blocks a
   assert.equal(parsed.blocks[6].attributes.actor, '菜月昴');
 });
 
+test('consecutive dialogue from the same resolved speaker merges into one bubble', () => {
+  const parsed = parseNarrativeResponse(`<content>
+<story volume="01"></story>
+<time>魔女历1000年01月01日</time>
+<now_plot>
+{菜月·昴}「第一句。」
+
+{菜月昴}「第二句。」
+
+{诸葛青}「第三句。」
+
+{诸葛青}「第四句。」
+
+{诸葛白}「第五句。」
+</now_plot>
+</content>`);
+
+  assert.equal(parsed.ok, true);
+  assert.deepEqual(parsed.blocks.map((block) => block.type), ['dialogue', 'dialogue', 'dialogue']);
+  assert.equal(parsed.blocks[0].speaker.stableId, 'natsuki-subaru');
+  assert.equal(parsed.blocks[0].text, '第一句。\n第二句。');
+  assert.equal(parsed.blocks[1].speaker.kind, 'generic');
+  assert.equal(parsed.blocks[1].speaker.displayName, '诸葛青');
+  assert.equal(parsed.blocks[1].text, '第三句。\n第四句。');
+  assert.equal(parsed.blocks[2].speaker.displayName, '诸葛白');
+});
+
 test('parser rejects unknown, duplicate, case-smuggled, or partially parsed attributes', () => {
   const cases = [
     '<content><story volume="01" onclick="x"></story><time>魔女历1000年01月01日</time><now_plot>正文</now_plot></content>',

@@ -3,8 +3,8 @@
 ## 待验收产物
 
 - 导入文件：`dist/regex-Re0·正文美化.json`
-- SHA-256：`7bf29db4ccc6e3a6fd6c675737954024f5c77d011c686cd8b1f0034221b2d03d`
-- 大小：`91481` 字节
+- SHA-256：`2ab32113feeb0f97d723af7b9c5b5e9161ca89f6aaeaaaec44074c19745e086f`
+- 大小：`93998` 字节
 - 正文规则：`narrative/rules/正文输出格式.md`
 - 战斗规则：`narrative/rules/战斗规则.md`
 - 状态映射：`narrative/rules/状态字段映射.md`
@@ -16,7 +16,7 @@
 
 当前清单中的 `releaseUrl` 全为空，且正则不内嵌约 9.65 MB 的图片。独立导入时，若 `./assets/...` 不在宿主可访问位置，Logo、背景和专属头像会安全降级；这不影响正文可读性，但不算视觉资产的生产验收。
 
-如需在真实宿主显示完整图片，先获得发布授权，再把 `narrative/assets/` 中与清单哈希一致的 51 个图像发布到固定 commit/tag/release 的 HTTPS 地址，更新清单与打包测试后重新生成正则。不得使用浮动分支 URL，也不得在未授权时上传参考衍生素材。
+如需在真实宿主显示完整图片，先获得发布授权，再把 `narrative/assets/` 中与清单哈希一致的 51 个图像发布到固定 commit/tag/release 的 HTTPS 地址，填写非空 `releaseRevision`，并让每个 HTTPS URL 明确包含该版本，再更新清单与打包测试后重新生成正则。解析器和审计器都会拒绝无版本或浮动 URL；不得在未授权时上传参考衍生素材。
 
 ## 真实 SillyTavern 验收顺序
 

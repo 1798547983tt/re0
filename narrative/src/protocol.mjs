@@ -122,11 +122,23 @@ function pushTextBlocks(blocks, text) {
     const dialogue = value.match(/^\{([^{}\n]+)\}「([\s\S]*)」$/u);
     if (dialogue) {
       const speakerName = decodeTextEntities(dialogue[1]).trim();
+      const speaker = resolveSpeaker(speakerName);
+      const dialogueText = decodeTextEntities(dialogue[2]).trim();
+      const previous = blocks.at(-1);
+      const sameSpeaker = previous?.type === 'dialogue'
+        && previous.speaker.kind === speaker.kind
+        && (speaker.kind === 'character'
+          ? previous.speaker.stableId === speaker.stableId
+          : previous.speaker.displayName === speaker.displayName);
+      if (sameSpeaker) {
+        previous.text = `${previous.text}\n${dialogueText}`;
+        continue;
+      }
       blocks.push({
         type: 'dialogue',
         speakerName,
-        speaker: resolveSpeaker(speakerName),
-        text: decodeTextEntities(dialogue[2]).trim(),
+        speaker,
+        text: dialogueText,
       });
     } else {
       blocks.push({ type: 'narration', text: value });

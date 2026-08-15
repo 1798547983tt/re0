@@ -1,8 +1,8 @@
 # RE0 正文渲染器离线 QA
 
-日期：2026-08-15  
-分支：`codex/re0-combat-renderer`  
-视觉资产与渲染提交：`def1712b14100d7294549fa6b30cdf62d0910582`
+- 日期：2026-08-15
+- 分支：`codex/re0-combat-renderer`
+- 审查基线：`5553415`；最终内容以交付分支 HEAD 为准
 
 ## 结论
 
@@ -23,7 +23,8 @@
 | 200% 内容缩放 | 通过 | 640px 视口内以 CSS `zoom:2` 验收；标题、日期、头像与正文仍可读；横向溢出 0。 |
 | 44 个专属人物 | 通过 | 一次渲染 44 条结构化对白，得到 44 个不同 `portraitKey` 和 44 个图片节点；滚动到底后 44/44 加载，破图 0。 |
 | 通用人物 | 通过 | `{诸葛青}` 不命中专属注册表，头像无图片节点，首字为“诸”，使用通用气泡。 |
-| 缺失资产 | 通过 | 空资产清单触发 `background title-plate` 与头像后备；正文、标题、日期和“菜”首字仍显示。 |
+| 连续对白 | 通过 | 同一稳定人物 ID 的连续别名对白合并为一个气泡并保留分行；不同未知姓名不会因共享通用 ID 而误合并。 |
+| 缺失资产 | 通过 | 空清单和真实 404 均已验证；404 后得到 `background title-plate`、`logo`、`avatar` 后备，Logo 文本 `RE0`、头像“菜”、标题和正文仍显示。 |
 | 恶意/损坏输入 | 通过 | 含 `onerror`/`script` 的输入与缺失闭合标签都进入不可执行的纯文本后备；注入标记保持 `false`；页面只有一个卡片。 |
 | 重复重绘 | 通过 | 连续调用渲染 10 次后仍只有一个 `.re0-narrative-card`，没有重复挂载。 |
 | 减少动态效果 | 通过（静态契约） | CSS 明确在 `prefers-reduced-motion: reduce` 下将动画/过渡压至 `.001ms` 并关闭平滑滚动；Node 合同测试通过。当前浏览器驱动未提供 OS 媒体偏好仿真，因此仍列入真实宿主复验。 |
@@ -31,10 +32,10 @@
 
 ## 自动化发布检查
 
-- `node --test tests/*.mjs`：130/130 通过，0 失败。
+- `node --test tests/*.mjs`：134/134 通过，0 失败。
 - `python -m unittest discover -s tests -p 'test_*.py' -v`：7/7 通过。
 - `node tools/package_narrative_regex.mjs --check`：产物与源码逐字节一致。
-- `node tools/package_narrative_regex.mjs --audit-assets --strict`：51 项，缺失 0、不完整 0、不安全 URL 0、`ready=true`。
+- `node tools/package_narrative_regex.mjs --audit-assets --strict`：51 项，缺失 0、不完整 0、不安全 URL 0、未固定版本 URL 0、`ready=true`。
 - `git diff --check`：通过。
 
 既有创角与状态栏打包器的独立 `--check` 在本 Windows checkout 均报告旧产物与当前序列化结果不一致；从计划基线 `5553415` 到本分支没有修改它们的源码、打包器或产物。本任务没有运行写模式，也没有覆盖这两个无关产物。
@@ -42,8 +43,8 @@
 ## 交付指纹
 
 - 正则：`dist/regex-Re0·正文美化.json`
-- 字节数：`91481`
-- SHA-256：`7bf29db4ccc6e3a6fd6c675737954024f5c77d011c686cd8b1f0034221b2d03d`
+- 字节数：`93998`
+- SHA-256：`2ab32113feeb0f97d723af7b9c5b5e9161ca89f6aaeaaaec44074c19745e086f`
 - 资产清单 SHA-256：`aed1705276b7742a47044f4b74786e11e79706d7779f048daaf5ad3a2629e902`
 - 图像：51 个，共 `9650197` 字节；其中专属头像 44 个。
 

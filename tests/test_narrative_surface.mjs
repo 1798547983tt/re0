@@ -109,6 +109,14 @@ test('CSS is scoped, responsive to 320px, and honors reduced motion', () => {
   assert.match(css, /@container[^\{]*\(max-width:\s*420px\)/);
   assert.match(css, /@container[^\{]*\(max-width:\s*340px\)/);
   assert.match(css, /prefers-reduced-motion/);
+  const logoRule = css.match(/\.re0-logo-slot\s*\{([^}]*)\}/s)?.[1] || '';
+  const logoMinimum = Number(logoRule.match(/inline-size:\s*clamp\((\d+)px/)?.[1]);
+  assert.ok(logoMinimum >= 120, 'the persistent RE0 wordmark must remain a large title, not an avatar-sized icon');
+  assert.match(
+    css,
+    /\.re0-dialogue__text\s*\{[^}]*white-space:\s*pre-line/s,
+    'merged dialogue lines must remain visually distinct inside one bubble',
+  );
   assert.match(css, /data-theme="day"/);
   assert.match(css, /data-theme="night"/);
   assert.match(css, /data-theme="beige"/);
@@ -136,6 +144,7 @@ test('maintained output-format rules describe the exact model protocol and safet
     '第XX卷 | 标题',
     '魔女历YYYY年MM月DD日',
     '{规范显示名}「对白」',
+    '连续相邻',
     '<scene location=',
     '<ability user=',
     '<check type=',
