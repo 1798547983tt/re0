@@ -1,5 +1,10 @@
 import { parseNarrativeResponse } from './protocol.mjs';
 import { resolveBubble, resolveTheme } from './theme-core.mjs';
+import {
+  loadNarrativeAssetManifest,
+  resolveNarrativeAsset,
+  themeAssetId,
+} from './assets.mjs';
 
 const SAMPLE = `<content>
 <story volume="01"></story>
@@ -18,12 +23,28 @@ function makeElement(documentRef, tagName, className = '', text = '') {
   return element;
 }
 
-function renderAvatar(documentRef, bubble) {
+function renderAvatar(documentRef, bubble, assetManifest) {
   const avatar = makeElement(documentRef, 'div', 're0-dialogue__avatar');
   avatar.dataset.portraitKey = bubble.portraitKey;
   avatar.dataset.icon = bubble.icon;
   avatar.style.setProperty('--re0-avatar-accent', bubble.styleProperties['--re0-avatar-accent']);
   const initial = makeElement(documentRef, 'span', 're0-dialogue__initial', bubble.initial || '?');
+  const asset = resolveNarrativeAsset(assetManifest, `avatar:${bubble.portraitKey}`);
+  if (asset.url && bubble.portraitKey !== 'generic') {
+    const image = documentRef.createElement('img');
+    image.className = 're0-dialogue__avatar-image';
+    image.alt = '';
+    image.decoding = 'async';
+    image.loading = 'lazy';
+    image.src = asset.url;
+    image.onerror = () => {
+      avatar.dataset.assetFallback = 'avatar';
+      image.remove();
+    };
+    avatar.append(image);
+  } else {
+    avatar.dataset.assetFallback = 'avatar';
+  }
   avatar.append(initial);
   return avatar;
 }
@@ -55,7 +76,7 @@ function renderDialogue(documentRef, block, themeName, options) {
   article.dataset.code = bubble.code;
   article.dataset.borderToken = bubble.border;
   article.dataset.textureToken = bubble.texture;
-  article.append(renderAvatar(documentRef, bubble));
+  article.append(renderAvatar(documentRef, bubble, options.assetManifest));
   const body = makeElement(documentRef, 'div', 're0-dialogue__body');
   body.append(
     makeElement(documentRef, 'strong', 're0-dialogue__speaker', bubble.displayName),
@@ -122,11 +143,14 @@ function renderFallback(documentRef, parsed) {
   return section;
 }
 
-function renderHeader(documentRef, parsed) {
+function renderHeader(documentRef, parsed, assetManifest) {
   const header = makeElement(documentRef, 'header', 're0-title-plate');
   const logo = makeElement(documentRef, 'div', 're0-logo-slot');
   logo.dataset.logoSlot = 'message-card';
   logo.setAttribute('aria-hidden', 'true');
+  const logoAsset = resolveNarrativeAsset(assetManifest, 'logo:transparent');
+  if (logoAsset.url) logo.style.setProperty('--re0-logo-image', `url("${logoAsset.url}")`);
+  else logo.dataset.assetFallback = 'logo';
   logo.append(makeElement(documentRef, 'span', '', 'RE0'));
   const text = makeElement(documentRef, 'div', 're0-title-plate__text');
   text.append(
@@ -183,6 +207,15 @@ function bindThemeControls(mount) {
   });
 }
 
+export function applyNarrativeAssets(app, manifest, themeName) {
+  const background = resolveNarrativeAsset(manifest, themeAssetId('background', themeName));
+  const titlePlate = resolveNarrativeAsset(manifest, themeAssetId('titlePlate', themeName));
+  if (background.url) app.style.setProperty('--re0-background-image', `url("${background.url}")`);
+  else app.dataset.assetFallback = 'background';
+  if (titlePlate.url) app.style.setProperty('--re0-title-plate-image', `url("${titlePlate.url}")`);
+  else app.dataset.assetFallback = [app.dataset.assetFallback, 'title-plate'].filter(Boolean).join(' ');
+}
+
 export function renderNarrative(target, source = SAMPLE, options = {}) {
   const app = target?.id === 're0-narrative-app' ? target : target?.querySelector?.('#re0-narrative-app') || target;
   if (!app?.ownerDocument) throw new TypeError('renderNarrative requires a DOM element target');
@@ -194,14 +227,17 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
   })();
   const preference = options.themePreference || storedPreference || 'auto';
   const theme = resolveTheme({ preference, period });
+  const assetManifest = options.assetManifest || null;
   app.dataset.theme = theme.name;
   app.dataset.themeSource = theme.source;
   app.setAttribute('aria-busy', 'false');
+  app.removeAttribute('data-asset-fallback');
+  if (assetManifest) applyNarrativeAssets(app, assetManifest, theme.name);
   const card = makeElement(documentRef, 'article', 're0-narrative-card');
   if (parsed.ok) {
-    card.append(renderHeader(documentRef, parsed));
+    card.append(renderHeader(documentRef, parsed, assetManifest));
     const story = makeElement(documentRef, 'section', 're0-story-flow');
-    story.append(renderBlocks(documentRef, parsed.blocks, theme.name, options));
+    story.append(renderBlocks(documentRef, parsed.blocks, theme.name, { ...options, assetManifest }));
     card.append(story);
   } else {
     card.append(renderFallback(documentRef, parsed));
@@ -209,7 +245,7 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
   app.replaceChildren(card);
   const mount = app.closest?.('[data-re0-narrative-mount]');
   if (mount) {
-    mount.__re0NarrativeState = { app, source, options };
+    mount.__re0NarrativeState = { app, source, options: { ...options, assetManifest } };
     bindThemeControls(mount);
     updateThemeButtons(mount, { preference, themeName: theme.name });
   }
@@ -221,6 +257,9 @@ function boot() {
   const app = document.querySelector('#re0-narrative-app');
   if (!mount || !app) return;
   renderNarrative(app, mount.dataset.sampleProtocol || SAMPLE);
+  loadNarrativeAssetManifest(mount).then((assetManifest) => {
+    if (assetManifest) renderNarrative(app, mount.dataset.sampleProtocol || SAMPLE, { assetManifest });
+  });
 }
 
 if (typeof document !== 'undefined') {

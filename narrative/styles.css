@@ -23,6 +23,9 @@
 #re0-narrative-app {
   position: relative;
   min-inline-size: 0;
+  --re0-background-image: none;
+  --re0-title-plate-image: none;
+  --re0-logo-image: none;
 }
 
 #re0-narrative-app[data-theme="day"] {
@@ -84,8 +87,12 @@
   border-radius: 8px;
   color: var(--re0-ink);
   background:
+    linear-gradient(rgb(255 255 255 / 84%), rgb(255 255 255 / 84%)),
+    var(--re0-background-image),
     linear-gradient(135deg, color-mix(in srgb, var(--re0-accent) 8%, transparent), transparent 42%),
     var(--re0-panel);
+  background-position: center;
+  background-size: cover;
   box-shadow: var(--re0-shadow);
 }
 
@@ -98,8 +105,12 @@
   padding: clamp(16px, 4vw, 32px);
   border-block-end: 1px solid var(--re0-line);
   background:
+    linear-gradient(color-mix(in srgb, var(--re0-panel) 72%, transparent), color-mix(in srgb, var(--re0-panel) 72%, transparent)),
+    var(--re0-title-plate-image),
     repeating-linear-gradient(90deg, transparent 0 35px, color-mix(in srgb, var(--re0-accent) 8%, transparent) 36px),
     linear-gradient(110deg, color-mix(in srgb, var(--re0-accent) 12%, transparent), transparent 68%);
+  background-position: center;
+  background-size: cover;
 }
 
 #re0-narrative-app[data-theme="night"] .re0-title-plate {
@@ -125,6 +136,14 @@
   font: 800 13px/1 "Segoe UI", sans-serif;
   letter-spacing: .08em;
   background: color-mix(in srgb, var(--re0-panel-strong) 78%, transparent);
+  background-image: var(--re0-logo-image);
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.re0-logo-slot:not([data-asset-fallback]) span {
+  opacity: 0;
 }
 
 .re0-title-plate__text {
@@ -310,6 +329,29 @@
     radial-gradient(circle at 34% 24%, color-mix(in srgb, var(--re0-avatar-accent) 28%, transparent), transparent 34%),
     color-mix(in srgb, var(--re0-avatar-accent) 9%, var(--re0-panel-strong));
   font-weight: 800;
+}
+
+.re0-dialogue__avatar-image {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.re0-dialogue__avatar {
+  position: relative;
+  overflow: hidden;
+}
+
+.re0-dialogue__avatar:not([data-asset-fallback]) .re0-dialogue__initial {
+  opacity: 0;
+}
+
+#re0-narrative-app[data-asset-fallback] .re0-narrative-card {
+  background-image:
+    linear-gradient(135deg, color-mix(in srgb, var(--re0-accent) 8%, transparent), transparent 42%),
+    linear-gradient(180deg, var(--re0-panel), var(--re0-panel));
 }
 
 .re0-dialogue__body,
