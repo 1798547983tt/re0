@@ -53,7 +53,7 @@ test('narrative regex artifact follows AI-output conventions and content-only ma
   assert.ok(artifact.replaceString.startsWith('```html\n<!doctype html>'));
   assert.ok(artifact.replaceString.endsWith('\n```'));
   assert.equal((artifact.replaceString.match(/```html/g) || []).length, 1);
-  assert.match(artifact.replaceString, /<textarea id="re0-narrative-source" hidden>\$1<\/textarea>/);
+  assert.match(artifact.replaceString, /<textarea id="re0-narrative-source"[^>]*data-re0-source="content"[^>]*>\$1<\/textarea>/);
   assert.equal((artifact.replaceString.match(/\$1/g) || []).length, 1, 'the replacement token must only occur in the carrier');
   for (const token of [/\$`/g, /\$'/g, /\$&/g, /\$</g, /\$\$/g]) {
     assert.equal((artifact.replaceString.match(token) || []).length, 0, `replacement token ${token} must not occur in bundled code`);
@@ -81,7 +81,7 @@ test('packaged HTML embeds maintained narrative sources in dependency order with
   }
   for (const modulePath of MODULE_ORDER) assert.match(html, new RegExp(modulePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.equal((html.match(/<!doctype html>/g) || []).length, 1);
-  assert.equal((html.match(/<div data-re0-narrative-mount/g) || []).length, 1);
+  assert.equal((html.match(/<div[^>]*data-re0-narrative-mount\b/g) || []).length, 1);
   assert.doesNotMatch(html, /^\s*(?:import|export)\s/m);
   assert.doesNotMatch(html, /\bwith\s*\{\s*type:\s*['"]json['"]\s*\}/);
   assert.doesNotMatch(html, /replaceVariables|updateVariablesWith|insertOrAssignVariables|replaceMvuData|stat_data\s*=/);
@@ -89,12 +89,20 @@ test('packaged HTML embeds maintained narrative sources in dependency order with
   assert.match(html, /data-asset-fallback/);
 });
 
+test('packaged message carries a static reader shell before script hydration', () => {
+  const html = buildArtifact().replaceString;
+  assert.match(html, /<main id="re0-narrative-app"[^>]*>[\s\S]*?<article class="re0-narrative-card">[\s\S]*?<header class="re0-title-plate">[\s\S]*?<h1>正文协议读取中<\/h1>/);
+  assert.match(html, /<section class="re0-story-flow"[^>]*>\s*<p class="re0-narration">正文正在载入/);
+  assert.match(html, /<textarea id="re0-narrative-source"[^>]*data-re0-source="content"[^>]*>\$1<\/textarea>/);
+  assert.ok(html.indexOf('</noscript>') < html.indexOf('<textarea id="re0-narrative-source"'), 'source carrier must stay at the end of the static reader shell');
+});
+
 test('replacement preserves a trailing UpdateVariable suffix byte-for-byte', () => {
   const artifact = buildArtifact();
   const content = '<content><story volume="38"></story><time>魔女历1234年05月06日</time><now_plot>{菜月昴}「必须显示这段正文。」</now_plot></content>';
   const original = `${content}<UpdateVariable>{"sentinel":"保持"}</UpdateVariable>`;
   const replaced = simulateReplacement(original, artifact);
-  const carrier = replaced.match(/<textarea id="re0-narrative-source" hidden>([\s\S]*?)<\/textarea>/);
+  const carrier = replaced.match(/<textarea id="re0-narrative-source"[^>]*data-re0-source="content"[^>]*>([\s\S]*?)<\/textarea>/);
   assert.ok(carrier, 'the matched protocol must be carried into the message iframe');
   assert.equal(carrier[1], content);
   assert.match(replaced, /function readNarrativeSource/);
@@ -111,7 +119,7 @@ test('generated narrative HTML is not recursively replaced during edit or rerend
   const rerendered = applyTavernRegex(first, artifact);
   assert.equal(edited, first, '编辑路径必须保留既有 mount');
   assert.equal(rerendered, first, '幂等保护必须阻止对已生成 HTML 的再次包裹');
-  assert.equal((first.match(/<div data-re0-narrative-mount>/g) || []).length, 1);
+  assert.equal((first.match(/<div[^>]*data-re0-narrative-mount\b/g) || []).length, 1);
   assert.equal((first.match(/<nav class="re0-theme-toolbar"/g) || []).length, 1);
 });
 

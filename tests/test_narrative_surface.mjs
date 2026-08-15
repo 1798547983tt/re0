@@ -17,6 +17,8 @@ test('narrative surface exposes one namespaced mount, overlay, logo slot and acc
   assert.equal(typeof renderNarrative, 'function');
   assert.equal((html.match(/data-re0-narrative-mount/g) || []).length, 1);
   assert.match(html, /id="re0-narrative-app"/);
+  assert.match(html, /<article class="re0-narrative-card">[\s\S]*<section class="re0-story-flow" data-re0-content/);
+  assert.match(html, /data-re0-root/);
   assert.match(html, /id="re0-narrative-overlay-root"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /data-logo-slot/);
@@ -65,6 +67,10 @@ test('renderer source uses safe DOM construction and no executable HTML sinks', 
   assert.match(render, /renderCheck/);
   assert.match(render, /renderRestart/);
   assert.match(render, /renderFallback/);
+  assert.match(render, /function renderBootFailure/);
+  assert.match(render, /data-re0-render-error/);
+  assert.match(render, /try\s*\{[\s\S]*renderNarrative[\s\S]*catch/);
+  assert.match(render, /loadNarrativeAssetManifest[\s\S]*\.catch/);
   assert.doesNotMatch(render, /\.innerHTML\s*=/);
   assert.doesNotMatch(render, /insertAdjacentHTML/);
   assert.doesNotMatch(render, /\beval\s*\(/);

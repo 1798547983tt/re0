@@ -48,5 +48,5 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 - 模型必须按 `rules/正文输出格式.md` 输出；正则只负责解析和呈现，不从自由叙述猜说话者。
 - 骰池由调用方在每次生成前提供，规则模块不自行伪随机生成；骰池与完整骰点历史不写入持久状态。
 - `<UpdateVariable>` 只能位于完整 `</content>` 之后，正则原样保留它，不负责执行变量写入。
-- 正文正则用捕获组把真实 `<content>` 放入隐藏载体；载体是替换串中唯一的 `$1` 令牌。正则采用单次 `/is` 匹配、`runOnEdit: false`，并在输入已经含有 `data-re0-narrative-mount` 时跳过，避免编辑/重绘时递归包裹脚本。渲染器会在 iframe 高度测量前立即启动，并在内容换入后主动更新高度。源码或产物更新后必须在 SillyTavern 中重新导入正则副本。
+- 正文正则参照《龙族》正式版采用“静态阅读壳层 + 脚本水合”：标题卡、正文容器和后备文案先随 HTML 输出，真实 `<content>` 放入末尾的惰性隐藏载体；载体是替换串中唯一的 `$1` 令牌。正则采用单次 `/is` 匹配、`runOnEdit: false`，并在输入已经含有 `data-re0-narrative-mount` 时跳过，避免编辑/重绘时递归包裹脚本。渲染器立即水合静态壳层，在 iframe 高度测量前主动更新高度；水合异常时保留壳层并显示安全后备。源码或产物更新后必须在 SillyTavern 中重新导入正则副本。
 - 真实 SillyTavern、Tavern Helper、MVU 与 ZOD 的端到端验收仍按 `../reports/narrative-runtime-handoff.md` 执行。

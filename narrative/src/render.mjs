@@ -255,6 +255,7 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
   app.dataset.themeSource = theme.source;
   app.setAttribute('aria-busy', 'false');
   app.removeAttribute('data-asset-fallback');
+  app.removeAttribute('data-re0-render-error');
   if (assetManifest) applyNarrativeAssets(app, assetManifest, theme.name);
   const card = makeElement(documentRef, 'article', 're0-narrative-card');
   if (parsed.ok) {
@@ -276,15 +277,31 @@ export function renderNarrative(target, source = SAMPLE, options = {}) {
   return { parsed, theme };
 }
 
+function renderBootFailure(app, source) {
+  if (!app?.ownerDocument) return;
+  app.dataset.re0RenderError = 'true';
+  app.setAttribute('aria-busy', 'false');
+  const story = app.querySelector?.('.re0-story-flow');
+  if (story) story.replaceChildren(renderFallback(app.ownerDocument, { rawText: source }));
+  requestMessageFrameResize();
+}
+
 function boot() {
   const mount = document.querySelector('[data-re0-narrative-mount]');
   const app = document.querySelector('#re0-narrative-app');
   if (!mount || !app) return;
   const source = readNarrativeSource(mount);
-  renderNarrative(app, source);
-  loadNarrativeAssetManifest(mount).then((assetManifest) => {
-    if (assetManifest) renderNarrative(app, source, { assetManifest });
-  });
+  try {
+    renderNarrative(app, source);
+  } catch (_error) {
+    renderBootFailure(app, source);
+  }
+  loadNarrativeAssetManifest(mount)
+    .then((assetManifest) => {
+      if (!assetManifest) return;
+      try { renderNarrative(app, source, { assetManifest }); } catch (_error) { renderBootFailure(app, source); }
+    })
+    .catch(() => {});
 }
 
 if (typeof document !== 'undefined') boot();

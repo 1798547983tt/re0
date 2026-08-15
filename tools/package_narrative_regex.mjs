@@ -253,17 +253,31 @@ ${css}
 </style>
 </head>
 <body>
-<div data-re0-narrative-mount>
-<textarea id="re0-narrative-source" hidden>$1</textarea>
+<div class="re0-reader" data-re0-narrative-mount data-re0-root data-asset-manifest-url="./assets/manifest.json">
 <nav class="re0-theme-toolbar" aria-label="正文主题">
 <button type="button" data-action="theme-auto" aria-label="自动主题" title="自动主题">◐</button>
 <button type="button" data-action="theme-day" aria-label="日间主题" title="日间主题">☼</button>
 <button type="button" data-action="theme-night" aria-label="夜间主题" title="夜间主题">☾</button>
 <button type="button" data-action="theme-beige" aria-label="羊皮纸主题" title="羊皮纸主题">▤</button>
 </nav>
-<main id="re0-narrative-app" aria-live="polite" aria-busy="true"></main>
+<main id="re0-narrative-app" aria-live="polite" aria-busy="true">
+<article class="re0-narrative-card">
+<header class="re0-title-plate">
+<div class="re0-logo-slot" data-logo-slot="message-card" aria-hidden="true"><span>RE0</span></div>
+<div class="re0-title-plate__text">
+<p class="re0-title-plate__kicker">王都档案 × 魔女残香</p>
+<h1>正文协议读取中</h1>
+<time>魔女历1000年01月01日</time>
+</div>
+</header>
+<section class="re0-story-flow" data-re0-content aria-label="剧情正文">
+<p class="re0-narration">正文正在载入……</p>
+</section>
+</article>
+</main>
 <div id="re0-narrative-overlay-root" hidden></div>
-<noscript>此正文渲染器需要启用 JavaScript。</noscript>
+<noscript>此正文渲染器需要 JavaScript 才能展示协议内容。</noscript>
+<textarea id="re0-narrative-source" data-re0-source="content" inert hidden aria-hidden="true">$1</textarea>
 </div>
 <script>
 ${buildJavascript({ moduleOverrides })}
