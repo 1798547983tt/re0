@@ -63,11 +63,13 @@ function usablePortrait(record) {
   return null;
 }
 
-export function resolvePortrait({ name, shared = null, override = null }) {
+export function resolvePortrait({ name, shared = null, override = null, builtIn = null }) {
   const chatPortrait = usablePortrait(override);
   if (chatPortrait) return { ...chatPortrait, source: 'override' };
   const sharedPortrait = usablePortrait(shared);
   if (sharedPortrait) return { ...sharedPortrait, source: 'shared' };
+  const bundledPortrait = usablePortrait(builtIn);
+  if (bundledPortrait) return { ...bundledPortrait, source: 'builtin' };
   return {
     kind: 'initial',
     initial: firstGrapheme(normalizePortraitName(name)),

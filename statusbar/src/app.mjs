@@ -14,6 +14,7 @@ import {
   resolvePortrait,
   validatePortraitUrl,
 } from './portraits.mjs';
+import { builtInPortraitForName } from './builtin-media.mjs';
 import { createRuntimeBridge, discoverRuntimeScope } from './runtime.mjs';
 import { artworkUrls } from './assets.mjs';
 import { selectPreviewFixture } from './preview.mjs';
@@ -1217,7 +1218,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
   };
 
   const hydrateAvatar = async (button, epoch) => {
-    if (!portraitRepository || state.destroyed) return;
+    if (state.destroyed) return;
     const identity = {
       namespace: button.dataset.namespace,
       name: button.dataset.name,
@@ -1225,12 +1226,20 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     };
     const keys = portraitKeys(identity);
     try {
-      const [shared, overrideRecord] = await Promise.all([
-        portraitRepository.get(keys.shared),
-        keys.override ? portraitRepository.get(keys.override) : null,
-      ]);
+      const [shared, overrideRecord] = portraitRepository
+        ? await Promise.all([
+          portraitRepository.get(keys.shared),
+          keys.override ? portraitRepository.get(keys.override) : null,
+        ])
+        : [null, null];
       if (state.destroyed || epoch !== state.renderEpoch || !button.isConnected) return;
-      const portrait = resolvePortrait({ name: identity.name, shared, override: overrideRecord });
+      const bundled = builtInPortraitForName(identity.name);
+      const portrait = resolvePortrait({
+        name: identity.name,
+        shared,
+        override: overrideRecord,
+        builtIn: bundled ? { kind: 'url', value: bundled.url } : null,
+      });
       if (portrait.kind === 'initial') return;
       const image = element('img', 're0-avatar__image');
       image.alt = '';

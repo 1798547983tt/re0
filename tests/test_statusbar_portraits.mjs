@@ -70,3 +70,22 @@ test('portrait resolution prefers chat override, then shared, then initial', () 
     source: 'fallback',
   });
 });
+
+test('portrait resolution prefers user choices before the bundled roster fallback', () => {
+  const builtIn = { kind: 'url', value: 'https://raw.example/%E7%88%B1%E8%9C%9C%E8%8E%89%E9%9B%85.png' };
+  assert.deepEqual(resolvePortrait({ name: '艾米莉亚', builtIn }), {
+    ...builtIn,
+    source: 'builtin',
+  });
+  assert.equal(resolvePortrait({
+    name: '艾米莉亚',
+    builtIn,
+    shared: { kind: 'url', value: 'https://user.example/shared.png' },
+  }).source, 'shared');
+  assert.equal(resolvePortrait({
+    name: '艾米莉亚',
+    builtIn,
+    shared: { kind: 'url', value: 'https://user.example/shared.png' },
+    override: { kind: 'url', value: 'https://user.example/chat.png' },
+  }).source, 'override');
+});
