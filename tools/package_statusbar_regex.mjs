@@ -10,6 +10,7 @@ const MODULES = Object.freeze([
   'statusbar/src/status-core.mjs',
   'statusbar/src/builtin-media.mjs',
   'statusbar/src/portraits.mjs',
+  'statusbar/src/music.mjs',
   'statusbar/src/runtime.mjs',
   'statusbar/src/assets.mjs',
   'statusbar/src/preview.mjs',
