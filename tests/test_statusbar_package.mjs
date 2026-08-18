@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import vm from 'node:vm';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const ARTIFACT_PATH = resolve(ROOT, 'dist', 'regex-Re0·全变量状态栏.json');
@@ -60,6 +61,17 @@ test('packaged HTML contains maintained modules in dependency order and no modul
   assert.doesNotMatch(html, /replaceVariables|updateVariablesWith|insertOrAssignVariables|replaceMvuData/);
   assert.match(html, /75d39874e8b6246a0d5f9bd45779441cdaf743cf/);
   assert.match(html, /prefers-reduced-motion/);
+});
+
+test('packaged runtime parses after every module is flattened into one script scope', () => {
+  const artifact = JSON.parse(readFileSync(ARTIFACT_PATH, 'utf8'));
+  const html = artifact.replaceString.slice('```html\n'.length, -'\n```'.length);
+  const script = html.match(/<script>([\s\S]*?)<\/script>/iu)?.[1] || '';
+  assert.ok(script.length > 10_000, 'packaged status-bar script must be present');
+  assert.doesNotThrow(
+    () => new vm.Script(script, { filename: 'packed-statusbar.js' }),
+    'the flattened module bundle must not contain duplicate lexical declarations',
+  );
 });
 
 test('zero-width replacement preserves message content and the update block byte-for-byte', () => {

@@ -7,7 +7,7 @@ const MUSIC_STORE_NAME = 'tracks';
 const MAX_MUSIC_BYTES = 100 * 1024 * 1024;
 const BUILT_IN_IDS = new Set(BUILT_IN_TRACKS.map((track) => track.id));
 
-function asObject(value) {
+function asMusicObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
@@ -40,7 +40,7 @@ function normalizeUrlTracks(value) {
   const tracks = [];
   const ids = new Set();
   for (const source of value.slice(0, 100)) {
-    const record = asObject(source);
+    const record = asMusicObject(source);
     const id = typeof record.id === 'string' && record.id.startsWith('url:') ? record.id.slice(0, 160) : '';
     const validation = validateMusicUrl(record.url);
     if (!id || ids.has(id) || !validation.ok) continue;
@@ -60,7 +60,7 @@ function normalizeLocalTracks(value) {
   const tracks = [];
   const ids = new Set();
   for (const source of value.slice(0, 100)) {
-    const record = asObject(source);
+    const record = asMusicObject(source);
     const id = typeof record.id === 'string' && record.id.startsWith('local:') ? record.id.slice(0, 160) : '';
     const type = typeof record.type === 'string' && record.type.startsWith('audio/') ? record.type.slice(0, 120) : '';
     const size = Math.floor(Number(record.size));
@@ -79,7 +79,7 @@ function normalizeLocalTracks(value) {
 }
 
 export function normalizeMusicPreferences(value) {
-  const source = asObject(value);
+  const source = asMusicObject(value);
   const hiddenBuiltIns = Array.isArray(source.hiddenBuiltIns)
     ? [...new Set(source.hiddenBuiltIns.filter((id) => typeof id === 'string' && BUILT_IN_IDS.has(id)))]
     : [];
@@ -93,14 +93,14 @@ export function normalizeMusicPreferences(value) {
   };
 }
 
-function requestResult(request) {
+function musicRequestResult(request) {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error || new Error('音乐库请求失败'));
   });
 }
 
-function transactionDone(transaction) {
+function musicTransactionDone(transaction) {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error || new Error('音乐库存储失败'));
@@ -133,7 +133,7 @@ export function createMusicRepository({
       if (!id) return null;
       const db = await database;
       const transaction = db.transaction(MUSIC_STORE_NAME, 'readonly');
-      const record = await requestResult(transaction.objectStore(MUSIC_STORE_NAME).get(id));
+      const record = await musicRequestResult(transaction.objectStore(MUSIC_STORE_NAME).get(id));
       return record?.blob instanceof Blob ? record.blob : null;
     },
     async put(id, blob) {
@@ -143,14 +143,14 @@ export function createMusicRepository({
       const db = await database;
       const transaction = db.transaction(MUSIC_STORE_NAME, 'readwrite');
       transaction.objectStore(MUSIC_STORE_NAME).put({ id, blob, updatedAt: new Date().toISOString() });
-      await transactionDone(transaction);
+      await musicTransactionDone(transaction);
     },
     async remove(id) {
       if (!id) return;
       const db = await database;
       const transaction = db.transaction(MUSIC_STORE_NAME, 'readwrite');
       transaction.objectStore(MUSIC_STORE_NAME).delete(id);
-      await transactionDone(transaction);
+      await musicTransactionDone(transaction);
     },
     async close() {
       const db = await database;
