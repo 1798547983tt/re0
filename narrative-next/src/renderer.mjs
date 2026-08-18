@@ -13,6 +13,11 @@ import { resolveTheme } from './theme.mjs';
 import { resolveCharacter, splitEmphasizedName } from './characters.mjs';
 import { resolveVolumeTitle } from './titles.mjs';
 import { resolveAbilityKind } from './abilities.mjs';
+import {
+  abilityVisualCss,
+  applyThemeVisuals,
+  resolveAbilityVisual,
+} from './visual-assets.mjs';
 
 const LOGO_LOCAL_URL = '../narrative/assets/logo-transparent.png';
 const LOGO_PRIMARY_URL = 'https://cdn.jsdelivr.net/gh/1798547983tt/re0@d011efa6a5351dd984e00ef8462db3689cbb358b/avatars/%E5%A4%A7%E6%A0%87%E9%A2%98/logo-transparent.png';
@@ -156,12 +161,15 @@ function renderSettings(documentRef, state) {
 function renderHeader(documentRef, state) {
   const header = element(documentRef, 'header', 're0v2-topbar');
   const identity = element(documentRef, 'div', 're0v2-identity');
-  identity.append(
-    renderLogo(documentRef),
-    element(documentRef, 'p', 're0v2-edition', 'LUGUNICA STORY ARCHIVE · 第二版'),
-  );
+  identity.append(renderLogo(documentRef));
   header.append(identity, renderSettings(documentRef, state));
   return header;
+}
+
+export function titleFitCqw(title) {
+  const count = Math.max(1, title?.characters?.length || 0);
+  const widthBudget = title?.family === 'departure' ? 73 : 86;
+  return Math.min(10.5, widthBudget / count);
 }
 
 function renderTitle(documentRef, parsed) {
@@ -171,13 +179,10 @@ function renderTitle(documentRef, parsed) {
   stage.dataset.length = title.characters.length > 18 ? 'long' : title.characters.length > 9 ? 'medium' : 'short';
   stage.setAttribute('aria-label', title.ariaLabel);
 
-  const meta = element(documentRef, 'div', 're0v2-title-meta');
-  meta.append(
-    element(documentRef, 'span', '', `VOLUME ${title.volume}`),
-    element(documentRef, 'span', '', title.kind),
-  );
   const heading = element(documentRef, 'h1', 're0v2-title');
   heading.setAttribute('aria-label', title.title);
+  const fitCqw = titleFitCqw(title);
+  heading.style.setProperty('--re0v2-title-fit', `${fitCqw.toFixed(3)}cqw`);
   title.characters.forEach((character, index) => {
     const span = element(documentRef, 'span', 're0v2-title-char', character);
     span.style.setProperty('--re0v2-char-index', String(index));
@@ -186,13 +191,12 @@ function renderTitle(documentRef, parsed) {
     heading.append(span);
   });
   const time = element(documentRef, 'p', 're0v2-title-time', parsed.time?.text || '时间未记录');
-  stage.append(meta, heading, time, element(documentRef, 'span', 're0v2-title-mark', 'R·0'));
+  stage.append(heading, time, element(documentRef, 'span', 're0v2-title-mark', 'R·0'));
   return stage;
 }
 
 function renderAvatar(documentRef, character) {
   const frame = element(documentRef, 'div', 're0v2-avatar');
-  frame.dataset.variant = String(character.variant ?? 0);
   const initial = element(documentRef, 'span', 're0v2-avatar__initial', character.initial);
   frame.append(initial);
   if (character.kind === 'character') {
@@ -250,7 +254,8 @@ function renderNarration(documentRef, block) {
 
 function renderScene(documentRef, block) {
   const scene = element(documentRef, 'section', 're0v2-scene');
-  const compass = element(documentRef, 'span', 're0v2-scene__compass', '✦');
+  const compass = element(documentRef, 'span', 're0v2-scene__compass');
+  compass.append(element(documentRef, 'span', '', '✦'));
   compass.setAttribute('aria-hidden', 'true');
   const copy = element(documentRef, 'div', 're0v2-scene__copy');
   copy.append(
@@ -267,6 +272,9 @@ function renderAbility(documentRef, block) {
   ability.dataset.effect = kind.effect;
   ability.dataset.kind = kind.token;
   if (!kind.valid) ability.dataset.invalid = 'true';
+  if (resolveAbilityVisual(kind.token)) {
+    ability.style.setProperty('--re0v2-ability-art', abilityVisualCss(kind.token));
+  }
   const sigil = element(documentRef, 'div', 're0v2-ability__sigil');
   sigil.setAttribute('aria-hidden', 'true');
   sigil.append(element(documentRef, 'span', '', kind.symbol));
@@ -405,6 +413,7 @@ export function renderNarrative(target, source, options = {}) {
   mount.dataset.static = String(settings.staticMode);
   mount.style.setProperty('--re0v2-reading-font', font.stack);
   mount.style.setProperty('--re0v2-reading-size', `${size.px}px`);
+  applyThemeVisuals(mount, theme.id);
   app.setAttribute('aria-busy', 'false');
 
   const state = {

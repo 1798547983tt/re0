@@ -22,6 +22,7 @@ const MODULE_ORDER = Object.freeze([
   'narrative-next/src/characters.mjs',
   'narrative-next/src/titles.mjs',
   'narrative-next/src/abilities.mjs',
+  'narrative-next/src/visual-assets.mjs',
   'narrative-next/src/renderer.mjs',
 ]);
 
