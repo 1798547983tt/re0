@@ -32,6 +32,16 @@ test('packed frontend follows the reference staged-script and inert-carrier stru
   assert.doesNotMatch(html, /narrative-next\/src\/protocol\.mjs/);
 });
 
+test('packed core survives Tavern Helper code-fence brace unescaping', () => {
+  const html = buildArtifacts().main.replaceString;
+  const core = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)][0][2];
+  const tavernHelperSource = core.replaceAll('\\{', '{').replaceAll('\\}', '}');
+
+  assert.doesNotMatch(core, /\\[{}]/u);
+  assert.match(core, /\/\[\{\]\(\[\^\{\}\x5cr\x5cn\]\{1,80\}\)\[\}\]「/u);
+  assert.doesNotThrow(() => new Function(tavernHelperSource));
+});
+
 test('packed boot locates stable data attributes and exposes a visible failure path', () => {
   const source = read('tools/package_narrative_next_regex.mjs');
   assert.match(source, /data-re0v2-app/);

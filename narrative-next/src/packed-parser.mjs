@@ -115,7 +115,7 @@ function packedStructuredBlock(type, attributes, body, raw) {
 function packedPlot(value) {
   const source = packedNormalize(value);
   const blocks = [];
-  const opener = /\{([^{}\r\n]{1,80})\}「|<(scene|ability|check|restart)\b([^>]*)>/giu;
+  const opener = /[{]([^{}\r\n]{1,80})[}]「|<(scene|ability|check|restart)\b([^>]*)>/giu;
   let cursor = 0;
   let match;
   while ((match = opener.exec(source))) {
