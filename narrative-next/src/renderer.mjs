@@ -417,7 +417,7 @@ export function renderNarrative(target, source, options = {}) {
   app.setAttribute('aria-busy', 'false');
 
   const state = {
-    source: typeof source === 'string' ? source : '',
+    source: source,
     options,
     settings,
     settingsOpen: options.settingsOpen === true,

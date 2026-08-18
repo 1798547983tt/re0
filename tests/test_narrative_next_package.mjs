@@ -37,11 +37,12 @@ test('build emits one simple import plus an explicit streaming/completed pair', 
   }
 });
 
-test('main import renders both unfinished streaming and completed content', () => {
+test('main import uses the requested completed content matcher while the pair owns streaming', () => {
   const { main } = buildArtifacts();
   const streaming = '<content player="菜月昴"><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「还在生成';
-  const completed = '<content player="菜月昴"><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「完成。」</now_plot></content>\n<UpdateVariable>{"x":1}</UpdateVariable>';
-  assert.match(applyRegex(streaming, main), /data-re0v2-mount/);
+  const completed = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「完成。」</now_plot></content>\n<UpdateVariable>{"x":1}</UpdateVariable>';
+  assert.equal(main.findRegex, '/<content>([\\s\\S]*?)<\\/content>/is');
+  assert.equal(applyRegex(streaming, main), streaming);
   const replaced = applyRegex(completed, main);
   assert.match(replaced, /data-re0v2-mount/);
   assert.ok(replaced.endsWith('\n<UpdateVariable>{"x":1}</UpdateVariable>'));
@@ -71,22 +72,21 @@ test('replacement embeds the full visual system and only one capture token', () 
   assert.doesNotMatch(html, /<script[^>]+src=/i);
 });
 
-test('hostile textarea source and already-rendered mounts are not replaced', () => {
+test('main matcher accepts only the requested literal unversioned content opener', () => {
   const { main } = buildArtifacts();
-  const hostile = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot></textarea><script>bad()</script></now_plot></content>';
-  const hostileScriptClose = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot></script><img src=x></now_plot></content>';
-  const rendered = '<div data-re0v2-mount><content><story volume="01"></story></content></div>';
-  assert.equal(applyRegex(hostile, main), hostile);
-  assert.equal(applyRegex(hostileScriptClose, main), hostileScriptClose);
-  assert.equal(applyRegex(rendered, main), rendered);
+  const attributed = '<content player="菜月昴"><story volume="01"></story></content>';
+  const versioned = '<content version="2"><story volume="01"></story></content>';
+  assert.equal(applyRegex(attributed, main), attributed);
+  assert.equal(applyRegex(versioned, main), versioned);
 });
 
-test('single packaged runtime script parses and artifact serialization is deterministic', () => {
+test('reference-style staged runtime scripts parse and artifact serialization is deterministic', () => {
   const html = buildArtifacts().main.replaceString;
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
     .filter((match) => !/type="text\/plain"/i.test(match[1]))
     .map((match) => match[2]);
-  assert.equal(scripts.length, 1);
+  assert.equal(scripts.length, 3);
+  assert.ok(Math.max(...scripts.map((script) => script.length)) < 100_000);
   for (const script of scripts) assert.doesNotThrow(() => new Function(script));
   assert.deepEqual(buildSerializedArtifacts(), buildSerializedArtifacts());
 });
@@ -95,7 +95,8 @@ test('packager produces a normal local HTML preview from the exact generated rep
   const preview = buildPackedPreview('<content><story volume="39"></story><time>魔女历1000年01月01日</time><now_plot>新的旅程。</now_plot></content>');
   assert.match(preview, /^<!doctype html>/i);
   assert.match(preview, /data-re0v2-mount/);
-  assert.match(preview, /<textarea[^>]*data-re0v2-source[^>]*><content>/);
+  assert.match(preview, /<textarea[^>]*data-re0v2-source[^>]*><story\b/);
+  assert.doesNotMatch(preview, /<textarea[^>]*data-re0v2-source[^>]*><content>/);
   assert.doesNotMatch(preview, /```html/);
 });
 

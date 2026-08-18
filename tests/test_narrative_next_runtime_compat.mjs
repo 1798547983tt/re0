@@ -16,15 +16,20 @@ function toRegExp(serialized) {
   return new RegExp(serialized.slice(1, lastSlash), serialized.slice(lastSlash + 1));
 }
 
-test('packed frontend uses one executable script and a non-script inert carrier', () => {
+test('packed frontend follows the reference staged-script and inert-carrier structure', () => {
   const html = buildArtifacts().main.replaceString;
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
   const executable = scripts.filter((match) => !/type=["'](?:text\/plain|application\/json)["']/i.test(match[1]));
-  assert.equal(executable.length, 1);
+  assert.equal(executable.length, 3);
   assert.doesNotMatch(html, /<script[^>]+type="text\/plain"/i);
   assert.match(html, /<textarea\b[^>]*data-re0v2-source[^>]*hidden[^>]*>\$1<\/textarea>/i);
-  assert.match(executable[0][2], /DOMContentLoaded/);
-  assert.match(executable[0][2], /setTimeout/);
+  assert.match(executable[0][2], /Re0NarrativeCore/);
+  assert.match(executable[1][2], /Re0NarrativeRenderer/);
+  assert.match(executable[2][2], /startRe0NarrativeReader/);
+  assert.match(executable[2][2], /SillyTavern/);
+  assert.match(executable[2][2], /name1/);
+  assert.match(executable[2][2], /parsed\.player/);
+  assert.doesNotMatch(html, /narrative-next\/src\/protocol\.mjs/);
 });
 
 test('packed boot locates stable data attributes and exposes a visible failure path', () => {
@@ -33,6 +38,20 @@ test('packed boot locates stable data attributes and exposes a visible failure p
   assert.match(source, /data-re0v2-source/);
   assert.match(source, /正文启动失败/);
   assert.doesNotMatch(source, /querySelector\('#re0v2-source'\)/);
+});
+
+test('replacement has no loading placeholder or literal content envelope to rematch', () => {
+  const html = buildArtifacts().main.replaceString.replace('$1', '');
+  assert.doesNotMatch(html, /正在展开露格尼卡档案/);
+  assert.doesNotMatch(html, /<content>/i);
+  assert.doesNotMatch(html, /<\/content>/i);
+  assert.match(html, /narrative-next\/src\/packed-parser\.mjs/);
+});
+
+test('renderer preserves a pre-parsed source object across settings rerenders', () => {
+  const source = read('narrative-next/src/renderer.mjs');
+  assert.match(source, /const state\s*=\s*\{[\s\S]*?source:\s*source,/);
+  assert.doesNotMatch(source, /source:\s*typeof source === 'string' \? source : ''/);
 });
 
 test('iframe page background stays transparent for every host theme', () => {
@@ -57,6 +76,14 @@ test('avatar grows to 90px desktop and 60px narrow layout', () => {
   assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-avatar\s*\{[^}]*width:\s*60px/s);
 });
 
+test('top-left title logo is substantially larger on desktop and narrow layouts', () => {
+  const css = read('narrative-next/styles.css');
+  const logoRule = css.match(/\.re0v2-logo\s*\{([^}]*)\}/s)?.[1] || '';
+  assert.match(logoRule, /width:\s*clamp\(240px,\s*34vw,\s*340px\)/);
+  assert.match(logoRule, /min-height:\s*118px/);
+  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo\s*\{[^}]*width:\s*180px/s);
+});
+
 test('model output guide follows customize_format and excludes UpdateVariable tags', () => {
   const format = read('narrative-next/rules/正文输出格式.md').trim();
   assert.equal(format.startsWith('<customize_format>'), true);
@@ -65,6 +92,8 @@ test('model output guide follows customize_format and excludes UpdateVariable ta
   assert.match(format, /root_tags:/);
   assert.match(format, /content_contains:/);
   assert.match(format, /template:\s*\|/);
+  assert.match(format, /^\s*<content>\s*$/m);
+  assert.doesNotMatch(format, /<content\s+player=/i);
   assert.match(format, /\{角色名\}「对白内容」/);
   assert.doesNotMatch(format, /<\/?UpdateVariable>/i);
 });

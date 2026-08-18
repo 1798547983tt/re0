@@ -13,24 +13,23 @@ export const OUTPUTS = Object.freeze({
 });
 export const PACKED_PREVIEW_OUTPUT = resolve(ROOT, 'reports', 'narrative-v2-packed-preview.html');
 
-const MODULE_ORDER = Object.freeze([
+const PACKED_CORE_MODULE_ORDER = Object.freeze([
   'narrative-next/src/entities.mjs',
   'narrative-next/src/inline-format.mjs',
-  'narrative-next/src/protocol.mjs',
   'narrative-next/src/settings.mjs',
   'narrative-next/src/theme.mjs',
   'narrative-next/src/characters.mjs',
   'narrative-next/src/titles.mjs',
   'narrative-next/src/abilities.mjs',
   'narrative-next/src/visual-assets.mjs',
-  'narrative-next/src/renderer.mjs',
+  'narrative-next/src/packed-parser.mjs',
 ]);
 
 const SAFE_CONTENT_CHARACTER = '(?:(?!<\\/?(?:textarea|script)\\b)[\\s\\S])';
 const PREFIX = '^(?![\\s\\S]*data-re0v2-mount)[\\t \\r\\n]*';
 export const COMPLETED_FIND_REGEX = `/${PREFIX}(<content\\b${SAFE_CONTENT_CHARACTER}*?<\\/content>)/i`;
 export const STREAMING_FIND_REGEX = `/${PREFIX}(<content\\b(?![\\s\\S]*<\\/content>)${SAFE_CONTENT_CHARACTER}*)$/i`;
-export const MAIN_FIND_REGEX = `/${PREFIX}(<content\\b(?:${SAFE_CONTENT_CHARACTER}*?<\\/content>|(?![\\s\\S]*<\\/content>)${SAFE_CONTENT_CHARACTER}*$))/i`;
+export const MAIN_FIND_REGEX = '/<content>([\\s\\S]*?)<\\/content>/is';
 
 function read(relativePath) {
   return readFileSync(resolve(ROOT, relativePath), 'utf8')
@@ -89,58 +88,98 @@ function assertEmbeddable(source, closingTag, label) {
   }
 }
 
-function buildRuntimeBundle() {
-  const modules = MODULE_ORDER.map((path) => `\n/* ${path} */\n${moduleSource(path)}`).join('\n');
-  const bundle = `(function () {\n'use strict';\n${modules}\n\n` +
-    `function showRe0NarrativeFailure(mount, text) {\n` +
-    `  const app = mount?.querySelector('[data-re0v2-app]') || document.querySelector('[data-re0v2-app]');\n` +
+function buildCoreBundle() {
+  const modules = PACKED_CORE_MODULE_ORDER
+    .map((path) => `\n/* ${path} */\n${moduleSource(path)}`)
+    .join('\n');
+  const bundle = `(function installRe0NarrativeCore() {\n'use strict';\n${modules}\n\n` +
+    `globalThis.Re0NarrativeCore = Object.freeze({\n` +
+    `  tokenizeInlineText, READING_FONTS, READING_SIZES, fontById, normalizeReadingSettings,\n` +
+    `  readReadingSettings, sizeById, writeReadingSettings, resolveTheme, resolveCharacter,\n` +
+    `  splitEmphasizedName, resolveVolumeTitle, resolveAbilityKind, abilityVisualCss,\n` +
+    `  applyThemeVisuals, resolveAbilityVisual, parsePackedContentEnvelope,\n` +
+    `  parseNarrative: parsePackedContentEnvelope, parseStreamingNarrative: parsePackedContentEnvelope,\n` +
+    `});\n` +
+    `})();`;
+  assertEmbeddable(bundle, '</script', 'core bundle');
+  return bundle;
+}
+
+function buildRendererBundle() {
+  const renderer = moduleSource('narrative-next/src/renderer.mjs');
+  const bundle = `(function installRe0NarrativeRenderer() {\n'use strict';\n` +
+    `const core = globalThis.Re0NarrativeCore;\n` +
+    `if (!core) return;\n` +
+    `const { tokenizeInlineText, READING_FONTS, READING_SIZES, fontById, normalizeReadingSettings,\n` +
+    `  readReadingSettings, sizeById, writeReadingSettings, resolveTheme, resolveCharacter,\n` +
+    `  splitEmphasizedName, resolveVolumeTitle, resolveAbilityKind, abilityVisualCss,\n` +
+    `  applyThemeVisuals, resolveAbilityVisual, parseNarrative, parseStreamingNarrative } = core;\n` +
+    `\n/* narrative-next/src/renderer.mjs */\n${renderer}\n` +
+    `globalThis.Re0NarrativeRenderer = Object.freeze({ renderNarrative });\n` +
+    `globalThis.Re0NarrativeV2 = globalThis.Re0NarrativeRenderer;\n` +
+    `})();`;
+  assertEmbeddable(bundle, '</script', 'renderer bundle');
+  return bundle;
+}
+
+function buildStartBundle() {
+  const bundle = `(function startRe0NarrativeReader() {\n'use strict';\n` +
+    `const core = globalThis.Re0NarrativeCore;\n` +
+    `const renderer = globalThis.Re0NarrativeRenderer;\n` +
+    `const roots = document.querySelectorAll('[data-re0v2-mount]');\n` +
+    `if (roots.length !== 1) return;\n` +
+    `const mount = roots[0];\n` +
+    `if (mount.dataset.re0v2Initialized === 'true') return;\n` +
+    `mount.dataset.re0v2Initialized = 'true';\n` +
+    `const app = mount.querySelector('[data-re0v2-app]');\n` +
+    `const carrier = mount.querySelector('[data-re0v2-source]');\n` +
+    `const fail = (text) => {\n` +
+    `  mount.dataset.re0v2Runtime = 'error';\n` +
     `  if (!app) return;\n` +
     `  const message = document.createElement('p');\n` +
     `  message.className = 're0v2-loading';\n` +
     `  message.textContent = text;\n` +
     `  app.replaceChildren(message);\n` +
     `  app.setAttribute('aria-busy', 'false');\n` +
-    `}\n` +
-    `function bootRe0NarrativeV2() {\n` +
-    `  const mount = document.querySelector('[data-re0v2-mount]');\n` +
-    `  if (!mount || mount.dataset.re0v2Booted === 'true') return Boolean(mount);\n` +
-    `  if (mount.dataset.re0v2Booting === 'true') return false;\n` +
-    `  const carrier = mount.querySelector('[data-re0v2-source]');\n` +
-    `  if (!carrier) {\n` +
-    `    mount.dataset.re0v2Runtime = 'error';\n` +
-    `    showRe0NarrativeFailure(mount, '正文启动失败：未找到正文载体。');\n` +
-    `    return false;\n` +
-    `  }\n` +
-    `  mount.dataset.re0v2Booting = 'true';\n` +
+    `};\n` +
+    `const readPlayerName = () => {\n` +
+    `  const hosts = [globalThis.SillyTavern];\n` +
     `  try {\n` +
-    `    const source = String(carrier.value || carrier.textContent || '');\n` +
-    `    renderNarrative(mount, source);\n` +
-    `    mount.dataset.re0v2Booted = 'true';\n` +
-    `    mount.dataset.re0v2Runtime = 'ready';\n` +
-    `    return true;\n` +
-    `  } catch (error) {\n` +
-    `    mount.dataset.re0v2Runtime = 'error';\n` +
-    `    showRe0NarrativeFailure(mount, '正文启动失败：请检查输出格式。');\n` +
-    `    return false;\n` +
-    `  } finally {\n` +
-    `    delete mount.dataset.re0v2Booting;\n` +
+    `    if (globalThis.parent !== globalThis) hosts.push(globalThis.parent?.SillyTavern);\n` +
+    `  } catch (_error) {}\n` +
+    `  for (const host of hosts) {\n` +
+    `    try {\n` +
+    `      const name = host?.getContext?.()?.name1;\n` +
+    `      if (typeof name === 'string' && name.trim()) return name.trim();\n` +
+    `    } catch (_error) {}\n` +
     `  }\n` +
+    `  return '';\n` +
+    `};\n` +
+    `if (!core || !renderer || !carrier) {\n` +
+    `  fail('正文启动失败：运行组件不完整。');\n` +
+    `  return;\n` +
     `}\n` +
-    `globalThis.Re0NarrativeV2 = Object.freeze({ boot: bootRe0NarrativeV2, renderNarrative, parseNarrative, parseStreamingNarrative });\n` +
-    `const startRe0NarrativeV2 = () => bootRe0NarrativeV2();\n` +
-    `if (document.readyState === 'loading') {\n` +
-    `  document.addEventListener('DOMContentLoaded', startRe0NarrativeV2, { once: true });\n` +
+    `try {\n` +
+    `  const source = String(carrier.value || carrier.textContent || '');\n` +
+    `  const parsed = core.parsePackedContentEnvelope(source);\n` +
+    `  if (!parsed.player) parsed.player = readPlayerName();\n` +
+    `  carrier.remove();\n` +
+    `  renderer.renderNarrative(mount, parsed);\n` +
+    `  mount.dataset.re0v2Runtime = 'ready';\n` +
+    `} catch (_error) {\n` +
+    `  fail('正文启动失败：请检查输出格式。');\n` +
     `}\n` +
-    `setTimeout(startRe0NarrativeV2, 0);\n` +
     `})();`;
-  assertEmbeddable(bundle, '</script', 'runtime bundle');
+  assertEmbeddable(bundle, '</script', 'start bundle');
   return bundle;
 }
 
 function buildReplacement() {
   const css = read('narrative-next/styles.css');
   assertEmbeddable(css, '</style', 'stylesheet');
-  const runtime = buildRuntimeBundle();
+  const core = buildCoreBundle();
+  const renderer = buildRendererBundle();
+  const start = buildStartBundle();
   return `\`\`\`html\n<!doctype html>\n<html lang="zh-CN">\n<head>\n` +
     `<meta charset="utf-8">\n` +
     `<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n` +
@@ -148,9 +187,9 @@ function buildReplacement() {
     `<title>Re:0 · 正文美化 V2</title>\n` +
     `<style>\n${css}\n</style>\n</head>\n<body class="re0v2-preview-page">\n` +
     `<div class="re0v2-shell" data-re0v2-mount>\n` +
-    `<main id="re0v2-app" data-re0v2-app aria-live="polite" aria-busy="true"><p class="re0v2-loading">正在展开露格尼卡档案……</p></main>\n` +
+    `<main id="re0v2-app" data-re0v2-app aria-live="polite" aria-busy="true"></main>\n` +
     `<textarea id="re0v2-source" data-re0v2-source hidden aria-hidden="true">$1</textarea>\n` +
-    `</div>\n<script>\n${runtime}\n</script>\n` +
+    `</div>\n<script>\n${core}\n</script>\n<script>\n${renderer}\n</script>\n<script>\n${start}\n</script>\n` +
     `</body>\n</html>\n\`\`\``;
 }
 
@@ -212,7 +251,9 @@ export function buildPackedPreview(source = read('narrative-next/fixtures/showca
   const html = replacement
     .replace(/^```html\n/u, '')
     .replace(/\n```$/u, '');
-  return html.replace('$1', () => source);
+  const envelope = String(source).match(/^\s*<content\b[^>]*>([\s\S]*?)<\/content>\s*(?:<UpdateVariable\b[\s\S]*)?$/iu);
+  const captured = envelope ? envelope[1] : source;
+  return html.replace('$1', () => captured);
 }
 
 function writeArtifacts({ check = false } = {}) {
