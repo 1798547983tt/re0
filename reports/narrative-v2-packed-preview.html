@@ -11,11 +11,9 @@
 .re0v2-preview-page {
   min-width: 320px;
   margin: 0;
-  padding: 22px 12px 64px;
+  padding: 12px 8px 24px;
   color: #ece8e1;
-  background:
-    radial-gradient(circle at 15% 5%, rgba(111, 77, 125, .28), transparent 34rem),
-    linear-gradient(145deg, #09080c, #141019 55%, #08090b);
+  background: transparent !important;
   font-family: "Noto Sans SC", sans-serif;
 }
 
@@ -455,35 +453,34 @@
   --re0v2-character-primary: var(--re0v2-accent);
   --re0v2-character-secondary: var(--re0v2-accent-2);
   display: grid;
-  grid-template-columns: 70px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
   width: min(88%, 760px);
   align-items: start;
   justify-self: start;
   animation: re0v2-bubble-arrive 520ms ease both;
 }
-.re0v2-dialogue[data-side="player"] { grid-template-columns: minmax(0, 1fr) 70px; justify-self: end; }
+.re0v2-dialogue[data-side="player"] { grid-template-columns: minmax(0, 1fr) 96px; justify-self: end; }
 .re0v2-dialogue[data-side="player"] .re0v2-avatar { grid-column: 2; }
 .re0v2-dialogue[data-side="player"] .re0v2-dialogue__body { grid-column: 1; grid-row: 1; }
 .re0v2-avatar {
   position: relative;
   display: grid;
-  width: 66px;
+  width: 90px;
   aspect-ratio: 1;
   overflow: hidden;
   place-items: center;
-  border: 2px solid var(--re0v2-character-primary);
+  border: 0;
   border-radius: 10px;
   color: #fff;
   background: linear-gradient(145deg, var(--re0v2-character-primary), var(--re0v2-character-secondary));
-  box-shadow: 0 8px 26px color-mix(in srgb, var(--re0v2-character-primary) 34%, transparent), inset 0 0 0 3px color-mix(in srgb, #fff 22%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--re0v2-character-primary) 34%, transparent);
 }
-.re0v2-avatar::after { content: ""; position: absolute; inset: 3px; z-index: 2; pointer-events: none; border: 1px solid rgba(255, 255, 255, .5); border-radius: inherit; }
 .re0v2-avatar img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; }
-.re0v2-avatar__initial { position: relative; z-index: 0; font: 900 26px/1 "Noto Serif SC", serif; text-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
-[data-theme="day"] .re0v2-avatar { border-color: color-mix(in srgb, var(--re0v2-character-primary) 72%, #eaf8ff); box-shadow: 0 8px 22px rgba(36, 93, 119, .18), inset 0 0 0 3px rgba(255, 255, 255, .5); }
+.re0v2-avatar__initial { position: relative; z-index: 0; font: 900 32px/1 "Noto Serif SC", serif; text-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
+[data-theme="day"] .re0v2-avatar { box-shadow: 0 9px 24px rgba(36, 93, 119, .2); }
 [data-theme="night"] .re0v2-avatar { border-radius: 8px; box-shadow: 0 0 0 2px rgba(8, 4, 12, .9), 0 0 22px color-mix(in srgb, var(--re0v2-character-primary) 45%, transparent); }
-[data-theme="tea"] .re0v2-avatar { border-color: color-mix(in srgb, var(--re0v2-character-primary) 60%, #6d5a38); box-shadow: 4px 5px 0 rgba(76, 57, 30, .14), inset 0 0 0 3px rgba(255, 244, 214, .3); }
+[data-theme="tea"] .re0v2-avatar { box-shadow: 4px 5px 0 rgba(76, 57, 30, .14); }
 
 .re0v2-dialogue__body {
   position: relative;
@@ -727,10 +724,10 @@
   .re0v2-title-time { font-size: 9px; }
   .re0v2-story-flow { gap: 22px; padding: 28px 12px 44px; }
   .re0v2-dialogue,
-  .re0v2-dialogue[data-side="player"] { grid-template-columns: 48px minmax(0, 1fr); width: 100%; gap: 8px; }
-  .re0v2-dialogue[data-side="player"] { grid-template-columns: minmax(0, 1fr) 48px; }
-  .re0v2-avatar { width: 46px; }
-  .re0v2-avatar__initial { font-size: 19px; }
+  .re0v2-dialogue[data-side="player"] { grid-template-columns: 64px minmax(0, 1fr); width: 100%; gap: 10px; }
+  .re0v2-dialogue[data-side="player"] { grid-template-columns: minmax(0, 1fr) 64px; }
+  .re0v2-avatar { width: 60px; }
+  .re0v2-avatar__initial { font-size: 23px; }
   .re0v2-dialogue__body { padding: 11px 12px 12px; }
   .re0v2-speaker-name { font-size: 11px; }
   .re0v2-ability { grid-template-columns: 1fr; }
@@ -768,8 +765,8 @@
 </head>
 <body class="re0v2-preview-page">
 <div class="re0v2-shell" data-re0v2-mount>
-<main id="re0v2-app" aria-live="polite" aria-busy="true"><p class="re0v2-loading">正在展开露格尼卡档案……</p></main>
-<script type="text/plain" id="re0v2-source"><content player="菜月昴"><story volume="20"></story><time period="深夜" layer="主线" basis="编辑演算">魔女历1000年08月17日</time><now_plot>月色落进水路，远处的钟声被雾切成七段。城市仍在呼吸，却没有一扇窗愿意先亮起来。
+<main id="re0v2-app" data-re0v2-app aria-live="polite" aria-busy="true"><p class="re0v2-loading">正在展开露格尼卡档案……</p></main>
+<textarea id="re0v2-source" data-re0v2-source hidden aria-hidden="true"><content player="菜月昴"><story volume="20"></story><time period="深夜" layer="主线" basis="编辑演算">魔女历1000年08月17日</time><now_plot>月色落进水路，远处的钟声被雾切成七段。城市仍在呼吸，却没有一扇窗愿意先亮起来。
 
 {艾姬多娜}「知识并不保证正确答案，但它至少会让错误变得有趣。」
 
@@ -808,7 +805,7 @@
 <check type="突破" actor="菜月昴" target="西侧闸门">1d20=17｜情境+2｜DC16｜成功｜在洪水抵达前开启逃生通道</check>
 
 <restart deathId="loop-017" checkpoint="钟塔响起前十分钟">黑影吞没视野，下一次心跳却从熟悉的钟声之前重新开始。</restart></now_plot></content>
-</script>
+</textarea>
 </div>
 <script>
 (function () {
@@ -5208,34 +5205,46 @@ function renderNarrative(target, source, options = {}) {
 }
 
 
+function showRe0NarrativeFailure(mount, text) {
+  const app = mount?.querySelector('[data-re0v2-app]') || document.querySelector('[data-re0v2-app]');
+  if (!app) return;
+  const message = document.createElement('p');
+  message.className = 're0v2-loading';
+  message.textContent = text;
+  app.replaceChildren(message);
+  app.setAttribute('aria-busy', 'false');
+}
 function bootRe0NarrativeV2() {
   const mount = document.querySelector('[data-re0v2-mount]');
-  const carrier = mount?.querySelector('#re0v2-source');
-  if (!mount || !carrier || mount.dataset.re0v2Booted === 'true') return;
-  mount.dataset.re0v2Booted = 'true';
-  const source = String(carrier.value || carrier.textContent || '');
+  if (!mount || mount.dataset.re0v2Booted === 'true') return Boolean(mount);
+  if (mount.dataset.re0v2Booting === 'true') return false;
+  const carrier = mount.querySelector('[data-re0v2-source]');
+  if (!carrier) {
+    mount.dataset.re0v2Runtime = 'error';
+    showRe0NarrativeFailure(mount, '正文启动失败：未找到正文载体。');
+    return false;
+  }
+  mount.dataset.re0v2Booting = 'true';
   try {
+    const source = String(carrier.value || carrier.textContent || '');
     renderNarrative(mount, source);
+    mount.dataset.re0v2Booted = 'true';
     mount.dataset.re0v2Runtime = 'ready';
+    return true;
   } catch (error) {
     mount.dataset.re0v2Runtime = 'error';
-    const app = mount.querySelector('#re0v2-app');
-    if (app) {
-      const message = document.createElement('p');
-      message.className = 're0v2-loading';
-      message.textContent = '正文渲染失败，请检查输出格式。';
-      app.replaceChildren(message);
-      app.setAttribute('aria-busy', 'false');
-    }
+    showRe0NarrativeFailure(mount, '正文启动失败：请检查输出格式。');
+    return false;
+  } finally {
+    delete mount.dataset.re0v2Booting;
   }
 }
 globalThis.Re0NarrativeV2 = Object.freeze({ boot: bootRe0NarrativeV2, renderNarrative, parseNarrative, parseStreamingNarrative });
-})();
-</script>
-<script>
-(function () {
-  const start = globalThis.Re0NarrativeV2?.boot;
-  if (typeof start === 'function') start();
+const startRe0NarrativeV2 = () => bootRe0NarrativeV2();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startRe0NarrativeV2, { once: true });
+}
+setTimeout(startRe0NarrativeV2, 0);
 })();
 </script>
 </body>

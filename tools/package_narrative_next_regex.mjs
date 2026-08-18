@@ -92,28 +92,46 @@ function assertEmbeddable(source, closingTag, label) {
 function buildRuntimeBundle() {
   const modules = MODULE_ORDER.map((path) => `\n/* ${path} */\n${moduleSource(path)}`).join('\n');
   const bundle = `(function () {\n'use strict';\n${modules}\n\n` +
+    `function showRe0NarrativeFailure(mount, text) {\n` +
+    `  const app = mount?.querySelector('[data-re0v2-app]') || document.querySelector('[data-re0v2-app]');\n` +
+    `  if (!app) return;\n` +
+    `  const message = document.createElement('p');\n` +
+    `  message.className = 're0v2-loading';\n` +
+    `  message.textContent = text;\n` +
+    `  app.replaceChildren(message);\n` +
+    `  app.setAttribute('aria-busy', 'false');\n` +
+    `}\n` +
     `function bootRe0NarrativeV2() {\n` +
     `  const mount = document.querySelector('[data-re0v2-mount]');\n` +
-    `  const carrier = mount?.querySelector('#re0v2-source');\n` +
-    `  if (!mount || !carrier || mount.dataset.re0v2Booted === 'true') return;\n` +
-    `  mount.dataset.re0v2Booted = 'true';\n` +
-    `  const source = String(carrier.value || carrier.textContent || '');\n` +
+    `  if (!mount || mount.dataset.re0v2Booted === 'true') return Boolean(mount);\n` +
+    `  if (mount.dataset.re0v2Booting === 'true') return false;\n` +
+    `  const carrier = mount.querySelector('[data-re0v2-source]');\n` +
+    `  if (!carrier) {\n` +
+    `    mount.dataset.re0v2Runtime = 'error';\n` +
+    `    showRe0NarrativeFailure(mount, '正文启动失败：未找到正文载体。');\n` +
+    `    return false;\n` +
+    `  }\n` +
+    `  mount.dataset.re0v2Booting = 'true';\n` +
     `  try {\n` +
+    `    const source = String(carrier.value || carrier.textContent || '');\n` +
     `    renderNarrative(mount, source);\n` +
+    `    mount.dataset.re0v2Booted = 'true';\n` +
     `    mount.dataset.re0v2Runtime = 'ready';\n` +
+    `    return true;\n` +
     `  } catch (error) {\n` +
     `    mount.dataset.re0v2Runtime = 'error';\n` +
-    `    const app = mount.querySelector('#re0v2-app');\n` +
-    `    if (app) {\n` +
-    `      const message = document.createElement('p');\n` +
-    `      message.className = 're0v2-loading';\n` +
-    `      message.textContent = '正文渲染失败，请检查输出格式。';\n` +
-    `      app.replaceChildren(message);\n` +
-    `      app.setAttribute('aria-busy', 'false');\n` +
-    `    }\n` +
+    `    showRe0NarrativeFailure(mount, '正文启动失败：请检查输出格式。');\n` +
+    `    return false;\n` +
+    `  } finally {\n` +
+    `    delete mount.dataset.re0v2Booting;\n` +
     `  }\n` +
     `}\n` +
     `globalThis.Re0NarrativeV2 = Object.freeze({ boot: bootRe0NarrativeV2, renderNarrative, parseNarrative, parseStreamingNarrative });\n` +
+    `const startRe0NarrativeV2 = () => bootRe0NarrativeV2();\n` +
+    `if (document.readyState === 'loading') {\n` +
+    `  document.addEventListener('DOMContentLoaded', startRe0NarrativeV2, { once: true });\n` +
+    `}\n` +
+    `setTimeout(startRe0NarrativeV2, 0);\n` +
     `})();`;
   assertEmbeddable(bundle, '</script', 'runtime bundle');
   return bundle;
@@ -123,7 +141,6 @@ function buildReplacement() {
   const css = read('narrative-next/styles.css');
   assertEmbeddable(css, '</style', 'stylesheet');
   const runtime = buildRuntimeBundle();
-  const boot = `(function () {\n  const start = globalThis.Re0NarrativeV2?.boot;\n  if (typeof start === 'function') start();\n})();`;
   return `\`\`\`html\n<!doctype html>\n<html lang="zh-CN">\n<head>\n` +
     `<meta charset="utf-8">\n` +
     `<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n` +
@@ -131,9 +148,9 @@ function buildReplacement() {
     `<title>Re:0 · 正文美化 V2</title>\n` +
     `<style>\n${css}\n</style>\n</head>\n<body class="re0v2-preview-page">\n` +
     `<div class="re0v2-shell" data-re0v2-mount>\n` +
-    `<main id="re0v2-app" aria-live="polite" aria-busy="true"><p class="re0v2-loading">正在展开露格尼卡档案……</p></main>\n` +
-    `<script type="text/plain" id="re0v2-source">$1</script>\n` +
-    `</div>\n<script>\n${runtime}\n</script>\n<script>\n${boot}\n</script>\n` +
+    `<main id="re0v2-app" data-re0v2-app aria-live="polite" aria-busy="true"><p class="re0v2-loading">正在展开露格尼卡档案……</p></main>\n` +
+    `<textarea id="re0v2-source" data-re0v2-source hidden aria-hidden="true">$1</textarea>\n` +
+    `</div>\n<script>\n${runtime}\n</script>\n` +
     `</body>\n</html>\n\`\`\``;
 }
 
@@ -190,6 +207,7 @@ export function buildSerializedArtifacts() {
 
 export function buildPackedPreview(source = read('narrative-next/fixtures/showcase.xml')) {
   if (/<\/?script\b/iu.test(source)) throw new Error('Preview source cannot contain a script boundary');
+  if (/<\/?textarea\b/iu.test(source)) throw new Error('Preview source cannot contain a textarea boundary');
   const replacement = buildArtifacts().main.replaceString;
   const html = replacement
     .replace(/^```html\n/u, '')

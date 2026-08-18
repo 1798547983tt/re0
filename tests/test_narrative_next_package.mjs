@@ -65,8 +65,8 @@ test('replacement embeds the full visual system and only one capture token', () 
   assert.match(html, /function renderNarrative/);
   assert.match(html, /natsuki-subaru/);
   assert.match(html, /新的旅程/);
-  assert.match(html, /<script type="text\/plain" id="re0v2-source">\$1<\/script>/);
-  assert.doesNotMatch(html, /<textarea id="re0v2-source"/);
+  assert.match(html, /<textarea[^>]*id="re0v2-source"[^>]*data-re0v2-source[^>]*hidden[^>]*>\$1<\/textarea>/);
+  assert.doesNotMatch(html, /<script[^>]+type="text\/plain"/i);
   assert.equal((html.match(/\$1/g) || []).length, 1);
   assert.doesNotMatch(html, /<script[^>]+src=/i);
 });
@@ -81,12 +81,12 @@ test('hostile textarea source and already-rendered mounts are not replaced', () 
   assert.equal(applyRegex(rendered, main), rendered);
 });
 
-test('all packaged scripts parse independently and artifact serialization is deterministic', () => {
+test('single packaged runtime script parses and artifact serialization is deterministic', () => {
   const html = buildArtifacts().main.replaceString;
   const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
     .filter((match) => !/type="text\/plain"/i.test(match[1]))
     .map((match) => match[2]);
-  assert.ok(scripts.length >= 2);
+  assert.equal(scripts.length, 1);
   for (const script of scripts) assert.doesNotThrow(() => new Function(script));
   assert.deepEqual(buildSerializedArtifacts(), buildSerializedArtifacts());
 });
@@ -95,7 +95,7 @@ test('packager produces a normal local HTML preview from the exact generated rep
   const preview = buildPackedPreview('<content><story volume="39"></story><time>魔女历1000年01月01日</time><now_plot>新的旅程。</now_plot></content>');
   assert.match(preview, /^<!doctype html>/i);
   assert.match(preview, /data-re0v2-mount/);
-  assert.match(preview, /<script type="text\/plain" id="re0v2-source"><content>/);
+  assert.match(preview, /<textarea[^>]*data-re0v2-source[^>]*><content>/);
   assert.doesNotMatch(preview, /```html/);
 });
 
