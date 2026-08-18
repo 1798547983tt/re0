@@ -8,6 +8,7 @@ const OUTPUT = resolve(ROOT, 'dist', 'regex-Re0·全变量状态栏.json');
 const MODULES = Object.freeze([
   'statusbar/src/schema-map.mjs',
   'statusbar/src/status-core.mjs',
+  'statusbar/src/builtin-media.mjs',
   'statusbar/src/portraits.mjs',
   'statusbar/src/runtime.mjs',
   'statusbar/src/assets.mjs',
