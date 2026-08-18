@@ -30,11 +30,12 @@
 
 ## 当前发布候选
 
-- 源码基线：`4a51a897e4085acffd9c54674bfd8bf33223810f`
+- 源码基线：`2b84f15af0e41cdeb4a5005a2c644557df50ff7c`
 - 导入文件：`dist/regex-Re0·全变量状态栏.json`
-- 大小：162064 bytes
-- SHA-256：`a3cb9c86db2f64259c4a0aa9b1c5c7af0403f681200d82f5ae7ae509fc9f53ec`
+- 大小：214886 bytes
+- SHA-256：`0841f7668052ac3be5b88ff69f0f05962a9685fda3ca608ab0685ac09a01b2c1`
 - 图像固定提交：`75d39874e8b6246a0d5f9bd45779441cdaf743cf`
+- 音乐与人物头像固定提交：`3a7a36a3e16809e8d53faabb2a453a5d48f30abd`
 - 真实运行时清单：`reports/statusbar-runtime-handoff.md`
 
 当前结论是“离线验收通过、真实宿主待验收”。任何会改变导入文件字节的后续修改都会使上述哈希失效，必须重打包并重新取证。
