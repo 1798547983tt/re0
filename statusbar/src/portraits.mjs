@@ -63,12 +63,20 @@ function usablePortrait(record) {
   return null;
 }
 
+function usableBundledPortrait(record) {
+  if (!record || typeof record !== 'object' || record.kind !== 'url') return null;
+  const value = String(record.value ?? '').trim();
+  if (/^\.\.\/avatars\/[A-Za-z0-9%._~-]+$/u.test(value)) return { ...record, value };
+  const validation = validatePortraitUrl(value);
+  return validation.ok ? { ...record, value: validation.value } : null;
+}
+
 export function resolvePortrait({ name, shared = null, override = null, builtIn = null }) {
   const chatPortrait = usablePortrait(override);
   if (chatPortrait) return { ...chatPortrait, source: 'override' };
   const sharedPortrait = usablePortrait(shared);
   if (sharedPortrait) return { ...sharedPortrait, source: 'shared' };
-  const bundledPortrait = usablePortrait(builtIn);
+  const bundledPortrait = usableBundledPortrait(builtIn);
   if (bundledPortrait) return { ...bundledPortrait, source: 'builtin' };
   return {
     kind: 'initial',

@@ -15,6 +15,7 @@ import {
   validatePortraitUrl,
 } from './portraits.mjs';
 import { builtInPortraitForName } from './builtin-media.mjs';
+import { createMusicController, createMusicRepository } from './music.mjs';
 import { createRuntimeBridge, discoverRuntimeScope } from './runtime.mjs';
 import { artworkUrls } from './assets.mjs';
 import { selectPreviewFixture } from './preview.mjs';
@@ -37,7 +38,7 @@ const SECTION_IDS = Object.freeze([
   'events',
   'clues',
   'assets',
-  'diagnostics',
+  'music',
 ]);
 const RELATION_FILTERS = Object.freeze([
   ['all', '全部'],
@@ -54,7 +55,7 @@ const DEFAULT_GROUPS = Object.freeze({
   events: 'active',
   clues: 'current',
   assets: 'items',
-  diagnostics: 'coverage',
+  music: 'player',
 });
 let instanceSequence = 0;
 
@@ -426,6 +427,17 @@ function renderOverview(model, context) {
     },
   }));
 
+  section.append(accordionGroup(context, {
+    id: 'protocol',
+    title: '规则与档案状态',
+    summary: `${displayValue(model.rules.schema版本)} · ${model.rules.初始化完成 ? '已初始化' : '等待初始化'}`,
+    count: 2,
+    render: () => fieldList('状态协议', model.rules, [
+      ['schema版本', '协议版本'],
+      ['初始化完成', '初始化状态'],
+    ]),
+  }));
+
   context.queuePortraits(section);
   return section;
 }
@@ -790,84 +802,218 @@ function renderAssets(model, context) {
   return section;
 }
 
-function renderDiagnostics(model, context) {
-  const section = element('section', 're0-section-view');
-  section.append(sectionIntro(model, context, 'Protocol Lens', '诊断', '协议覆盖、运行时来源与透传字段；仅供核对。'));
+function formatMusicTime(value) {
+  const seconds = Math.max(0, Math.floor(Number(value) || 0));
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}
 
-  section.append(accordionGroup(context, {
-    id: 'coverage',
-    title: '完整状态映射',
-    summary: '八域 · 172 个已声明叶路径 · 只读',
-    count: 172,
-    render: () => {
-      const content = element('div', 're0-group-stack');
-      const notice = element('section', 're0-readonly-notice');
-      notice.append(element('span', '', 'READ ONLY'));
-      notice.append(element('p', '', '本界面只读取状态。剧情变量仍仅由每轮 <UpdateVariable> 更新流程写入。'));
-      content.append(notice);
-      const coverage = element('section', 're0-card');
-      const coverageGrid = element('div', 're0-coverage-grid');
-      let total = 0;
-      for (const [domain, count] of Object.entries(model.diagnostics.declaredDomainCounts)) {
-        total += count;
-        coverageGrid.append(statusChip(domain, `${count} 叶`));
-      }
-      coverageGrid.prepend(statusChip('合计', `${total} 叶`, 'accent'));
-      coverage.append(coverageGrid);
-      content.append(coverage);
-      return content;
-    },
-  }));
+function musicKindLabel(track) {
+  if (track?.kind === 'builtin') return '内置曲目';
+  if (track?.kind === 'local') return '本地上传';
+  return 'URL 曲目';
+}
 
-  section.append(accordionGroup(context, {
-    id: 'rules',
-    title: '规则元数据',
-    summary: `${displayValue(model.rules.schema版本)} · 初始化 ${displayValue(model.rules.初始化完成)}`,
-    render: () => fieldList('规则元数据', model.rules, ['schema版本', '初始化完成']),
-  }));
+function renderMusicPlayer(context) {
+  const snapshot = context.musicSnapshot();
+  const current = snapshot.current || snapshot.tracks[0] || null;
+  const player = element('section', 're0-music-player');
+  player.dataset.playing = snapshot.playing ? 'true' : 'false';
 
-  section.append(accordionGroup(context, {
-    id: 'runtime',
-    title: '运行时探测',
-    summary: `${context.runtime.status} · ${context.runtime.source || '无来源'}`,
-    render: () => fieldList('运行时探测', {
-      状态: context.runtime.status,
-      来源: context.runtime.source || '无',
-      消息: context.runtime.message || '读取正常',
-      SillyTavern: context.runtime.probe?.tavern || '未报告',
-      TavernHelper: context.runtime.probe?.helper || '未报告',
-      消息楼层: context.runtime.probe?.messageId ?? '未报告',
-      MVU: context.runtime.probe?.hasMvu ? '可用' : '未检测到',
-    }, ['状态', '来源', '消息', 'SillyTavern', 'TavernHelper', '消息楼层', 'MVU']),
-  }));
+  const visual = element('div', 're0-music-visual');
+  visual.setAttribute('aria-hidden', 'true');
+  const disc = element('span', 're0-music-disc');
+  disc.append(element('span', 're0-music-disc__label', 'R:0'));
+  visual.append(disc, element('span', 're0-music-needle'));
+  player.append(visual);
 
+  const console = element('div', 're0-music-console');
+  const meta = element('div', 're0-music-now');
+  meta.append(element('span', 're0-kicker', 'WITCH RECORDS'));
+  const title = element('h3', '', current?.title || '音乐库为空');
+  title.setAttribute('data-music-current-title', '');
+  const subtitle = element('p', '', current ? `${current.artist || musicKindLabel(current)} · ${musicKindLabel(current)}` : '上传本地音乐或添加 HTTPS URL');
+  subtitle.setAttribute('data-music-current-meta', '');
+  meta.append(title, subtitle);
+  console.append(meta);
+
+  const controls = element('div', 're0-music-controls');
+  controls.setAttribute('aria-label', '音乐播放控制');
+  controls.append(actionButton('‹', 'music-previous', 're0-music-control', { 'aria-label': '上一首' }));
+  const toggle = actionButton(snapshot.playing ? 'Ⅱ' : '▶', 'music-toggle', 're0-music-control re0-music-control--primary', {
+    'aria-label': snapshot.playing ? '暂停音乐' : '播放音乐',
+  });
+  toggle.setAttribute('data-music-toggle', '');
+  controls.append(toggle);
+  controls.append(actionButton('›', 'music-next', 're0-music-control', { 'aria-label': '下一首' }));
+  console.append(controls);
+
+  const timeline = element('label', 're0-music-timeline');
+  const currentTime = element('span', '', formatMusicTime(snapshot.currentTime));
+  currentTime.setAttribute('data-music-current-time', '');
+  const seek = document.createElement('input');
+  seek.type = 'range';
+  seek.min = '0';
+  seek.max = String(Math.max(0, snapshot.duration));
+  seek.step = '0.1';
+  seek.value = String(Math.min(snapshot.currentTime, snapshot.duration || 0));
+  seek.disabled = !current || !(snapshot.duration > 0);
+  seek.setAttribute('aria-label', '播放进度');
+  seek.setAttribute('data-music-seek', '');
+  const duration = element('span', '', formatMusicTime(snapshot.duration));
+  duration.setAttribute('data-music-duration', '');
+  timeline.append(currentTime, seek, duration);
+  console.append(timeline);
+
+  const settings = element('div', 're0-music-settings');
+  const volume = element('label', 're0-music-volume');
+  volume.append(element('span', '', '音量'));
+  const volumeInput = document.createElement('input');
+  volumeInput.type = 'range';
+  volumeInput.min = '0';
+  volumeInput.max = '1';
+  volumeInput.step = '0.01';
+  volumeInput.value = String(snapshot.volume);
+  volumeInput.setAttribute('data-music-volume', '');
+  volume.append(volumeInput);
+  settings.append(volume);
+
+  const modes = element('div', 're0-music-modes');
+  modes.setAttribute('aria-label', '播放模式');
+  for (const [mode, label] of [['sequence', '顺序播放'], ['single', '单曲循环']]) {
+    const button = actionButton(label, 'music-mode', '', { 'aria-pressed': snapshot.mode === mode });
+    button.dataset.mode = mode;
+    modes.append(button);
+  }
+  settings.append(modes);
+  console.append(settings);
+
+  player.append(console);
+  return player;
+}
+
+function renderMusicLibrary(context) {
+  const snapshot = context.musicSnapshot();
+  const content = element('div', 're0-music-library');
+  if (!snapshot.tracks.length) {
+    content.append(emptyState('音乐库为空', '你可以恢复内置曲目，或添加自己的音乐。'));
+  } else {
+    const list = element('ol', 're0-track-list');
+    for (const [index, track] of snapshot.tracks.entries()) {
+      const item = element('li', 're0-track-item');
+      item.dataset.trackId = track.id;
+      if (track.id === snapshot.currentId) item.dataset.current = 'true';
+      item.append(element('span', 're0-track-number', String(index + 1).padStart(2, '0')));
+      const copy = element('div', 're0-track-copy');
+      copy.append(element('strong', '', track.title));
+      copy.append(element('small', '', track.artist || musicKindLabel(track)));
+      item.append(copy);
+      const actions = element('div', 're0-track-actions');
+      const play = actionButton(
+        track.id === snapshot.currentId && snapshot.playing ? '正在播放' : '播放',
+        'music-play-track',
+        're0-text-button',
+      );
+      play.dataset.trackId = track.id;
+      actions.append(play);
+      const remove = actionButton('删除', 'music-remove-track', 're0-icon-button re0-track-delete', {
+        'aria-label': `删除音乐「${track.title}」`,
+        title: `删除音乐「${track.title}」`,
+      });
+      remove.dataset.trackId = track.id;
+      actions.append(remove);
+      item.append(actions);
+      list.append(item);
+    }
+    content.append(list);
+  }
+  if (snapshot.hiddenBuiltIns.length) {
+    content.append(actionButton('恢复四首内置曲目', 'music-restore-builtins', 're0-button re0-button--quiet'));
+  }
+  return content;
+}
+
+function renderMusicImport(context) {
+  const content = element('div', 're0-music-import-grid');
+  const local = element('section', 're0-music-import-card');
+  local.append(element('span', 're0-music-import-card__mark', 'FILE'));
+  local.append(element('h3', '', '上传本地音乐'));
+  local.append(element('p', '', '音频保存在当前浏览器的本地音乐库，单曲不超过 100 MB。'));
+  const fileLabel = element('label', 're0-music-file-picker');
+  fileLabel.append(element('span', '', '选择音频文件'));
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'audio/*';
+  fileInput.setAttribute('data-music-file', '');
+  fileLabel.append(fileInput);
+  local.append(fileLabel);
+  content.append(local);
+
+  const remote = element('form', 're0-music-import-card');
+  remote.setAttribute('data-music-url-form', '');
+  remote.append(element('span', 're0-music-import-card__mark', 'URL'));
+  remote.append(element('h3', '', '添加网络音乐'));
+  remote.append(element('p', '', '保存一个可直接播放的 HTTPS 音频地址。'));
+  const titleLabel = element('label', 're0-input-group');
+  titleLabel.append(element('span', '', '曲目名称（可选）'));
+  const titleInput = document.createElement('input');
+  titleInput.type = 'text';
+  titleInput.maxLength = 120;
+  titleInput.placeholder = '例如：Stay Alive';
+  titleInput.setAttribute('data-music-title', '');
+  titleLabel.append(titleInput);
+  remote.append(titleLabel);
+  const urlLabel = element('label', 're0-input-group');
+  urlLabel.append(element('span', '', 'HTTPS 音乐 URL'));
+  const urlInput = document.createElement('input');
+  urlInput.type = 'url';
+  urlInput.required = true;
+  urlInput.placeholder = 'https://example.com/music.mp3';
+  urlInput.autocomplete = 'url';
+  urlInput.setAttribute('data-music-url', '');
+  urlLabel.append(urlInput);
+  remote.append(urlLabel);
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 're0-button re0-button--primary';
+  submit.textContent = '加入音乐库';
+  remote.append(submit);
+  content.append(remote);
+  return content;
+}
+
+function renderMusic(model, context) {
+  const snapshot = context.musicSnapshot();
+  const current = snapshot.current || snapshot.tracks[0];
+  const section = element('section', 're0-section-view re0-section-view--music');
+  section.append(sectionIntro(model, context, 'Witch Records', '轮回留声机', '音乐只保存在浏览器界面中，不会写入剧情变量。'));
+  const message = element('p', 're0-music-message', context.state.musicMessage || snapshot.error || '');
+  message.setAttribute('aria-live', 'polite');
+  message.setAttribute('data-music-message', '');
+  section.append(message);
+  const playerGroup = accordionGroup(context, {
+    id: 'player',
+    title: '正在播放',
+    summary: current?.title || '音乐库为空',
+    count: snapshot.tracks.length,
+    render: () => renderMusicPlayer(context),
+  });
+  playerGroup.querySelector('.re0-accordion-group__summary')?.setAttribute('data-music-player-summary', '');
+  section.append(playerGroup);
+  const libraryGroup = accordionGroup(context, {
+    id: 'library',
+    title: '音乐收藏',
+    summary: `${snapshot.tracks.length} 首 · ${snapshot.mode === 'single' ? '单曲循环' : '顺序播放'}`,
+    count: snapshot.tracks.length,
+    render: () => renderMusicLibrary(context),
+  });
+  libraryGroup.querySelector('.re0-accordion-group__summary')?.setAttribute('data-music-library-summary', '');
+  section.append(libraryGroup);
   section.append(accordionGroup(context, {
-    id: 'unknown',
-    title: '未知透传字段',
-    summary: model.diagnostics.unknown.length ? model.diagnostics.unknown[0].path : '当前状态树与已声明映射一致',
-    count: model.diagnostics.unknown.length,
-    render: () => {
-      const unknown = element('section', 're0-card');
-      if (!model.diagnostics.unknown.length) {
-        unknown.append(emptyState('没有发现协议外叶字段', '当前状态树与已声明映射一致。'));
-      } else {
-        const listKey = 'diagnostics:unknown';
-        const limit = visibleListLimit(context.state.listLimits, listKey, model.diagnostics.unknown.length);
-        const list = element('dl', 're0-tree');
-        for (const entry of model.diagnostics.unknown.slice(0, limit)) {
-          const row = element('div', 're0-tree__row');
-          row.append(element('dt', '', entry.path));
-          const dd = element('dd');
-          dd.append(valueTree(entry.value));
-          row.append(dd);
-          list.append(row);
-        }
-        unknown.append(list);
-        const pagination = paginationControls(model.diagnostics.unknown.length, listKey, context);
-        if (pagination) unknown.append(pagination);
-      }
-      return unknown;
-    },
+    id: 'import',
+    title: '添加音乐',
+    summary: '本地上传或 HTTPS URL',
+    render: () => renderMusicImport(context),
   }));
   return section;
 }
@@ -881,7 +1027,7 @@ const SECTION_RENDERERS = Object.freeze({
   events: renderEvents,
   clues: renderClues,
   assets: renderAssets,
-  diagnostics: renderDiagnostics,
+  music: renderMusic,
 });
 
 function readChatId(scope) {
@@ -1171,6 +1317,8 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     destroyed: false,
     renderEpoch: 0,
     overlayReturnFocus: null,
+    music: null,
+    musicMessage: '',
   };
   const runtimeBridge = createRuntimeBridge(runtimeScope);
   const runtime = {
@@ -1189,9 +1337,19 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
   try {
     portraitRepository = createPortraitRepository();
   } catch {}
+  let musicRepository = null;
+  try {
+    musicRepository = createMusicRepository();
+  } catch {}
+  const musicController = createMusicController({
+    storage,
+    repository: musicRepository,
+  });
+  state.music = musicController.snapshot();
   let objectUrls = [];
   let refreshFrame = 0;
   let stopRuntime = () => {};
+  let stopMusic = () => {};
   let observer = null;
   let layoutObserver = null;
   let compactLayout = root.getBoundingClientRect().width <= 700;
@@ -1217,6 +1375,24 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     objectUrls = [];
   };
 
+  const appendPortraitImage = (button, portrait) => {
+    if (!portrait || portrait.kind === 'initial') return null;
+    const image = element('img', 're0-avatar__image');
+    image.alt = '';
+    image.referrerPolicy = 'no-referrer';
+    image.decoding = 'async';
+    image.addEventListener('error', () => image.remove(), { once: true });
+    if (portrait.kind === 'blob') {
+      const url = URL.createObjectURL(portrait.value);
+      objectUrls.push(url);
+      image.src = url;
+    } else {
+      image.src = portrait.value;
+    }
+    button.append(image);
+    return image;
+  };
+
   const hydrateAvatar = async (button, epoch) => {
     if (state.destroyed) return;
     const identity = {
@@ -1225,35 +1401,25 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       chatId,
     };
     const keys = portraitKeys(identity);
+    const bundled = builtInPortraitForName(identity.name);
+    appendPortraitImage(button, resolvePortrait({
+      name: identity.name,
+      builtIn: bundled ? { kind: 'url', value: bundled.url } : null,
+    }));
+    if (!portraitRepository) return;
     try {
-      const [shared, overrideRecord] = portraitRepository
-        ? await Promise.all([
-          portraitRepository.get(keys.shared),
-          keys.override ? portraitRepository.get(keys.override) : null,
-        ])
-        : [null, null];
+      const [shared, overrideRecord] = await Promise.all([
+        portraitRepository.get(keys.shared),
+        keys.override ? portraitRepository.get(keys.override) : null,
+      ]);
       if (state.destroyed || epoch !== state.renderEpoch || !button.isConnected) return;
-      const bundled = builtInPortraitForName(identity.name);
       const portrait = resolvePortrait({
         name: identity.name,
         shared,
         override: overrideRecord,
-        builtIn: bundled ? { kind: 'url', value: bundled.url } : null,
       });
       if (portrait.kind === 'initial') return;
-      const image = element('img', 're0-avatar__image');
-      image.alt = '';
-      image.referrerPolicy = 'no-referrer';
-      image.decoding = 'async';
-      image.addEventListener('error', () => image.remove(), { once: true });
-      if (portrait.kind === 'blob') {
-        const url = URL.createObjectURL(portrait.value);
-        objectUrls.push(url);
-        image.src = url;
-      } else {
-        image.src = portrait.value;
-      }
-      button.append(image);
+      appendPortraitImage(button, portrait);
     } catch {}
   };
 
@@ -1306,6 +1472,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     chatId,
     instanceId,
     portraitRepository,
+    musicSnapshot: () => state.music || musicController.snapshot(),
     queuePortraits,
     closeOverlay,
     openGroup: (groupId) => resolveOpenGroup(
@@ -1472,6 +1639,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
 
   const setDetailsOpen = (open) => {
     state.detailsOpen = Boolean(open);
+    app.dataset.detailsOpen = state.detailsOpen ? 'true' : 'false';
     const details = app.querySelector('#re0-statusbar-details');
     if (!details) {
       render('interaction');
@@ -1585,6 +1753,58 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     )?.focus();
   };
 
+  const syncMusicView = (snapshot = state.music) => {
+    if (!snapshot) return;
+    const current = snapshot.current || snapshot.tracks[0] || null;
+    for (const player of app.querySelectorAll('.re0-music-player')) {
+      player.dataset.playing = snapshot.playing ? 'true' : 'false';
+    }
+    for (const title of app.querySelectorAll('[data-music-current-title]')) {
+      title.textContent = current?.title || '音乐库为空';
+    }
+    for (const meta of app.querySelectorAll('[data-music-current-meta]')) {
+      meta.textContent = current
+        ? `${current.artist || musicKindLabel(current)} · ${musicKindLabel(current)}`
+        : '上传本地音乐或添加 HTTPS URL';
+    }
+    for (const summary of app.querySelectorAll('[data-music-player-summary]')) {
+      summary.textContent = current?.title || '音乐库为空';
+    }
+    for (const summary of app.querySelectorAll('[data-music-library-summary]')) {
+      summary.textContent = `${snapshot.tracks.length} 首 · ${snapshot.mode === 'single' ? '单曲循环' : '顺序播放'}`;
+    }
+    for (const toggle of app.querySelectorAll('[data-music-toggle]')) {
+      toggle.textContent = snapshot.playing ? 'Ⅱ' : '▶';
+      toggle.setAttribute('aria-label', snapshot.playing ? '暂停音乐' : '播放音乐');
+    }
+    for (const seek of app.querySelectorAll('[data-music-seek]')) {
+      seek.max = String(Math.max(0, snapshot.duration));
+      seek.disabled = !current || !(snapshot.duration > 0);
+      if (document.activeElement !== seek) seek.value = String(Math.min(snapshot.currentTime, snapshot.duration || 0));
+    }
+    for (const node of app.querySelectorAll('[data-music-current-time]')) {
+      node.textContent = formatMusicTime(snapshot.currentTime);
+    }
+    for (const node of app.querySelectorAll('[data-music-duration]')) {
+      node.textContent = formatMusicTime(snapshot.duration);
+    }
+    for (const input of app.querySelectorAll('[data-music-volume]')) {
+      if (document.activeElement !== input) input.value = String(snapshot.volume);
+    }
+    for (const mode of app.querySelectorAll('[data-action="music-mode"]')) {
+      mode.setAttribute('aria-pressed', String(mode.dataset.mode === snapshot.mode));
+    }
+    for (const item of app.querySelectorAll('.re0-track-item[data-track-id]')) {
+      const active = item.dataset.trackId === snapshot.currentId;
+      item.dataset.current = active ? 'true' : 'false';
+      const play = item.querySelector('[data-action="music-play-track"]');
+      if (play) play.textContent = active && snapshot.playing ? '正在播放' : '播放';
+    }
+    for (const message of app.querySelectorAll('[data-music-message]')) {
+      message.textContent = state.musicMessage || snapshot.error || '';
+    }
+  };
+
   function render(reason = 'data') {
     if (state.destroyed) return;
     state.renderEpoch += 1;
@@ -1608,6 +1828,7 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       app.dataset.theme = model.theme.mode;
       app.dataset.transition = model.theme.transition;
       app.dataset.runtime = runtime.status;
+      app.dataset.detailsOpen = state.detailsOpen ? 'true' : 'false';
       overlay.dataset.theme = model.theme.mode;
       app.replaceChildren(frame);
       revokeObjectUrls(previousObjectUrls);
@@ -1676,6 +1897,32 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     (person) => person.category === category && person.name === name,
   );
 
+  const runMusicAction = (operation, {
+    success = '',
+    refreshPanel = false,
+    focusSelector = '',
+    onSuccess = null,
+    onFinally = null,
+  } = {}) => {
+    state.musicMessage = '';
+    syncMusicView();
+    Promise.resolve()
+      .then(operation)
+      .then((result) => {
+        state.music = musicController.snapshot();
+        state.musicMessage = typeof success === 'function' ? success(result) : success;
+        onSuccess?.(result);
+        if (refreshPanel && state.activeSection === 'music') updatePanelView({ focusSelector });
+        else syncMusicView(state.music);
+      })
+      .catch((reason) => {
+        state.music = musicController.snapshot();
+        state.musicMessage = reason instanceof Error ? reason.message : String(reason || '音乐操作失败');
+        syncMusicView(state.music);
+      })
+      .finally(() => onFinally?.());
+  };
+
   const handleAction = (event) => {
     const shell = event.target.closest?.('[data-shell-toggle]');
     if (shell && root.contains(shell) && !isInteractiveTarget(event.target)) {
@@ -1731,6 +1978,30 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
       state.model = buildHudModel(state.statData, { themePreference: 'auto' });
       persist();
       render('theme');
+    } else if (action === 'music-toggle') {
+      runMusicAction(() => musicController.toggle());
+    } else if (action === 'music-previous') {
+      runMusicAction(() => musicController.previous());
+    } else if (action === 'music-next') {
+      runMusicAction(() => musicController.next());
+    } else if (action === 'music-play-track') {
+      runMusicAction(() => musicController.play(button.dataset.trackId));
+    } else if (action === 'music-mode') {
+      musicController.setMode(button.dataset.mode);
+      state.music = musicController.snapshot();
+      state.musicMessage = state.music.mode === 'single' ? '已切换为单曲循环。' : '已切换为顺序播放。';
+      syncMusicView(state.music);
+    } else if (action === 'music-remove-track') {
+      runMusicAction(() => musicController.remove(button.dataset.trackId), {
+        success: '音乐已从收藏中删除。',
+        refreshPanel: true,
+        focusSelector: '.re0-accordion-group[data-group="library"] .re0-accordion-group__trigger',
+      });
+    } else if (action === 'music-restore-builtins') {
+      musicController.restoreBuiltIns();
+      state.music = musicController.snapshot();
+      state.musicMessage = '四首内置曲目已恢复。';
+      updatePanelView({ focusSelector: '.re0-accordion-group[data-group="library"] .re0-accordion-group__trigger' });
     } else if (action === 'filter-relations') {
       state.relationFilter = button.dataset.filter;
       persist();
@@ -1785,8 +2056,53 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
   const handleVisibility = () => {
     root.dataset.paused = document.hidden ? 'true' : 'false';
   };
+  const handleMusicInput = (event) => {
+    const input = event.target;
+    if (input.matches?.('[data-music-seek]')) {
+      musicController.seek(input.value);
+    } else if (input.matches?.('[data-music-volume]')) {
+      musicController.setVolume(input.value);
+    }
+  };
+  const handleMusicChange = (event) => {
+    const input = event.target;
+    if (!input.matches?.('[data-music-file]')) return;
+    const file = input.files?.[0];
+    if (!file) return;
+    input.disabled = true;
+    runMusicAction(() => musicController.addFile(file), {
+      success: (track) => `已添加本地音乐「${track.title}」。`,
+      refreshPanel: true,
+      focusSelector: '.re0-accordion-group[data-group="import"] .re0-accordion-group__trigger',
+      onSuccess: () => { input.value = ''; },
+      onFinally: () => { if (input.isConnected) input.disabled = false; },
+    });
+  };
+  const handleMusicSubmit = (event) => {
+    const form = event.target;
+    if (!form.matches?.('[data-music-url-form]')) return;
+    event.preventDefault();
+    const title = form.querySelector('[data-music-title]')?.value || '';
+    const url = form.querySelector('[data-music-url]')?.value || '';
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    runMusicAction(() => musicController.addUrl({ title, url }), {
+      success: (track) => `已添加网络音乐「${track.title}」。`,
+      refreshPanel: true,
+      focusSelector: '.re0-accordion-group[data-group="import"] .re0-accordion-group__trigger',
+      onSuccess: () => form.reset(),
+      onFinally: () => { if (submit?.isConnected) submit.disabled = false; },
+    });
+  };
+  stopMusic = musicController.subscribe((snapshot) => {
+    state.music = snapshot;
+    syncMusicView(snapshot);
+  });
   root.addEventListener('click', handleAction);
   root.addEventListener('keydown', handleKeydown);
+  root.addEventListener('input', handleMusicInput);
+  root.addEventListener('change', handleMusicChange);
+  root.addEventListener('submit', handleMusicSubmit);
   document.addEventListener('visibilitychange', handleVisibility);
   globalThis.addEventListener?.('pagehide', () => destroy(), { once: true });
   if (Number(navigator.hardwareConcurrency || 8) <= 4) root.dataset.performance = 'low';
@@ -1811,14 +2127,19 @@ export function createStatusBar(root, { runtimeScope = discoverRuntimeScope(glob
     state.destroyed = true;
     cancelAnimationFrame(refreshFrame);
     stopRuntime();
+    stopMusic();
     observer?.disconnect();
     layoutObserver?.disconnect();
     closeOverlay();
     clearObjectUrls();
     root.removeEventListener('click', handleAction);
     root.removeEventListener('keydown', handleKeydown);
+    root.removeEventListener('input', handleMusicInput);
+    root.removeEventListener('change', handleMusicChange);
+    root.removeEventListener('submit', handleMusicSubmit);
     document.removeEventListener('visibilitychange', handleVisibility);
     portraitRepository?.close?.().catch(() => {});
+    musicController.destroy();
   }
 
   renderLoading();

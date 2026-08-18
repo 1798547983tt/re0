@@ -13,7 +13,7 @@ export const NAV_SECTIONS = Object.freeze([
   { id: 'events', label: '事件', glyph: '◇' },
   { id: 'clues', label: '线索', glyph: '⌕' },
   { id: 'assets', label: '行囊', glyph: '▣' },
-  { id: 'diagnostics', label: '诊断', glyph: '⚙' },
+  { id: 'music', label: '音乐', glyph: '♫' },
 ]);
 
 export function asRecord(value) {

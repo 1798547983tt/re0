@@ -10,7 +10,7 @@ import {
 class FakeAudio extends EventTarget {
   constructor() {
     super();
-    this.src = '';
+    this._src = '';
     this.currentTime = 0;
     this.duration = 120;
     this.volume = 1;
@@ -19,6 +19,14 @@ class FakeAudio extends EventTarget {
     this.error = null;
     this.playCalls = 0;
     this.loadCalls = 0;
+  }
+
+  get src() {
+    return this._src;
+  }
+
+  set src(value) {
+    this._src = value ? new URL(value, 'http://127.0.0.1/statusbar/').href : '';
   }
 
   async play() {
@@ -109,6 +117,23 @@ test('sequence advances and single-track mode repeats without changing the selec
   player.destroy();
 });
 
+test('pausing and resuming a relative built-in source does not reload or lose progress', async () => {
+  const audio = new FakeAudio();
+  const player = createMusicController({
+    audio,
+    storage: memoryStorage(),
+    repository: memoryRepository(),
+    search: '?assets=local',
+  });
+  await player.play('builtin:styx-helix');
+  audio.currentTime = 36;
+  await player.toggle();
+  await player.toggle();
+  assert.equal(audio.loadCalls, 1);
+  assert.equal(audio.currentTime, 36);
+  player.destroy();
+});
+
 test('library can add and delete URL/local tracks and hide or restore built-ins', async () => {
   const storage = memoryStorage();
   const repository = memoryRepository();
@@ -135,4 +160,3 @@ test('library can add and delete URL/local tracks and hide or restore built-ins'
   assert.ok(storage.values.size > 0);
   player.destroy();
 });
-

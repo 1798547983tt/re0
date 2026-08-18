@@ -18,13 +18,13 @@ test('status bar source exposes the complete read-only accessible surface', () =
 
   for (const id of [
     'overview', 'protagonist', 'world', 'relations', 'loop',
-    'events', 'clues', 'assets', 'diagnostics',
+    'events', 'clues', 'assets', 'music',
   ]) {
     assert.ok(app.includes(`'${id}'`), `missing section ${id}`);
   }
   for (const renderer of [
     'renderOverview', 'renderProtagonist', 'renderWorld', 'renderRelations',
-    'renderLoop', 'renderEvents', 'renderClues', 'renderAssets', 'renderDiagnostics',
+    'renderLoop', 'renderEvents', 'renderClues', 'renderAssets', 'renderMusic',
   ]) {
     assert.match(app, new RegExp(`function ${renderer}\\b`));
   }
@@ -40,10 +40,23 @@ test('status bar source exposes the complete read-only accessible surface', () =
   assert.match(app, /restore-auto-theme/);
   assert.match(app, /re0-detail-toolbar/);
   assert.match(app, /re0-compact-theme/);
+  assert.match(app, /data-music-file/);
+  assert.match(app, /data-music-url/);
+  assert.match(app, /single/);
+  assert.match(app, /sequence/);
+  assert.doesNotMatch(app, /function renderDiagnostics\b/);
   assert.match(app, /aria-modal/);
   assert.match(app, /Escape/);
   assert.doesNotMatch(app, /replaceVariables|updateVariablesWith|insertOrAssignVariables|replaceMvuData/);
   assert.doesNotMatch(app, /\.innerHTML\s*=/);
+
+  const hydrateStart = app.indexOf('const hydrateAvatar');
+  const hydrateEnd = app.indexOf('const queuePortraits', hydrateStart);
+  const hydrateSource = app.slice(hydrateStart, hydrateEnd);
+  assert.ok(
+    hydrateSource.indexOf('builtInPortraitForName') < hydrateSource.indexOf('await Promise.all'),
+    'bundled portraits must render before optional IndexedDB overrides are read',
+  );
 
   assert.match(css, /container-type:\s*inline-size/);
   assert.match(css, /@container[^\{]*\(max-width:\s*700px\)/);
@@ -56,6 +69,14 @@ test('status bar source exposes the complete read-only accessible surface', () =
   assert.match(css, /data-theme="day"/);
   assert.match(css, /data-theme="night"/);
   assert.match(css, /min-(?:inline-)?size:\s*44px|min-height:\s*44px/);
+  assert.match(
+    css,
+    /#re0-statusbar-app\[data-details-open="true"\]\[data-theme="day"\]\s*\{[^}]*--re0-scene:\s*var\(--re0-day-art-mobile/s,
+  );
+  assert.match(
+    css,
+    /#re0-statusbar-app\[data-details-open="true"\]\[data-theme="night"\]\s*\{[^}]*--re0-scene:\s*var\(--re0-night-art-mobile/s,
+  );
   assert.match(
     css,
     /\.re0-statusbar\s*\{[^}]*isolation:\s*isolate/s,

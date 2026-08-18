@@ -197,6 +197,7 @@ export function createMusicController({
   let error = '';
   let destroyed = false;
   let operation = 0;
+  let loadedTrackId = '';
 
   if (audio) {
     audio.preload = 'metadata';
@@ -270,12 +271,13 @@ export function createMusicController({
   const selectTrack = async (track) => {
     if (!audio) throw new Error('当前环境不支持音频播放');
     const source = await sourceFor(track);
-    const changed = currentId !== track.id || audio.src !== source;
+    const changed = loadedTrackId !== track.id;
     currentId = track.id;
     if (changed) {
       audio.src = source;
       audio.currentTime = 0;
       audio.load?.();
+      loadedTrackId = track.id;
     }
     persist();
   };
@@ -430,6 +432,7 @@ export function createMusicController({
         audio.currentTime = 0;
         audio.load?.();
       }
+      loadedTrackId = '';
     }
     persist();
     notify();
@@ -449,7 +452,10 @@ export function createMusicController({
     ['loadedmetadata', notify],
     ['durationchange', notify],
     ['ended', () => { handleEnded().catch(setError); }],
-    ['error', () => setError(audio?.error?.message || '当前音乐无法加载')],
+    ['error', () => {
+      loadedTrackId = '';
+      setError(audio?.error?.message || '当前音乐无法加载');
+    }],
   ];
   for (const [type, listener] of audioListeners) audio?.addEventListener?.(type, listener);
 
@@ -488,4 +494,3 @@ export function createMusicController({
     },
   });
 }
-

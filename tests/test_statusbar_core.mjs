@@ -53,7 +53,7 @@ test('view model exposes overview, nine sections and relationship categories', (
       'events',
       'clues',
       'assets',
-      'diagnostics',
+      'music',
     ],
   );
   assert.equal(model.overview.protagonist.name, '艾米莉亚');
@@ -71,7 +71,7 @@ test('theme derives from world period but honors a manual override', () => {
   assert.equal(resolveTheme('未知时段', 'auto').mode, 'day');
 });
 
-test('unknown passthrough leaves remain available to diagnostics', () => {
+test('unknown passthrough leaves remain available to the model audit layer', () => {
   const state = structuredClone(sample.stat_data);
   state.主角档案.自定义印记 = '<img src=x onerror=alert(1)>';
   assert.deepEqual(collectUnknownPaths(state), [

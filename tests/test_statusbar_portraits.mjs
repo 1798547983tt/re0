@@ -88,4 +88,8 @@ test('portrait resolution prefers user choices before the bundled roster fallbac
     shared: { kind: 'url', value: 'https://user.example/shared.png' },
     override: { kind: 'url', value: 'https://user.example/chat.png' },
   }).source, 'override');
+  assert.equal(resolvePortrait({
+    name: '艾米莉亚',
+    builtIn: { kind: 'url', value: '../avatars/%E7%88%B1%E8%9C%9C%E8%8E%89%E9%9B%85.png' },
+  }).source, 'builtin');
 });

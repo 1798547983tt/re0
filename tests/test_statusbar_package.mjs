@@ -40,7 +40,9 @@ test('packaged HTML contains maintained modules in dependency order and no modul
   const markers = [
     'const DECLARED_DOMAIN_COUNTS',
     'function firstGrapheme',
+    'const MEDIA_REVISION',
     'function createPortraitRepository',
+    'function createMusicController',
     'function createRuntimeBridge',
     'const ASSET_MANIFEST',
     'function createStatusBar',

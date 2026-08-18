@@ -14,6 +14,9 @@ test('status bar uses a local interaction path instead of rebuilding the whole f
   assert.match(app, /updateGroupView/);
   assert.match(app, /action === 'toggle-group'[\s\S]*?updateGroupView\(groupId\)/);
   assert.match(app, /setDetailsOpen/);
+  assert.match(app, /app\.dataset\.detailsOpen/);
+  assert.match(app, /data-music-player-summary/);
+  assert.match(app, /data-music-library-summary/);
   assert.match(app, /data-shell-toggle/);
   assert.match(app, /startViewTransition/);
   assert.doesNotMatch(app, /展开档案/);
