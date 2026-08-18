@@ -1,7 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -72,6 +81,29 @@ test('packaged runtime parses after every module is flattened into one script sc
     () => new vm.Script(script, { filename: 'packed-statusbar.js' }),
     'the flattened module bundle must not contain duplicate lexical declarations',
   );
+});
+
+test('package check accepts a CRLF worktree copy of the generated JSON', () => {
+  const sandbox = mkdtempSync(resolve(tmpdir(), 're0-statusbar-package-'));
+  try {
+    mkdirSync(resolve(sandbox, 'tools'), { recursive: true });
+    mkdirSync(resolve(sandbox, 'dist'), { recursive: true });
+    cpSync(resolve(ROOT, 'statusbar'), resolve(sandbox, 'statusbar'), { recursive: true });
+    cpSync(
+      resolve(ROOT, 'tools', 'package_statusbar_regex.mjs'),
+      resolve(sandbox, 'tools', 'package_statusbar_regex.mjs'),
+    );
+    const artifact = readFileSync(ARTIFACT_PATH, 'utf8').replaceAll('\r\n', '\n').replaceAll('\n', '\r\n');
+    writeFileSync(resolve(sandbox, 'dist', 'regex-Re0·全变量状态栏.json'), artifact, 'utf8');
+    const result = spawnSync(
+      process.execPath,
+      ['tools/package_statusbar_regex.mjs', '--check'],
+      { cwd: sandbox, encoding: 'utf8' },
+    );
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
 });
 
 test('zero-width replacement preserves message content and the update block byte-for-byte', () => {

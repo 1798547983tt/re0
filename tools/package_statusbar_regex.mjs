@@ -18,10 +18,14 @@ const MODULES = Object.freeze([
   'statusbar/src/app.mjs',
 ]);
 
-function read(relativePath) {
-  return readFileSync(resolve(ROOT, relativePath), 'utf8')
+function normalizeText(value) {
+  return String(value)
     .replace(/^\uFEFF/, '')
     .replaceAll('\r\n', '\n');
+}
+
+function read(relativePath) {
+  return normalizeText(readFileSync(resolve(ROOT, relativePath), 'utf8'));
 }
 
 function stripModuleSyntax(source) {
@@ -94,7 +98,7 @@ function buildArtifact() {
 const serialized = `${JSON.stringify(buildArtifact(), null, 2)}\n`;
 if (process.argv.includes('--check')) {
   if (!existsSync(OUTPUT)) throw new Error(`产物不存在：${OUTPUT}`);
-  if (readFileSync(OUTPUT, 'utf8') !== serialized) throw new Error(`产物不是当前源码生成：${OUTPUT}`);
+  if (normalizeText(readFileSync(OUTPUT, 'utf8')) !== serialized) throw new Error(`产物不是当前源码生成：${OUTPUT}`);
   console.log(`statusbar-regex package is current: ${OUTPUT}`);
 } else {
   mkdirSync(dirname(OUTPUT), { recursive: true });
