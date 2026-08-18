@@ -89,9 +89,9 @@ test('avatar grows to 90px desktop and 60px narrow layout', () => {
 test('top-left title logo is substantially larger on desktop and narrow layouts', () => {
   const css = read('narrative-next/styles.css');
   const logoRule = css.match(/\.re0v2-logo\s*\{([^}]*)\}/s)?.[1] || '';
-  assert.match(logoRule, /width:\s*clamp\(240px,\s*34vw,\s*340px\)/);
-  assert.match(logoRule, /min-height:\s*118px/);
-  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo\s*\{[^}]*width:\s*180px/s);
+  assert.match(logoRule, /width:\s*clamp\(320px,\s*50vw,\s*540px\)/);
+  assert.match(logoRule, /min-height:\s*172px/);
+  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo\s*\{[^}]*width:\s*220px/s);
 });
 
 test('model output guide follows customize_format and excludes UpdateVariable tags', () => {

@@ -16,6 +16,17 @@ test('top chrome keeps the logo without the archive edition caption', () => {
   assert.doesNotMatch(source, /re0v2-edition|LUGUNICA STORY ARCHIVE|第二版/);
 });
 
+test('top chrome uses only the enlarged remote GitHub logo without fallback lettering', () => {
+  const source = read('narrative-next/src/renderer.mjs');
+  const css = read('narrative-next/styles.css');
+  const logoRule = css.match(/\.re0v2-logo\s*\{([^}]*)\}/s)?.[1] || '';
+  assert.doesNotMatch(source, /LOGO_LOCAL_URL|re0v2-logo__fallback|['"]Re:ZERO['"]/);
+  assert.match(source, /https:\/\/(?:cdn\.jsdelivr\.net\/gh|raw\.githubusercontent\.com)\/1798547983tt\/re0/);
+  assert.match(logoRule, /width:\s*clamp\(320px,\s*50vw,\s*540px\)/);
+  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo\s*\{[^}]*width:\s*220px/s);
+  assert.doesNotMatch(css, /\.re0v2-logo__fallback/);
+});
+
 test('volume title omits duplicate volume and chapter metadata', () => {
   const source = read('narrative-next/src/renderer.mjs');
   assert.doesNotMatch(source, /re0v2-title-meta|VOLUME\s+\$\{/);
@@ -86,7 +97,7 @@ test('check cards render the shared square avatar with character colors', () => 
   const css = read('narrative-next/styles.css');
   const checkRenderer = renderer.match(/function renderCheck\([^]*?\n\}/u)?.[0] || '';
   assert.match(checkRenderer, /resolveCheckActor\(block\)/);
-  assert.match(checkRenderer, /renderAvatar\(documentRef, character\)/);
+  assert.match(checkRenderer, /renderAvatar\(documentRef, character, avatarStorage\)/);
   assert.match(checkRenderer, /--re0v2-character-primary/);
   assert.match(css, /\.re0v2-check__portrait\s*\{/);
   assert.match(css, /\.re0v2-check\s+\.re0v2-avatar\s*\{/);

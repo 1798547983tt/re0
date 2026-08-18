@@ -66,6 +66,8 @@ test('replacement embeds the full visual system and only one capture token', () 
   assert.match(html, /function renderNarrative/);
   assert.match(html, /natsuki-subaru/);
   assert.match(html, /新的旅程/);
+  assert.match(html, /re0:narrative-v2:avatar-overrides/);
+  assert.match(html, /save-avatar-file/);
   assert.match(html, /<textarea[^>]*id="re0v2-source"[^>]*data-re0v2-source[^>]*hidden[^>]*>\$1<\/textarea>/);
   assert.doesNotMatch(html, /<script[^>]+type="text\/plain"/i);
   assert.equal((html.match(/\$1/g) || []).length, 1);

@@ -18,8 +18,14 @@ import {
   applyThemeVisuals,
   resolveAbilityVisual,
 } from './visual-assets.mjs';
+import {
+  avatarFileToDataUrl,
+  normalizeAvatarSource,
+  readAvatarOverride,
+  removeAvatarOverride,
+  writeAvatarOverride,
+} from './avatar-overrides.mjs';
 
-const LOGO_LOCAL_URL = '../narrative/assets/logo-transparent.png';
 const LOGO_PRIMARY_URL = 'https://cdn.jsdelivr.net/gh/1798547983tt/re0@d011efa6a5351dd984e00ef8462db3689cbb358b/avatars/%E5%A4%A7%E6%A0%87%E9%A2%98/logo-transparent.png';
 const LOGO_FALLBACK_URL = 'https://raw.githubusercontent.com/1798547983tt/re0/d011efa6a5351dd984e00ef8462db3689cbb358b/avatars/%E5%A4%A7%E6%A0%87%E9%A2%98/logo-transparent.png';
 
@@ -89,12 +95,11 @@ function applyImageFallback(image, urls) {
 
 function renderLogo(documentRef) {
   const wrap = element(documentRef, 'div', 're0v2-logo');
-  const fallback = element(documentRef, 'span', 're0v2-logo__fallback', 'Re:ZERO');
   const image = documentRef.createElement('img');
   image.alt = 'Re:从零开始的异世界生活';
   image.decoding = 'async';
-  applyImageFallback(image, [LOGO_LOCAL_URL, LOGO_PRIMARY_URL, LOGO_FALLBACK_URL]);
-  wrap.append(fallback, image);
+  applyImageFallback(image, [LOGO_PRIMARY_URL, LOGO_FALLBACK_URL]);
+  wrap.append(image);
   return wrap;
 }
 
@@ -206,26 +211,50 @@ function renderTitle(documentRef, parsed) {
   return stage;
 }
 
-function renderAvatar(documentRef, character) {
-  const frame = element(documentRef, 'div', 're0v2-avatar');
+function characterDisplayName(character) {
+  return character.shortName || character.rosterName || character.displayName || '未知人物';
+}
+
+function renderAvatar(documentRef, character, storage, { interactive = true } = {}) {
+  const frame = interactive
+    ? button(documentRef, 're0v2-avatar', '', 'edit-avatar')
+    : element(documentRef, 'div', 're0v2-avatar');
+  if (interactive) {
+    frame.dataset.avatarId = character.stableId;
+    frame.__re0v2Character = character;
+    frame.setAttribute('aria-label', `更换${characterDisplayName(character)}的头像`);
+    frame.title = '点击更换头像';
+  }
   const initial = element(documentRef, 'span', 're0v2-avatar__initial', character.initial);
   frame.append(initial);
-  if (character.kind === 'character') {
+  const override = readAvatarOverride(character.stableId, storage);
+  const sources = [
+    override,
+    character.avatar?.localUrl,
+    character.avatar?.primaryUrl,
+    character.avatar?.fallbackUrl,
+  ].filter(Boolean);
+  if (sources.length) {
     const image = documentRef.createElement('img');
     image.alt = '';
     image.loading = 'lazy';
     image.decoding = 'async';
-    applyImageFallback(image, [character.avatar.localUrl, character.avatar.primaryUrl, character.avatar.fallbackUrl]);
+    applyImageFallback(image, sources);
     frame.append(image);
   } else {
     frame.dataset.fallback = 'initial';
+  }
+  if (interactive) {
+    const edit = element(documentRef, 'span', 're0v2-avatar__edit', '✎');
+    edit.setAttribute('aria-hidden', 'true');
+    frame.append(edit);
   }
   return frame;
 }
 
 function renderSpeakerName(documentRef, character) {
   const name = element(documentRef, 'strong', 're0v2-speaker-name');
-  const displayName = character.shortName || character.rosterName || character.displayName;
+  const displayName = characterDisplayName(character);
   for (const part of splitEmphasizedName(displayName)) {
     const span = element(documentRef, 'span', part.emphasized ? 'is-emphasized' : '', part.character);
     name.append(span);
@@ -236,7 +265,7 @@ function renderSpeakerName(documentRef, character) {
   return name;
 }
 
-function renderDialogue(documentRef, block, playerName) {
+function renderDialogue(documentRef, block, playerName, avatarStorage) {
   const side = dialogueSide(block);
   const character = resolveCharacter(side === 'player' ? playerName : block.speaker);
   const article = element(documentRef, 'article', 're0v2-dialogue');
@@ -255,7 +284,7 @@ function renderDialogue(documentRef, block, playerName) {
   const text = element(documentRef, 'p', 're0v2-dialogue__text');
   appendInline(documentRef, text, block.text);
   body.append(text);
-  article.append(renderAvatar(documentRef, character), body);
+  article.append(renderAvatar(documentRef, character, avatarStorage), body);
   return article;
 }
 
@@ -309,7 +338,7 @@ function renderAbility(documentRef, block) {
   return ability;
 }
 
-function renderCheck(documentRef, block) {
+function renderCheck(documentRef, block, avatarStorage) {
   const character = resolveCheckActor(block);
   const check = element(documentRef, 'section', 're0v2-check');
   check.dataset.skin = character.skinId;
@@ -319,7 +348,7 @@ function renderCheck(documentRef, block) {
   const portrait = element(documentRef, 'div', 're0v2-check__portrait');
   const die = element(documentRef, 'span', 're0v2-check__die', 'D20');
   die.setAttribute('aria-hidden', 'true');
-  portrait.append(renderAvatar(documentRef, character), die);
+  portrait.append(renderAvatar(documentRef, character, avatarStorage), die);
 
   const copy = element(documentRef, 'div', 're0v2-check__copy');
   copy.append(
@@ -350,12 +379,12 @@ function renderInvalid(documentRef, block) {
   return note;
 }
 
-function renderBlock(documentRef, block, parsed) {
+function renderBlock(documentRef, block, parsed, avatarStorage) {
   if (block.type === 'narration') return renderNarration(documentRef, block);
-  if (block.type === 'dialogue' || block.type === 'player-dialogue') return renderDialogue(documentRef, block, parsed.player);
+  if (block.type === 'dialogue' || block.type === 'player-dialogue') return renderDialogue(documentRef, block, parsed.player, avatarStorage);
   if (block.type === 'scene') return renderScene(documentRef, block);
   if (block.type === 'ability') return renderAbility(documentRef, block);
-  if (block.type === 'check') return renderCheck(documentRef, block);
+  if (block.type === 'check') return renderCheck(documentRef, block, avatarStorage);
   if (block.type === 'restart') return renderRestart(documentRef, block);
   return renderInvalid(documentRef, block);
 }
@@ -390,20 +419,199 @@ function requestFrameResize() {
   globalThis.requestAnimationFrame?.(resize);
 }
 
+const AVATAR_ERROR_MESSAGES = Object.freeze({
+  'invalid-source': '请输入头像图片的 HTTPS 地址。',
+  'invalid-url': '这个 URL 格式无法识别。',
+  'unsafe-url': '头像 URL 只能使用不含账号密码的 HTTPS 地址。',
+  'file-type': '请选择 PNG、JPEG、WebP、GIF 或 AVIF 图片。',
+  'file-size': '图片需大于 0 字节且不超过 1.5 MB。',
+  'file-read': '无法读取这张图片，请换一张重试。',
+  storage: '保存失败，浏览器可能禁用了本地存储或空间不足。',
+});
+
+function renderAvatarEditor(documentRef, character, storage) {
+  const current = readAvatarOverride(character.stableId, storage);
+  const displayName = characterDisplayName(character);
+  const overlay = element(documentRef, 'div', 're0v2-avatar-editor');
+  overlay.dataset.avatarEditor = '';
+
+  const backdrop = button(documentRef, 're0v2-avatar-editor__backdrop', '', 'close-avatar-editor');
+  backdrop.setAttribute('aria-label', '关闭头像设置');
+  backdrop.tabIndex = -1;
+
+  const panel = element(documentRef, 'section', 're0v2-avatar-editor__panel');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 're0v2-avatar-editor-title');
+
+  const close = button(documentRef, 're0v2-avatar-editor__close', '×', 'close-avatar-editor');
+  close.setAttribute('aria-label', '关闭头像设置');
+
+  const heading = element(documentRef, 'div', 're0v2-avatar-editor__heading');
+  const portrait = element(documentRef, 'div', 're0v2-avatar-editor__portrait');
+  portrait.append(renderAvatar(documentRef, character, storage, { interactive: false }));
+  const title = element(documentRef, 'div', '');
+  const titleText = element(documentRef, 'h2', '', `更换「${displayName}」的头像`);
+  titleText.id = 're0v2-avatar-editor-title';
+  title.append(
+    titleText,
+    element(documentRef, 'p', '', '只保存在当前浏览器，不会写入正文或角色数据。'),
+  );
+  heading.append(portrait, title);
+
+  const urlField = element(documentRef, 'div', 're0v2-avatar-editor__field');
+  const urlLabel = element(documentRef, 'label', '', '使用图片 URL');
+  urlLabel.htmlFor = 're0v2-avatar-url';
+  const urlRow = element(documentRef, 'div', 're0v2-avatar-editor__row');
+  const urlInput = documentRef.createElement('input');
+  urlInput.id = 're0v2-avatar-url';
+  urlInput.type = 'url';
+  urlInput.inputMode = 'url';
+  urlInput.autocomplete = 'off';
+  urlInput.placeholder = 'https://example.com/avatar.webp';
+  urlInput.dataset.avatarUrl = '';
+  if (current.startsWith('https://')) urlInput.value = current;
+  urlRow.append(urlInput, button(documentRef, 're0v2-avatar-editor__primary', '保存 URL', 'save-avatar-url'));
+  urlField.append(urlLabel, urlRow);
+
+  const divider = element(documentRef, 'p', 're0v2-avatar-editor__divider', '或者');
+
+  const fileField = element(documentRef, 'div', 're0v2-avatar-editor__field');
+  const fileLabel = element(documentRef, 'label', '', '从本地上传');
+  fileLabel.htmlFor = 're0v2-avatar-file';
+  const fileInput = documentRef.createElement('input');
+  fileInput.id = 're0v2-avatar-file';
+  fileInput.type = 'file';
+  fileInput.accept = 'image/png,image/jpeg,image/webp,image/gif,image/avif';
+  fileInput.dataset.avatarFile = '';
+  const fileHint = element(documentRef, 'p', 're0v2-avatar-editor__hint', '最大 1.5 MB；头像会以方形区域显示。');
+  const fileButton = button(documentRef, 're0v2-avatar-editor__primary', '上传并保存', 'save-avatar-file');
+  fileField.append(fileLabel, fileInput, fileHint, fileButton);
+
+  const status = element(documentRef, 'p', 're0v2-avatar-editor__status');
+  status.dataset.avatarStatus = '';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+
+  const footer = element(documentRef, 'div', 're0v2-avatar-editor__footer');
+  const reset = button(documentRef, 're0v2-avatar-editor__reset', '恢复默认头像', 'reset-avatar');
+  reset.disabled = !current;
+  footer.append(reset, button(documentRef, 're0v2-avatar-editor__secondary', '取消', 'close-avatar-editor'));
+
+  panel.append(close, heading, urlField, divider, fileField, status, footer);
+  overlay.append(backdrop, panel);
+  return overlay;
+}
+
+function setAvatarEditorStatus(mount, message, error = true) {
+  const status = mount.querySelector?.('[data-avatar-status]');
+  if (!status) return;
+  status.textContent = message;
+  status.dataset.error = String(error);
+}
+
+function rerenderFromState(mount, state) {
+  return renderNarrative(mount, state.source, {
+    ...state.options,
+    settings: state.settings,
+    settingsOpen: state.settingsOpen,
+    avatarEditor: state.avatarEditor,
+    avatarStorage: state.avatarStorage,
+  });
+}
+
+function afterRender(callback) {
+  if (typeof globalThis.queueMicrotask === 'function') globalThis.queueMicrotask(callback);
+  else Promise.resolve().then(callback);
+}
+
+function focusAvatarEditor(mount) {
+  afterRender(() => mount.querySelector?.('[data-avatar-editor] input')?.focus?.());
+}
+
+function closeAvatarEditor(mount, state) {
+  const avatarId = state.avatarEditor?.stableId;
+  state.avatarEditor = null;
+  rerenderFromState(mount, state);
+  afterRender(() => {
+    const controls = mount.querySelectorAll?.('[data-action="edit-avatar"]') ?? [];
+    Array.from(controls).find((control) => control.dataset.avatarId === avatarId)?.focus?.();
+  });
+}
+
 function bindControls(mount) {
   if (mount.dataset.re0v2Bound === 'true') return;
   mount.dataset.re0v2Bound = 'true';
-  mount.addEventListener('click', (event) => {
+  mount.addEventListener('click', async (event) => {
     const control = event.target?.closest?.('[data-action]');
     if (!control || !mount.contains(control)) return;
     const state = mount.__re0v2State;
     if (!state) return;
     const action = control.dataset.action;
+    if (action === 'edit-avatar') {
+      state.avatarEditor = control.__re0v2Character ?? null;
+      if (!state.avatarEditor) return;
+      rerenderFromState(mount, state);
+      focusAvatarEditor(mount);
+      return;
+    }
+    if (action === 'close-avatar-editor') {
+      closeAvatarEditor(mount, state);
+      return;
+    }
+    if (action === 'save-avatar-url') {
+      const input = mount.querySelector?.('[data-avatar-url]');
+      const source = normalizeAvatarSource(input?.value ?? '');
+      if (!source.ok) {
+        setAvatarEditorStatus(mount, AVATAR_ERROR_MESSAGES[source.error] ?? '无法使用这个头像 URL。');
+        return;
+      }
+      const saved = writeAvatarOverride(state.avatarEditor?.stableId, source.source, state.avatarStorage);
+      if (!saved.ok) {
+        setAvatarEditorStatus(mount, AVATAR_ERROR_MESSAGES[saved.error] ?? '头像保存失败。');
+        return;
+      }
+      closeAvatarEditor(mount, state);
+      return;
+    }
+    if (action === 'save-avatar-file') {
+      const input = mount.querySelector?.('[data-avatar-file]');
+      const file = input?.files?.[0];
+      if (!file) {
+        setAvatarEditorStatus(mount, '请先选择一张本地图片。');
+        return;
+      }
+      control.disabled = true;
+      setAvatarEditorStatus(mount, '正在读取并保存头像……', false);
+      const encoded = await avatarFileToDataUrl(file);
+      if (mount.__re0v2State !== state || !state.avatarEditor) return;
+      control.disabled = false;
+      if (!encoded.ok) {
+        setAvatarEditorStatus(mount, AVATAR_ERROR_MESSAGES[encoded.error] ?? '无法读取这张图片。');
+        return;
+      }
+      const saved = writeAvatarOverride(state.avatarEditor.stableId, encoded.source, state.avatarStorage);
+      if (!saved.ok) {
+        setAvatarEditorStatus(mount, AVATAR_ERROR_MESSAGES[saved.error] ?? '头像保存失败。');
+        return;
+      }
+      closeAvatarEditor(mount, state);
+      return;
+    }
+    if (action === 'reset-avatar') {
+      const removed = removeAvatarOverride(state.avatarEditor?.stableId, state.avatarStorage);
+      if (!removed.ok) {
+        setAvatarEditorStatus(mount, AVATAR_ERROR_MESSAGES[removed.error] ?? '无法恢复默认头像。');
+        return;
+      }
+      closeAvatarEditor(mount, state);
+      return;
+    }
     if (action === 'toggle-settings') state.settingsOpen = !state.settingsOpen;
     if (action === 'set-theme') state.settings.theme = control.dataset.value;
     if (action === 'set-size') state.settings.size = control.dataset.value;
     state.settings = writeReadingSettings(state.settings);
-    renderNarrative(mount, state.source, { ...state.options, settings: state.settings, settingsOpen: state.settingsOpen });
+    rerenderFromState(mount, state);
   });
   mount.addEventListener('change', (event) => {
     const control = event.target;
@@ -413,7 +621,30 @@ function bindControls(mount) {
     if (control.dataset.setting === 'indent') state.settings.indent = control.checked;
     if (control.dataset.setting === 'staticMode') state.settings.staticMode = control.checked;
     state.settings = writeReadingSettings(state.settings);
-    renderNarrative(mount, state.source, { ...state.options, settings: state.settings, settingsOpen: state.settingsOpen });
+    rerenderFromState(mount, state);
+  });
+  mount.addEventListener('keydown', (event) => {
+    const state = mount.__re0v2State;
+    if (!state?.avatarEditor) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeAvatarEditor(mount, state);
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const panel = mount.querySelector?.('.re0v2-avatar-editor__panel');
+    const controls = Array.from(panel?.querySelectorAll?.('button:not([disabled]), input:not([disabled])') ?? []);
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls.at(-1);
+    const active = panel.ownerDocument.activeElement;
+    if (event.shiftKey && (active === first || !panel.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 }
 
@@ -442,6 +673,8 @@ export function renderNarrative(target, source, options = {}) {
     options,
     settings,
     settingsOpen: options.settingsOpen === true,
+    avatarEditor: options.avatarEditor ?? null,
+    avatarStorage: options.avatarStorage ?? globalThis.localStorage,
   };
   mount.__re0v2State = state;
   bindControls(mount);
@@ -452,7 +685,9 @@ export function renderNarrative(target, source, options = {}) {
     article.append(renderTitle(documentRef, parsed));
     const flow = element(documentRef, 'section', 're0v2-story-flow');
     flow.setAttribute('aria-label', '剧情正文');
-    for (const block of mergeAdjacentDialogue(parsed.blocks)) flow.append(renderBlock(documentRef, block, parsed));
+    for (const block of mergeAdjacentDialogue(parsed.blocks)) {
+      flow.append(renderBlock(documentRef, block, parsed, state.avatarStorage));
+    }
     if (parsed.streaming && parsed.progressText) {
       const progress = element(documentRef, 'p', 're0v2-streaming', parsed.progressText);
       progress.setAttribute('aria-label', '正在生成');
@@ -462,7 +697,9 @@ export function renderNarrative(target, source, options = {}) {
   } else {
     article.append(renderFallback(documentRef, parsed, source));
   }
-  app.replaceChildren(article);
+  const children = [article];
+  if (state.avatarEditor) children.push(renderAvatarEditor(documentRef, state.avatarEditor, state.avatarStorage));
+  app.replaceChildren(...children);
   requestFrameResize();
   return { parsed, settings, theme };
 }

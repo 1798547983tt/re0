@@ -70,6 +70,23 @@ test('renderer constructs inert DOM and exposes settings, title, bubbles and ope
   assert.doesNotMatch(source, /new Function/);
 });
 
+test('avatars open one local editor with file, HTTPS URL, reset and accessible dialog controls', () => {
+  const source = read('narrative-next/src/renderer.mjs');
+  const css = read('narrative-next/styles.css');
+  assert.match(source, /data\.action\s*=\s*'edit-avatar'|button\([^)]*'edit-avatar'/);
+  assert.match(source, /type\s*=\s*'file'/);
+  assert.match(source, /accept\s*=\s*['"]image\/png,image\/jpeg,image\/webp,image\/gif,image\/avif['"]/);
+  assert.match(source, /type\s*=\s*'url'/);
+  assert.match(source, /save-avatar-url/);
+  assert.match(source, /save-avatar-file/);
+  assert.match(source, /reset-avatar/);
+  assert.match(source, /aria-modal/);
+  assert.match(source, /avatarFileToDataUrl/);
+  assert.match(source, /writeAvatarOverride/);
+  assert.match(css, /\.re0v2-avatar-editor\s*\{/);
+  assert.match(css, /\.re0v2-avatar-editor__panel\s*\{/);
+});
+
 test('styles contain the three themes, four font modes, four sizes and motion shutdown', () => {
   const css = read('narrative-next/styles.css');
   for (const theme of ['day', 'night', 'tea']) assert.match(css, new RegExp(`data-theme="${theme}"`));

@@ -17,6 +17,7 @@ const PACKED_CORE_MODULE_ORDER = Object.freeze([
   'narrative-next/src/entities.mjs',
   'narrative-next/src/inline-format.mjs',
   'narrative-next/src/settings.mjs',
+  'narrative-next/src/avatar-overrides.mjs',
   'narrative-next/src/theme.mjs',
   'narrative-next/src/characters.mjs',
   'narrative-next/src/titles.mjs',
@@ -96,6 +97,7 @@ function buildCoreBundle() {
     `globalThis.Re0NarrativeCore = Object.freeze({\n` +
     `  tokenizeInlineText, READING_FONTS, READING_SIZES, fontById, normalizeReadingSettings,\n` +
     `  readReadingSettings, sizeById, writeReadingSettings, resolveTheme, resolveCharacter,\n` +
+    `  avatarFileToDataUrl, normalizeAvatarSource, readAvatarOverride, removeAvatarOverride, writeAvatarOverride,\n` +
     `  splitEmphasizedName, resolveVolumeTitle, resolveAbilityKind, abilityVisualCss,\n` +
     `  applyThemeVisuals, resolveAbilityVisual, parsePackedContentEnvelope,\n` +
     `  parseNarrative: parsePackedContentEnvelope, parseStreamingNarrative: parsePackedContentEnvelope,\n` +
@@ -112,6 +114,7 @@ function buildRendererBundle() {
     `if (!core) return;\n` +
     `const { tokenizeInlineText, READING_FONTS, READING_SIZES, fontById, normalizeReadingSettings,\n` +
     `  readReadingSettings, sizeById, writeReadingSettings, resolveTheme, resolveCharacter,\n` +
+    `  avatarFileToDataUrl, normalizeAvatarSource, readAvatarOverride, removeAvatarOverride, writeAvatarOverride,\n` +
     `  splitEmphasizedName, resolveVolumeTitle, resolveAbilityKind, abilityVisualCss,\n` +
     `  applyThemeVisuals, resolveAbilityVisual, parseNarrative, parseStreamingNarrative } = core;\n` +
     `\n/* narrative-next/src/renderer.mjs */\n${renderer}\n` +
