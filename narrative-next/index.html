@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Re:Zero · 正文美化 V2</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body class="re0v2-preview-page">
+    <aside class="re0v2-preview-tools" aria-label="视觉验收工具">
+      <div>
+        <strong>正文美化 · 全量预览</strong>
+        <span>切换 39 卷标题与 44 位人物，正文内设置可测试日／夜／茶、字体、字号和静态模式。</span>
+      </div>
+      <label>
+        <span>卷标题</span>
+        <select data-preview-volume aria-label="选择预览卷"></select>
+      </label>
+      <label>
+        <span>人物气泡</span>
+        <select data-preview-character aria-label="选择预览人物"></select>
+      </label>
+    </aside>
+
+    <div class="re0v2-shell" data-re0v2-mount>
+      <main id="re0v2-app" aria-live="polite" aria-busy="true">
+        <p class="re0v2-loading">正在展开露格尼卡档案……</p>
+      </main>
+      <textarea id="re0v2-source" hidden aria-hidden="true"></textarea>
+    </div>
+
+    <script type="module" src="./src/preview.mjs"></script>
+  </body>
+</html>

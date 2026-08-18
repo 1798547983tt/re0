@@ -1,0 +1,39 @@
+<content player="菜月昴"><story volume="20"></story><time period="深夜" layer="主线" basis="编辑演算">魔女历1000年08月17日</time><now_plot>月色落进水路，远处的钟声被雾切成七段。城市仍在呼吸，却没有一扇窗愿意先亮起来。
+
+{艾姬多娜}「知识并不保证正确答案，但它至少会让错误变得有趣。」
+
+{蕾姆}「无论这条路重来多少次，蕾姆都会记住此刻的心意。」
+
+{莱茵哈鲁特}「只要剑仍在手中，我便不会让希望倒下。」
+
+{培提尔其乌斯}「爱！正因为爱，勤勉才应当抵达灵魂最深处！」
+
+{碧翠丝}「这不是为了你，贝蒂只是恰好不想让禁书库蒙尘而已。」
+
+{艾尔莎}「真漂亮。人在恐惧里，心跳总会说出最诚实的话。」
+
+{普莉希拉}「世界围绕妾身转动，本就是无需证明的常理。」
+
+{#}「那就从这座沉默的城市开始，把答案一个个找回来。」
+
+{路人骑士}「西侧闸门发现异常，请各位立刻避难！」
+
+<scene location="水门都市·第一街区" time="深夜" mood="暴风雨前的寂静">水面映出倒悬的灯塔，涟漪像被谁从另一个世界轻轻拨动。</scene>
+
+<ability user="菜月昴" name="临机应变" kind="一般技能"><effect>昴借助栏杆改变重心，从攻击死角滑入巷道。</effect><description>由经验、观察和身体控制组成的实用技巧，擅长在混乱局面中创造一线生机。</description></ability>
+
+<ability user="培提尔其乌斯" name="不可视之手" kind="权能"><effect>空气被无形巨力撕开，石墙同时留下数道凹陷。</effect><description>与魔女因子相连的异常力量，效果不遵循通常术式的规则。</description></ability>
+
+<ability user="莱茵哈鲁特" name="先制的加护" kind="加护"><effect>敌意成形以前，剑锋已经封住所有进攻路线。</effect><description>世界给予持有者的祝福，会在满足条件时自然显现。</description></ability>
+
+<ability user="碧翠丝" name="米尼亚" kind="魔法" affinity="阴"><effect>紫黑晶体沿着术式轨道凝结，瞬间封死目标的动作。</effect><description>操纵玛那构成的阴属性魔法，以复杂术式干涉目标状态。</description></ability>
+
+<ability user="碧翠丝" name="精灵共鸣" kind="精灵术" affinity="阴"><effect>细小光点从契约纹章升起，在两人之间连成星环。</effect><description>通过契约与精灵沟通并借用力量，稳定性取决于双方的信任与状态。</description></ability>
+
+<ability user="加菲尔" name="兽化" kind="种族能力"><effect>金色毛发覆上双臂，野兽般的力量震碎脚下石板。</effect><description>源自血脉与种族特征的天赋能力，通常伴随身体形态或感官变化。</description></ability>
+
+<ability user="威尔海姆" name="无声一闪" kind="武技"><effect>剑光迟于伤痕出现，雨幕在老人身后整齐分开。</effect><description>经由漫长训练抵达极致的战斗技法，以动作、节奏和判断完成杀招。</description></ability>
+
+<check type="突破" actor="菜月昴" target="西侧闸门">1d20=17｜情境+2｜DC16｜成功｜在洪水抵达前开启逃生通道</check>
+
+<restart deathId="loop-017" checkpoint="钟塔响起前十分钟">黑影吞没视野，下一次心跳却从熟悉的钟声之前重新开始。</restart></now_plot></content>
