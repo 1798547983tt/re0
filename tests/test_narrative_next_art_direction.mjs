@@ -56,6 +56,23 @@ test('only the first narration paragraph receives the colored drop cap', () => {
   );
 });
 
+test('short narration paragraphs keep a full reading measure instead of centering', () => {
+  const css = read('narrative-next/styles.css');
+  const narrationRule = css.match(/(?:^|\n)\.re0v2-narration\s*\{([^}]*)\}/s)?.[1] || '';
+  assert.match(narrationRule, /width:\s*100%/);
+  assert.match(narrationRule, /justify-self:\s*center/);
+  assert.match(narrationRule, /text-align-last:\s*(?:start|left)/);
+  assert.doesNotMatch(narrationRule, /margin:\s*0\s+auto/);
+});
+
+test('optional indentation applies two ideographs to every narration paragraph', () => {
+  const renderer = read('narrative-next/src/renderer.mjs');
+  const css = read('narrative-next/styles.css');
+  assert.match(renderer, /dataset\.setting\s*=\s*'indent'/);
+  assert.match(renderer, /mount\.dataset\.indent\s*=\s*String\(settings\.indent\)/);
+  assert.match(css, /\[data-indent="true"\]\s+\.re0v2-narration\s*\{[^}]*text-indent:\s*2em/s);
+});
+
 test('check actors use the same character and fallback portrait resolution as dialogue', () => {
   assert.equal(typeof narrativeRenderer.resolveCheckActor, 'function');
   assert.equal(narrativeRenderer.resolveCheckActor({ actor: '雷姆' }).stableId, 'rem');
@@ -73,6 +90,15 @@ test('check cards render the shared square avatar with character colors', () => 
   assert.match(checkRenderer, /--re0v2-character-primary/);
   assert.match(css, /\.re0v2-check__portrait\s*\{/);
   assert.match(css, /\.re0v2-check\s+\.re0v2-avatar\s*\{/);
+});
+
+test('Emilia has a dedicated frost-crystal bubble and emphasized name style', () => {
+  const css = read('narrative-next/styles.css');
+  assert.match(css, /\.re0v2-dialogue\[data-skin="emilia"\]\s+\.re0v2-dialogue__body\s*\{/);
+  assert.match(css, /\.re0v2-dialogue\[data-skin="emilia"\]\s+\.re0v2-speaker-name\s+\.is-emphasized/);
+  const crystalRule = css.match(/\.re0v2-dialogue\[data-skin="emilia"\]\s+\.re0v2-dialogue__body::before\s*\{([^}]*)\}/s)?.[1] || '';
+  assert.match(crystalRule, /radial-gradient|linear-gradient/);
+  assert.match(crystalRule, /--re0v2-character-secondary/);
 });
 
 test('generated bitmap library covers three themes, scenes, seven abilities and both special panels', () => {

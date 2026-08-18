@@ -1,10 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import {
   READING_FONTS,
   READING_SIZES,
   normalizeReadingSettings,
+  readReadingSettings,
+  writeReadingSettings,
 } from '../narrative-next/src/settings.mjs';
 import { resolveTheme } from '../narrative-next/src/theme.mjs';
 import {
@@ -22,26 +26,42 @@ import {
   resolveAbilityKind,
 } from '../narrative-next/src/abilities.mjs';
 
-test('reading settings expose three layouts, four fonts, four sizes and static mode', () => {
+const ROOT = resolve(import.meta.dirname, '..');
+
+test('reading settings expose three layouts, four fonts, four sizes, indentation and static mode', () => {
   assert.deepEqual(READING_FONTS.map((item) => item.id), ['serif', 'sans', 'wenkai', 'xiaowei']);
   assert.deepEqual(READING_SIZES.map((item) => item.px), [15, 17, 19, 22]);
   assert.deepEqual(normalizeReadingSettings({
     theme: 'tea',
     font: 'wenkai',
     size: 'large',
+    indent: true,
     staticMode: true,
   }), {
     theme: 'tea',
     font: 'wenkai',
     size: 'large',
+    indent: true,
     staticMode: true,
   });
   assert.deepEqual(normalizeReadingSettings({ theme: 'purple', font: 'comic', size: '99' }), {
     theme: 'auto',
     font: 'serif',
     size: 'medium',
+    indent: false,
     staticMode: false,
   });
+});
+
+test('indentation preference persists through the reading settings store', () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+  };
+  const written = writeReadingSettings({ indent: true }, storage);
+  assert.equal(written.indent, true);
+  assert.equal(readReadingSettings(storage).indent, true);
 });
 
 test('auto theme resolves only to day or night while tea remains manual', () => {
@@ -57,9 +77,9 @@ test('name emphasis follows the requested first and first-third rule', () => {
   assert.deepEqual(emphasisIndexes('莱茵哈鲁特'), [0, 2]);
 });
 
-test('all 44 named characters have a unique visual identity and aliases resolve safely', () => {
-  assert.equal(CHARACTER_REGISTRY.length, 44);
-  assert.equal(new Set(CHARACTER_REGISTRY.map((item) => item.skinId)).size, 44);
+test('all 45 named characters have a unique visual identity and aliases resolve safely', () => {
+  assert.equal(CHARACTER_REGISTRY.length, 45);
+  assert.equal(new Set(CHARACTER_REGISTRY.map((item) => item.skinId)).size, 45);
   for (const character of CHARACTER_REGISTRY) {
     assert.match(character.primary, /^#[0-9a-f]{6}$/i);
     assert.match(character.secondary, /^#[0-9a-f]{6}$/i);
@@ -70,9 +90,25 @@ test('all 44 named characters have a unique visual identity and aliases resolve 
   }
   assert.equal(resolveCharacter('雷姆').stableId, 'rem');
   assert.equal(resolveCharacter('碧翠丝').stableId, 'beatrice');
+  assert.equal(resolveCharacter('爱蜜莉雅').stableId, 'emilia');
+  assert.equal(resolveCharacter('艾米莉亚').stableId, 'emilia');
   const fallback = resolveCharacter('路人骑士');
   assert.equal(fallback.kind, 'generic');
   assert.equal(fallback.initial, '路');
+});
+
+test('Emilia uses the supplied pinned portrait and a unique silver-violet identity', () => {
+  const emilia = resolveCharacter('爱蜜莉雅');
+  assert.equal(emilia.rosterName, '爱蜜莉雅');
+  assert.equal(emilia.symbol, '❅');
+  assert.equal(emilia.shape, 'crystal-flower');
+  assert.match(emilia.primary, /^#[0-9a-f]{6}$/i);
+  assert.match(emilia.avatar.primaryUrl, /fe81357cba2b5df6d1ada34bb9e825c755202c67\/avatars\/%E7%88%B1%E8%9C%9C%E8%8E%89%E9%9B%85\.png$/);
+  const portrait = resolve(ROOT, 'narrative/assets/avatars/emilia.webp');
+  assert.equal(existsSync(portrait), true);
+  const bytes = readFileSync(portrait);
+  assert.equal(bytes.subarray(0, 4).toString('ascii'), 'RIFF');
+  assert.equal(bytes.subarray(8, 12).toString('ascii'), 'WEBP');
 });
 
 test('all 39 supplied volume titles resolve through seven kinetic families', () => {

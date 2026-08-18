@@ -321,8 +321,8 @@
 .re0v2-segmented button[aria-pressed="true"] { border-color: var(--re0v2-accent); color: #fff; background: var(--re0v2-accent); }
 .re0v2-setting-row { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; color: var(--re0v2-muted); font: 600 11px "Noto Sans SC", sans-serif; }
 .re0v2-setting-row select { min-width: 0; min-height: 40px; border: 1px solid var(--re0v2-border); border-radius: 7px; padding: 6px 9px; color: var(--re0v2-ink); background: var(--re0v2-surface-2); }
-.re0v2-static-toggle { display: flex; min-height: 42px; align-items: center; gap: 10px; border-top: 1px solid var(--re0v2-border); padding-top: 12px; color: var(--re0v2-ink); font: 600 12px "Noto Sans SC", sans-serif; }
-.re0v2-static-toggle input { width: 20px; height: 20px; accent-color: var(--re0v2-accent); }
+.re0v2-choice-toggle { display: flex; min-height: 42px; align-items: center; gap: 10px; border-top: 1px solid var(--re0v2-border); padding-top: 12px; color: var(--re0v2-ink); font: 600 12px "Noto Sans SC", sans-serif; }
+.re0v2-choice-toggle input { width: 20px; height: 20px; accent-color: var(--re0v2-accent); }
 
 .re0v2-title-stage {
   position: relative;
@@ -446,7 +446,8 @@
   font-family: var(--re0v2-reading-font);
   font-size: var(--re0v2-reading-size);
 }
-.re0v2-narration { position: relative; max-width: 42em; margin: 0 auto; color: var(--re0v2-ink); line-height: 2.05; letter-spacing: .035em; text-align: justify; overflow-wrap: anywhere; }
+.re0v2-narration { position: relative; width: 100%; max-width: 42em; margin: 0; justify-self: center; color: var(--re0v2-ink); line-height: 2.05; letter-spacing: .035em; text-align: justify; text-align-last: start; overflow-wrap: anywhere; }
+[data-indent="true"] .re0v2-narration { text-indent: 2em; }
 .re0v2-story-flow > .re0v2-narration:first-of-type::first-letter { float: left; margin: .07em .18em 0 0; color: var(--re0v2-accent); font: 900 2.4em/.82 "Noto Serif SC", serif; }
 
 .re0v2-dialogue {
@@ -512,6 +513,12 @@
 .re0v2-dialogue[data-variant="5"] .re0v2-dialogue__body { border-radius: 10px 26px 10px 26px; border-right-width: 3px; }
 .re0v2-dialogue[data-variant="6"] .re0v2-dialogue__body { border-radius: 3px 16px; box-shadow: 7px 7px 0 color-mix(in srgb, var(--re0v2-character-secondary) 20%, transparent); }
 .re0v2-dialogue[data-variant="7"] .re0v2-dialogue__body { border-radius: 26px; border-style: double; border-width: 3px; }
+.re0v2-dialogue[data-skin="emilia"] .re0v2-dialogue__body { border-color: color-mix(in srgb, var(--re0v2-character-primary) 76%, #e8f8ff); border-radius: 28px 5px 28px 5px; background: linear-gradient(118deg, color-mix(in srgb, var(--re0v2-surface) 89%, var(--re0v2-character-secondary) 11%), color-mix(in srgb, var(--re0v2-surface) 92%, var(--re0v2-character-primary) 8%)); box-shadow: 0 12px 34px color-mix(in srgb, var(--re0v2-character-primary) 22%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--re0v2-character-secondary) 28%, transparent); }
+.re0v2-dialogue[data-skin="emilia"] .re0v2-dialogue__body::before { opacity: .34; background: radial-gradient(circle at 88% 20%, var(--re0v2-character-secondary) 0 2px, transparent 3px), radial-gradient(circle at 76% 74%, var(--re0v2-character-primary) 0 1px, transparent 2px), linear-gradient(132deg, transparent 0 46%, color-mix(in srgb, var(--re0v2-character-secondary) 34%, transparent) 47% 48%, transparent 49%); background-size: 34px 34px, 46px 46px, 100% 100%; animation: re0v2-emilia-crystal 8s ease-in-out infinite; }
+.re0v2-dialogue[data-skin="emilia"] .re0v2-avatar { box-shadow: 0 0 0 2px color-mix(in srgb, var(--re0v2-character-secondary) 42%, transparent), 0 10px 30px color-mix(in srgb, var(--re0v2-character-primary) 34%, transparent); }
+.re0v2-dialogue[data-skin="emilia"] .re0v2-speaker-name .is-emphasized { color: var(--re0v2-character-primary); text-shadow: 0 0 16px color-mix(in srgb, var(--re0v2-character-secondary) 52%, transparent); }
+.re0v2-dialogue[data-skin="emilia"] .re0v2-speaker-name .is-emphasized:nth-child(3) { color: var(--re0v2-character-secondary); }
+.re0v2-dialogue[data-skin="emilia"] .re0v2-speaker-symbol { border-color: var(--re0v2-character-secondary); border-radius: 7px 50% 7px 50%; color: var(--re0v2-character-primary); background: color-mix(in srgb, var(--re0v2-character-secondary) 14%, transparent); transform: rotate(8deg); }
 .re0v2-speaker-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: .02em; margin-bottom: 6px; color: var(--re0v2-ink); font: 700 13px/1.4 "Noto Sans SC", sans-serif; letter-spacing: .1em; }
 .re0v2-speaker-name .is-emphasized { color: var(--re0v2-character-primary); font-size: 1.34em; font-family: "Noto Serif SC", serif; font-weight: 900; text-shadow: 0 0 16px color-mix(in srgb, var(--re0v2-character-primary) 28%, transparent); }
 .re0v2-speaker-symbol { display: inline-grid; width: 1.8em; height: 1.8em; margin-left: 7px; place-items: center; border: 1px solid var(--re0v2-character-primary); border-radius: 50%; color: var(--re0v2-character-primary); font-size: .8em; letter-spacing: 0; }
@@ -697,6 +704,7 @@
 @keyframes re0v2-title-rise { from { opacity: 0; transform: translateY(.38em) scale(.92); filter: blur(6px); } to { opacity: 1; filter: blur(0); } }
 @keyframes re0v2-bubble-arrive { from { opacity: 0; transform: translateY(10px); } }
 @keyframes re0v2-text-flow { to { background-position: -300% 0; } }
+@keyframes re0v2-emilia-crystal { 50% { background-position: 8px -5px, -7px 6px, 0 0; filter: saturate(1.14); } }
 @keyframes re0v2-orbit { to { transform: rotate(360deg); } }
 @keyframes re0v2-broken-spin { 50% { transform: rotate(18deg) scale(.96); } }
 @keyframes re0v2-scan { 0%, 20% { transform: translateY(-100%); } 65%, 100% { transform: translateY(100%); } }
@@ -1262,6 +1270,7 @@ const STORAGE_KEYS = Object.freeze({
   theme: 're0:narrative-v2:theme',
   font: 're0:narrative-v2:font',
   size: 're0:narrative-v2:size',
+  indent: 're0:narrative-v2:indent',
   staticMode: 're0:narrative-v2:static',
 });
 
@@ -1269,6 +1278,7 @@ const DEFAULT_READING_SETTINGS = Object.freeze({
   theme: 'auto',
   font: 'serif',
   size: 'medium',
+  indent: false,
   staticMode: false,
 });
 
@@ -1281,6 +1291,7 @@ function normalizeReadingSettings(value = {}) {
     theme: SETTING_THEME_IDS.has(value?.theme) ? value.theme : DEFAULT_READING_SETTINGS.theme,
     font: SETTING_FONT_IDS.has(value?.font) ? value.font : DEFAULT_READING_SETTINGS.font,
     size: SETTING_SIZE_IDS.has(value?.size) ? value.size : DEFAULT_READING_SETTINGS.size,
+    indent: value?.indent === true,
     staticMode: value?.staticMode === true,
   };
 }
@@ -1294,6 +1305,7 @@ function readReadingSettings(storage = globalThis.localStorage) {
     theme: safeRead(storage, STORAGE_KEYS.theme),
     font: safeRead(storage, STORAGE_KEYS.font),
     size: safeRead(storage, STORAGE_KEYS.size),
+    indent: safeRead(storage, STORAGE_KEYS.indent) === 'true',
     staticMode: safeRead(storage, STORAGE_KEYS.staticMode) === 'true',
   });
 }
@@ -1304,6 +1316,7 @@ function writeReadingSettings(settings, storage = globalThis.localStorage) {
     storage?.setItem?.(STORAGE_KEYS.theme, normalized.theme);
     storage?.setItem?.(STORAGE_KEYS.font, normalized.font);
     storage?.setItem?.(STORAGE_KEYS.size, normalized.size);
+    storage?.setItem?.(STORAGE_KEYS.indent, String(normalized.indent));
     storage?.setItem?.(STORAGE_KEYS.staticMode, String(normalized.staticMode));
   } catch {
     return normalized;
@@ -1352,8 +1365,21 @@ function resolveTheme({ preference = 'auto', period = '' } = {}) {
 
 /* narrative-next/src/characters.mjs */
 const registryData = [{"stableId":"al-debaran","rosterName":"阿尔","displayName":"阿尔·迪巴兰","referenceFile":"阿尔.webp","portraitKey":"al-debaran","aliases":["阿尔·迪巴兰","阿尔德巴兰","阿尔迪巴兰","阿尔"],"identityTokens":["role:knight","faction:priscilla-camp","accent:al","icon:helmet"],"bubbleTokens":["code:iron-mask","tone:dry","edge:traveler"]},{"stableId":"elsa-granhiert","rosterName":"艾尔莎","displayName":"艾尔莎·葛兰希尔特","referenceFile":"艾尔莎.webp","portraitKey":"elsa-granhiert","aliases":["艾尔莎·葛兰希尔特","艾尔莎"],"identityTokens":["role:assassin","faction:underworld","accent:elsa","icon:dagger"],"bubbleTokens":["code:guts-hunter","tone:silk","edge:crimson"]},{"stableId":"echidna","rosterName":"艾姬多娜","displayName":"艾姬多娜","referenceFile":"艾姬多娜 强欲魔女.webp","portraitKey":"echidna","aliases":["艾姬多娜"],"identityTokens":["role:witch","faction:witch-tea-party","accent:echidna","icon:book"],"bubbleTokens":["code:greed-witch","tone:porcelain","edge:white-black"]},{"stableId":"anastasia-hoshin","rosterName":"安娜塔西亚","displayName":"安娜塔西亚·合辛","referenceFile":"安娜塔西亚.webp","portraitKey":"anastasia-hoshin","aliases":["安娜塔西亚·合辛","安娜塔西亚"],"identityTokens":["role:merchant","faction:royal-candidate","accent:anastasia","icon:coin"],"bubbleTokens":["code:kararagi-ledger","tone:shrewd","edge:violet"]},{"stableId":"otto-suwen","rosterName":"奥托","displayName":"奥托·苏文","referenceFile":"奥托.webp","portraitKey":"otto-suwen","aliases":["奥托·苏文","奥托·思文","奥托"],"identityTokens":["role:merchant","faction:subaru-camp","accent:otto","icon:cart"],"bubbleTokens":["code:merchant-road","tone:nervous","edge:green"]},{"stableId":"yae-tengen","rosterName":"八重","displayName":"八重·天膳","referenceFile":"八重.webp","portraitKey":"yae-tengen","aliases":["八重·天膳","八重"],"identityTokens":["role:shinobi","faction:vollachia","accent:yae","icon:fan"],"bubbleTokens":["code:hidden-blade","tone:quiet","edge:indigo"]},{"stableId":"beatrice","rosterName":"碧翠丝","displayName":"贝亚特丽丝","referenceFile":"碧翠丝.webp","portraitKey":"beatrice","aliases":["贝亚特丽丝","贝阿特丽丝","碧翠丝"],"identityTokens":["role:spirit","faction:subaru-camp","accent:beatrice","icon:library"],"bubbleTokens":["code:forbidden-library","tone:proud","edge:butterfly"]},{"stableId":"natsuki-subaru","rosterName":"菜月昴","displayName":"菜月昴","referenceFile":"菜月昴.webp","portraitKey":"natsuki-subaru","aliases":["菜月昴","菜月·昴","昴"],"identityTokens":["role:returner","faction:subaru-camp","accent:subaru","icon:return"],"bubbleTokens":["code:return-by-death","tone:frayed","edge:archive"]},{"stableId":"daphne","rosterName":"达芙妮","displayName":"达芙妮","referenceFile":"达芙妮 暴食魔女.webp","portraitKey":"daphne","aliases":["达芙妮"],"identityTokens":["role:witch","faction:witch-tea-party","accent:daphne","icon:hunger"],"bubbleTokens":["code:gluttony-witch","tone:hollow","edge:beast"]},{"stableId":"felix-argyle","rosterName":"菲利克斯","displayName":"菲利克斯·阿盖尔","referenceFile":"菲利克斯.webp","portraitKey":"felix-argyle","aliases":["菲利克斯·阿盖尔","菲利克斯","菲莉丝"],"identityTokens":["role:healer","faction:crusch-camp","accent:felix","icon:water"],"bubbleTokens":["code:blue-healer","tone:teasing","edge:aqua"]},{"stableId":"felt","rosterName":"菲鲁特","displayName":"菲鲁特","referenceFile":"菲鲁特.webp","portraitKey":"felt","aliases":["菲鲁特"],"identityTokens":["role:thief","faction:royal-candidate","accent:felt","icon:wind"],"bubbleTokens":["code:golden-thief","tone:sharp","edge:yellow"]},{"stableId":"frederica-baumann","rosterName":"弗雷德莉卡","displayName":"法兰德丽卡·鲍曼","referenceFile":"弗雷德莉卡.webp","portraitKey":"frederica-baumann","aliases":["法兰德丽卡·鲍曼","弗雷德莉卡","法兰德丽卡","法兰黛莉卡"],"identityTokens":["role:maid","faction:roswaal-mansion","accent:frederica","icon:fanged-maid"],"bubbleTokens":["code:maid-fang","tone:warm","edge:amber"]},{"stableId":"hector","rosterName":"赫克托尔","displayName":"赫克托尔","referenceFile":"赫克托尔 忧郁魔人.webp","portraitKey":"hector","aliases":["赫克托尔","赫克特"],"identityTokens":["role:warlock","faction:witch-era","accent:hector","icon:melancholy"],"bubbleTokens":["code:melancholy","tone:weary","edge:gray"]},{"stableId":"heinkel-astrea","rosterName":"亨克尔","displayName":"亨克尔·阿斯特雷亚","referenceFile":"亨克尔.webp","portraitKey":"heinkel-astrea","aliases":["亨克尔·阿斯特雷亚","亨克尔"],"identityTokens":["role:knight","faction:astrea","accent:heinkel","icon:broken-sword"],"bubbleTokens":["code:astrea-disgrace","tone:bitter","edge:rust"]},{"stableId":"garfiel-tinsel","rosterName":"加菲尔","displayName":"加菲尔·汀泽尔","referenceFile":"加菲尔.webp","portraitKey":"garfiel-tinsel","aliases":["加菲尔·汀泽尔","嘉飞尔·闵","加菲尔","嘉飞尔"],"identityTokens":["role:warrior","faction:subaru-camp","accent:garfiel","icon:fang"],"bubbleTokens":["code:tiger-shield","tone:boisterous","edge:orange"]},{"stableId":"carmilla","rosterName":"卡蜜拉","displayName":"卡蜜拉","referenceFile":"卡蜜拉 色欲魔女.webp","portraitKey":"carmilla","aliases":["卡蜜拉"],"identityTokens":["role:witch","faction:witch-tea-party","accent:carmilla","icon:heart"],"bubbleTokens":["code:lust-witch","tone:whisper","edge:rose"]},{"stableId":"capella-lugunica","rosterName":"卡佩拉","displayName":"卡佩拉·艾美拉达·露格尼卡","referenceFile":"卡佩拉.webp","portraitKey":"capella-lugunica","aliases":["卡佩拉·艾美拉达·露格尼卡","卡佩拉","卡佩菈"],"identityTokens":["role:archbishop","faction:witch-cult","accent:capella","icon:dragon-blood"],"bubbleTokens":["code:lust-archbishop","tone:venom","edge:magenta"]},{"stableId":"crusch-karsten","rosterName":"库珥修","displayName":"库珥修·卡尔斯腾","referenceFile":"库珥修.webp","portraitKey":"crusch-karsten","aliases":["库珥修·卡尔斯腾","库珥修"],"identityTokens":["role:lord","faction:royal-candidate","accent:crusch","icon:lion"],"bubbleTokens":["code:green-lion","tone:command","edge:emerald"]},{"stableId":"ram","rosterName":"拉姆","displayName":"拉姆","referenceFile":"拉姆.webp","portraitKey":"ram","aliases":["拉姆"],"identityTokens":["role:maid","faction:roswaal-mansion","accent:ram","icon:oni"],"bubbleTokens":["code:pink-oni","tone:cutting","edge:pink"]},{"stableId":"ley-batenkaitos","rosterName":"莱伊","displayName":"莱伊·巴登凯托斯","referenceFile":"莱伊.webp","portraitKey":"ley-batenkaitos","aliases":["莱伊·巴登凯托斯","莱伊"],"identityTokens":["role:archbishop","faction:witch-cult","accent:ley","icon:gluttony"],"bubbleTokens":["code:gluttony-ley","tone:feral","edge:red"]},{"stableId":"reinhard-astrea","rosterName":"莱茵哈鲁特","displayName":"莱茵哈鲁特·范·阿斯特雷亚","referenceFile":"莱茵哈鲁特.webp","portraitKey":"reinhard-astrea","aliases":["莱茵哈鲁特·范·阿斯特雷亚","莱因哈鲁特","莱茵哈鲁特"],"identityTokens":["role:knight","faction:astrea","accent:reinhard","icon:sword-saint"],"bubbleTokens":["code:sword-saint","tone:clear","edge:blue"]},{"stableId":"reid-astrea","rosterName":"雷德","displayName":"雷德·阿斯特雷亚","referenceFile":"雷德 初代剑圣.webp","portraitKey":"reid-astrea","aliases":["雷德·阿斯特雷亚","雷伊德·阿斯特雷亚","雷伊德","雷德"],"identityTokens":["role:swordmaster","faction:astrea","accent:reid","icon:first-sword"],"bubbleTokens":["code:first-sword-saint","tone:rough","edge:steel"]},{"stableId":"regulus-corneas","rosterName":"雷古勒斯","displayName":"雷古勒斯·柯尔尼亚斯","referenceFile":"雷古勒斯.webp","portraitKey":"regulus-corneas","aliases":["雷古勒斯·柯尔尼亚斯","雷古勒斯"],"identityTokens":["role:archbishop","faction:witch-cult","accent:regulus","icon:greed"],"bubbleTokens":["code:greed-archbishop","tone:entitled","edge:white"]},{"stableId":"rem","rosterName":"蕾姆","displayName":"蕾姆","referenceFile":"蕾姆.webp","portraitKey":"rem","aliases":["蕾姆","雷姆"],"identityTokens":["role:maid","faction:subaru-camp","accent:rem","icon:morningstar"],"bubbleTokens":["code:blue-oni","tone:devoted","edge:sky"]},{"stableId":"ricardo-welkin","rosterName":"里卡多","displayName":"里卡多·威尔金","referenceFile":"里卡多.webp","portraitKey":"ricardo-welkin","aliases":["里卡多·威尔金","里卡德","里卡多"],"identityTokens":["role:mercenary","faction:iron-fang","accent:ricardo","icon:fang"],"bubbleTokens":["code:iron-fang","tone:hearty","edge:brown"]},{"stableId":"rui-arneb","rosterName":"鲁伊","displayName":"鲁伊","referenceFile":"鲁伊.webp","portraitKey":"rui-arneb","aliases":["鲁伊","鲁伊·阿鲁奈布","露伊","露伊·亚尔聂博"],"identityTokens":["role:archbishop","faction:witch-cult","accent:rui","icon:gluttony"],"bubbleTokens":["code:gluttony-rui","tone:childlike","edge:yellow-green"]},{"stableId":"roy-alphard","rosterName":"罗伊","displayName":"罗伊·阿尔法鲁多","referenceFile":"罗伊.webp","portraitKey":"roy-alphard","aliases":["罗伊·阿尔法鲁多","罗伊·爱尔法德","罗伊"],"identityTokens":["role:archbishop","faction:witch-cult","accent:roy","icon:gluttony"],"bubbleTokens":["code:gluttony-roy","tone:coarse","edge:rust-red"]},{"stableId":"roswaal-mathers","rosterName":"罗兹瓦尔","displayName":"罗兹瓦尔·L·梅扎斯","referenceFile":"罗兹瓦尔.webp","portraitKey":"roswaal-mathers","aliases":["罗兹瓦尔·L·梅扎斯","罗兹瓦尔"],"identityTokens":["role:mage","faction:roswaal-mansion","accent:roswaal","icon:clown"],"bubbleTokens":["code:margrave-mage","tone:drawn","edge:purple"]},{"stableId":"meili-portroute","rosterName":"梅莉","displayName":"梅莉·波特鲁特","referenceFile":"梅莉.webp","portraitKey":"meili-portroute","aliases":["梅莉·波特鲁特","梅莉"],"identityTokens":["role:beastmaster","faction:underworld","accent:meili","icon:beast"],"bubbleTokens":["code:demon-beast-user","tone:sweet","edge:lime"]},{"stableId":"minerva","rosterName":"密涅瓦","displayName":"密涅瓦","referenceFile":"密涅瓦 愤怒魔女.webp","portraitKey":"minerva","aliases":["密涅瓦"],"identityTokens":["role:witch","faction:witch-tea-party","accent:minerva","icon:fist"],"bubbleTokens":["code:wrath-witch","tone:bright","edge:gold"]},{"stableId":"puck","rosterName":"帕克","displayName":"帕克","referenceFile":"帕克.webp","portraitKey":"puck","aliases":["帕克"],"identityTokens":["role:spirit","faction:emilia-camp","accent:puck","icon:ice"],"bubbleTokens":["code:great-spirit","tone:lazy","edge:ice"]},{"stableId":"pandora","rosterName":"潘多拉","displayName":"潘多拉","referenceFile":"潘多拉 虚饰魔女.webp","portraitKey":"pandora","aliases":["潘多拉","潘朵拉"],"identityTokens":["role:witch","faction:witch-cult","accent:pandora","icon:vanity"],"bubbleTokens":["code:vanity-witch","tone:serene","edge:silver"]},{"stableId":"petelgeuse-romaneeconti","rosterName":"培提尔其乌斯","displayName":"培提尔其乌斯·罗曼尼康帝","referenceFile":"培提尔其乌斯 怠惰大司教.webp","portraitKey":"petelgeuse-romaneeconti","aliases":["培提尔其乌斯·罗曼尼康帝","培提尔其乌斯","贝特鲁吉乌斯"],"identityTokens":["role:archbishop","faction:witch-cult","accent:petelgeuse","icon:sloth"],"bubbleTokens":["code:sloth-archbishop","tone:manic","edge:green-black"]},{"stableId":"petra-leyte","rosterName":"佩特拉","displayName":"佩特拉","referenceFile":"佩特拉.webp","portraitKey":"petra-leyte","aliases":["佩特拉"],"identityTokens":["role:maid","faction:roswaal-mansion","accent:petra","icon:ribbon"],"bubbleTokens":["code:apprentice-maid","tone:earnest","edge:coral"]},{"stableId":"priscilla-barielle","rosterName":"普莉希拉","displayName":"普莉希拉·跋利耶尔","referenceFile":"普莉希拉.webp","portraitKey":"priscilla-barielle","aliases":["普莉希拉·跋利耶尔","普莉希拉"],"identityTokens":["role:lord","faction:royal-candidate","accent:priscilla","icon:sun"],"bubbleTokens":["code:sun-princess","tone:imperious","edge:scarlet"]},{"stableId":"sekmet","rosterName":"塞赫麦特","displayName":"塞赫麦特","referenceFile":"塞赫麦特 怠惰魔女.webp","portraitKey":"sekmet","aliases":["塞赫麦特","赛赫麦特"],"identityTokens":["role:witch","faction:witch-tea-party","accent:sekmet","icon:sloth"],"bubbleTokens":["code:sloth-witch","tone:exhausted","edge:smoke"]},{"stableId":"satella","rosterName":"莎缇拉","displayName":"莎缇拉","referenceFile":"莎缇拉 嫉妒魔女.webp","portraitKey":"satella","aliases":["莎缇拉","莎提拉","嫉妒魔女"],"identityTokens":["role:witch","faction:envy","accent:satella","icon:shadow"],"bubbleTokens":["code:envy-witch","tone:tender-void","edge:black-purple"]},{"stableId":"schult","rosterName":"舒尔特","displayName":"舒尔特","referenceFile":"舒尔特.webp","portraitKey":"schult","aliases":["舒尔特"],"identityTokens":["role:attendant","faction:priscilla-camp","accent:schult","icon:bell"],"bubbleTokens":["code:young-attendant","tone:soft","edge:cream"]},{"stableId":"typhon","rosterName":"缇丰","displayName":"缇丰","referenceFile":"缇丰 傲慢魔女.webp","portraitKey":"typhon","aliases":["缇丰"],"identityTokens":["role:witch","faction:witch-tea-party","accent:typhon","icon:judgment"],"bubbleTokens":["code:pride-witch","tone:innocent","edge:teal"]},{"stableId":"wilhelm-astrea","rosterName":"威尔海姆","displayName":"威尔海姆·范·阿斯特雷亚","referenceFile":"威尔海姆.webp","portraitKey":"wilhelm-astrea","aliases":["威尔海姆·范·阿斯特雷亚","威尔海姆"],"identityTokens":["role:knight","faction:crusch-camp","accent:wilhelm","icon:sword"],"bubbleTokens":["code:sword-demon","tone:grave","edge:navy"]},{"stableId":"sirius-romaneeconti","rosterName":"西里乌斯","displayName":"西里乌斯·罗曼尼康帝","referenceFile":"西里乌斯.webp","portraitKey":"sirius-romaneeconti","aliases":["西里乌斯·罗曼尼康帝","叙吕厄斯","西里乌斯"],"identityTokens":["role:archbishop","faction:witch-cult","accent:sirius","icon:wrath"],"bubbleTokens":["code:wrath-archbishop","tone:fever","edge:flame"]},{"stableId":"shaula","rosterName":"夏乌拉","displayName":"夏乌拉","referenceFile":"夏乌拉.webp","portraitKey":"shaula","aliases":["夏乌拉"],"identityTokens":["role:guardian","faction:watchtower","accent:shaula","icon:scorpion"],"bubbleTokens":["code:star-keeper","tone:clingy","edge:violet-blue"]},{"stableId":"julius-juukulius","rosterName":"尤里乌斯","displayName":"尤里乌斯·尤克历乌斯","referenceFile":"尤里乌斯.webp","portraitKey":"julius-juukulius","aliases":["尤里乌斯·尤克历乌斯","尤里乌斯","由里乌斯"],"identityTokens":["role:knight","faction:anastasia-camp","accent:julius","icon:spirit-knight"],"bubbleTokens":["code:finest-knight","tone:polished","edge:indigo-blue"]},{"stableId":"joshua-juukulius","rosterName":"约书亚","displayName":"约书亚·尤克历乌斯","referenceFile":"约书亚webp.webp","portraitKey":"joshua-juukulius","aliases":["约书亚·尤克历乌斯","约书亚"],"identityTokens":["role:attendant","faction:anastasia-camp","accent:joshua","icon:booklet"],"bubbleTokens":["code:younger-brother","tone:formal","edge:pale-blue"]}];
-const ASSET_COMMIT = 'd011efa6a5351dd984e00ef8462db3689cbb358b';
+const ASSET_COMMIT = 'fe81357cba2b5df6d1ada34bb9e825c755202c67';
 const ASSET_ROOT = `https://cdn.jsdelivr.net/gh/1798547983tt/re0@${ASSET_COMMIT}/avatars`;
+
+const V2_ADDITIONAL_CHARACTER_DATA = Object.freeze([
+  Object.freeze({
+    stableId: 'emilia',
+    rosterName: '爱蜜莉雅',
+    displayName: '爱蜜莉雅',
+    referenceFile: '爱蜜莉雅.png',
+    portraitKey: 'emilia',
+    aliases: ['爱蜜莉雅', '艾米莉亚', '艾蜜莉雅', '艾米利亚'],
+    identityTokens: ['role:spirit', 'faction:emilia-camp', 'accent:emilia', 'icon:ice-flower'],
+    bubbleTokens: ['code:silver-half-elf', 'tone:gentle-resolve', 'edge:frost-crystal'],
+  }),
+]);
 
 const VISUALS = Object.freeze({
   'al-debaran': ['#657080', '#c85b78', '⛊', 'mask', 'grid', 'scan'],
@@ -1400,6 +1426,7 @@ const VISUALS = Object.freeze({
   shaula: ['#6d54b4', '#e19f3d', '♏', 'star', 'constellation', 'orbit'],
   'julius-juukulius': ['#4c5da6', '#9b8bd1', '♞', 'filigree', 'spirits', 'poise'],
   'joshua-juukulius': ['#7798ba', '#d8e2ec', '▤', 'folio', 'pages', 'turn'],
+  emilia: ['#8e72c9', '#8fd3df', '❅', 'crystal-flower', 'frost-petals', 'aurora'],
 });
 
 function graphemes(value) {
@@ -1489,7 +1516,7 @@ function makeCharacter(entry, index) {
   });
 }
 
-const CHARACTER_REGISTRY = Object.freeze(registryData.map(makeCharacter));
+const CHARACTER_REGISTRY = Object.freeze([...registryData, ...V2_ADDITIONAL_CHARACTER_DATA].map(makeCharacter));
 
 const ALIAS_INDEX = new Map();
 for (const character of CHARACTER_REGISTRY) {
@@ -1996,7 +2023,7 @@ function renderSettings(documentRef, state) {
   const toggle = button(documentRef, 're0v2-settings-toggle', '阅读设置', 'toggle-settings');
   toggle.setAttribute('aria-expanded', String(state.settingsOpen));
   toggle.setAttribute('aria-controls', 're0v2-settings-panel');
-  toggle.title = '主题、字体、字号与动态效果';
+  toggle.title = '主题、字体、字号、缩进与动态效果';
   const glyph = element(documentRef, 'span', 're0v2-settings-toggle__glyph', '◐');
   glyph.setAttribute('aria-hidden', 'true');
   toggle.prepend(glyph);
@@ -2043,14 +2070,21 @@ function renderSettings(documentRef, state) {
   }
   sizeField.append(sizeButtons);
 
-  const staticLabel = element(documentRef, 'label', 're0v2-static-toggle');
+  const indentLabel = element(documentRef, 'label', 're0v2-choice-toggle re0v2-indent-toggle');
+  const indentInput = documentRef.createElement('input');
+  indentInput.type = 'checkbox';
+  indentInput.dataset.setting = 'indent';
+  indentInput.checked = state.settings.indent;
+  indentLabel.append(indentInput, element(documentRef, 'span', '', '自然段首行缩进'));
+
+  const staticLabel = element(documentRef, 'label', 're0v2-choice-toggle re0v2-static-toggle');
   const staticInput = documentRef.createElement('input');
   staticInput.type = 'checkbox';
   staticInput.dataset.setting = 'staticMode';
   staticInput.checked = state.settings.staticMode;
   staticLabel.append(staticInput, element(documentRef, 'span', '', '关闭动态特效'));
 
-  panel.append(themeField, fontLabel, sizeField, staticLabel);
+  panel.append(themeField, fontLabel, sizeField, indentLabel, staticLabel);
   tools.append(toggle, panel);
   return tools;
 }
@@ -2296,6 +2330,7 @@ function bindControls(mount) {
     const state = mount.__re0v2State;
     if (!state || !control?.dataset?.setting) return;
     if (control.dataset.setting === 'font') state.settings.font = control.value;
+    if (control.dataset.setting === 'indent') state.settings.indent = control.checked;
     if (control.dataset.setting === 'staticMode') state.settings.staticMode = control.checked;
     state.settings = writeReadingSettings(state.settings);
     renderNarrative(mount, state.source, { ...state.options, settings: state.settings, settingsOpen: state.settingsOpen });
@@ -2315,6 +2350,7 @@ function renderNarrative(target, source, options = {}) {
   mount.dataset.theme = theme.id;
   mount.dataset.font = font.id;
   mount.dataset.size = size.id;
+  mount.dataset.indent = String(settings.indent);
   mount.dataset.static = String(settings.staticMode);
   mount.style.setProperty('--re0v2-reading-font', font.stack);
   mount.style.setProperty('--re0v2-reading-size', `${size.px}px`);

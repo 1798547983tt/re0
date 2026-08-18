@@ -1,7 +1,20 @@
 import registryData from '../../narrative/data/character-registry.json' with { type: 'json' };
 
-const ASSET_COMMIT = 'd011efa6a5351dd984e00ef8462db3689cbb358b';
+const ASSET_COMMIT = 'fe81357cba2b5df6d1ada34bb9e825c755202c67';
 const ASSET_ROOT = `https://cdn.jsdelivr.net/gh/1798547983tt/re0@${ASSET_COMMIT}/avatars`;
+
+const V2_ADDITIONAL_CHARACTER_DATA = Object.freeze([
+  Object.freeze({
+    stableId: 'emilia',
+    rosterName: '爱蜜莉雅',
+    displayName: '爱蜜莉雅',
+    referenceFile: '爱蜜莉雅.png',
+    portraitKey: 'emilia',
+    aliases: ['爱蜜莉雅', '艾米莉亚', '艾蜜莉雅', '艾米利亚'],
+    identityTokens: ['role:spirit', 'faction:emilia-camp', 'accent:emilia', 'icon:ice-flower'],
+    bubbleTokens: ['code:silver-half-elf', 'tone:gentle-resolve', 'edge:frost-crystal'],
+  }),
+]);
 
 const VISUALS = Object.freeze({
   'al-debaran': ['#657080', '#c85b78', '⛊', 'mask', 'grid', 'scan'],
@@ -48,6 +61,7 @@ const VISUALS = Object.freeze({
   shaula: ['#6d54b4', '#e19f3d', '♏', 'star', 'constellation', 'orbit'],
   'julius-juukulius': ['#4c5da6', '#9b8bd1', '♞', 'filigree', 'spirits', 'poise'],
   'joshua-juukulius': ['#7798ba', '#d8e2ec', '▤', 'folio', 'pages', 'turn'],
+  emilia: ['#8e72c9', '#8fd3df', '❅', 'crystal-flower', 'frost-petals', 'aurora'],
 });
 
 function graphemes(value) {
@@ -137,7 +151,7 @@ function makeCharacter(entry, index) {
   });
 }
 
-export const CHARACTER_REGISTRY = Object.freeze(registryData.map(makeCharacter));
+export const CHARACTER_REGISTRY = Object.freeze([...registryData, ...V2_ADDITIONAL_CHARACTER_DATA].map(makeCharacter));
 
 const ALIAS_INDEX = new Map();
 for (const character of CHARACTER_REGISTRY) {

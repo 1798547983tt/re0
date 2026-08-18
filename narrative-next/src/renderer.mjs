@@ -103,7 +103,7 @@ function renderSettings(documentRef, state) {
   const toggle = button(documentRef, 're0v2-settings-toggle', '阅读设置', 'toggle-settings');
   toggle.setAttribute('aria-expanded', String(state.settingsOpen));
   toggle.setAttribute('aria-controls', 're0v2-settings-panel');
-  toggle.title = '主题、字体、字号与动态效果';
+  toggle.title = '主题、字体、字号、缩进与动态效果';
   const glyph = element(documentRef, 'span', 're0v2-settings-toggle__glyph', '◐');
   glyph.setAttribute('aria-hidden', 'true');
   toggle.prepend(glyph);
@@ -150,14 +150,21 @@ function renderSettings(documentRef, state) {
   }
   sizeField.append(sizeButtons);
 
-  const staticLabel = element(documentRef, 'label', 're0v2-static-toggle');
+  const indentLabel = element(documentRef, 'label', 're0v2-choice-toggle re0v2-indent-toggle');
+  const indentInput = documentRef.createElement('input');
+  indentInput.type = 'checkbox';
+  indentInput.dataset.setting = 'indent';
+  indentInput.checked = state.settings.indent;
+  indentLabel.append(indentInput, element(documentRef, 'span', '', '自然段首行缩进'));
+
+  const staticLabel = element(documentRef, 'label', 're0v2-choice-toggle re0v2-static-toggle');
   const staticInput = documentRef.createElement('input');
   staticInput.type = 'checkbox';
   staticInput.dataset.setting = 'staticMode';
   staticInput.checked = state.settings.staticMode;
   staticLabel.append(staticInput, element(documentRef, 'span', '', '关闭动态特效'));
 
-  panel.append(themeField, fontLabel, sizeField, staticLabel);
+  panel.append(themeField, fontLabel, sizeField, indentLabel, staticLabel);
   tools.append(toggle, panel);
   return tools;
 }
@@ -403,6 +410,7 @@ function bindControls(mount) {
     const state = mount.__re0v2State;
     if (!state || !control?.dataset?.setting) return;
     if (control.dataset.setting === 'font') state.settings.font = control.value;
+    if (control.dataset.setting === 'indent') state.settings.indent = control.checked;
     if (control.dataset.setting === 'staticMode') state.settings.staticMode = control.checked;
     state.settings = writeReadingSettings(state.settings);
     renderNarrative(mount, state.source, { ...state.options, settings: state.settings, settingsOpen: state.settingsOpen });
@@ -422,6 +430,7 @@ export function renderNarrative(target, source, options = {}) {
   mount.dataset.theme = theme.id;
   mount.dataset.font = font.id;
   mount.dataset.size = size.id;
+  mount.dataset.indent = String(settings.indent);
   mount.dataset.static = String(settings.staticMode);
   mount.style.setProperty('--re0v2-reading-font', font.stack);
   mount.style.setProperty('--re0v2-reading-size', `${size.px}px`);
