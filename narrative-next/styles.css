@@ -439,7 +439,7 @@
   font-size: var(--re0v2-reading-size);
 }
 .re0v2-narration { position: relative; max-width: 42em; margin: 0 auto; color: var(--re0v2-ink); line-height: 2.05; letter-spacing: .035em; text-align: justify; overflow-wrap: anywhere; }
-.re0v2-narration::first-letter { float: left; margin: .07em .18em 0 0; color: var(--re0v2-accent); font: 900 2.4em/.82 "Noto Serif SC", serif; }
+.re0v2-story-flow > .re0v2-narration:first-of-type::first-letter { float: left; margin: .07em .18em 0 0; color: var(--re0v2-accent); font: 900 2.4em/.82 "Noto Serif SC", serif; }
 
 .re0v2-dialogue {
   --re0v2-character-primary: var(--re0v2-accent);
@@ -633,12 +633,14 @@
 .re0v2-ability[data-effect="martial-slash"] .re0v2-ability__sigil::after { inset: 52px 5px; border: 0; border-top: 2px solid currentColor; border-radius: 0; transform: rotate(-34deg); animation: re0v2-slash 3.6s ease-in-out infinite; }
 .re0v2-ability[data-effect="martial-slash"] .re0v2-ability__sigil::after { transform: rotate(-46deg) translateY(11px); animation-delay: .18s; }
 
-.re0v2-check { position: relative; isolation: isolate; display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 18px; min-height: 156px; overflow: hidden; align-items: center; border: 1px solid var(--re0v2-border); padding: 22px 24px; background: linear-gradient(90deg, rgba(5, 9, 17, .08) 0 25%, var(--re0v2-local-panel) 48% 100%), var(--re0v2-check-art) left center / cover no-repeat, var(--re0v2-surface-2); box-shadow: 0 16px 34px rgba(0, 0, 0, .1); }
+.re0v2-check { --re0v2-character-primary: var(--re0v2-accent); --re0v2-character-secondary: var(--re0v2-accent-2); position: relative; isolation: isolate; display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 18px; min-height: 156px; overflow: hidden; align-items: center; border: 1px solid var(--re0v2-border); padding: 22px 24px; background: linear-gradient(90deg, rgba(5, 9, 17, .08) 0 25%, var(--re0v2-local-panel) 48% 100%), var(--re0v2-check-art) left center / cover no-repeat, var(--re0v2-surface-2); box-shadow: 0 16px 34px rgba(0, 0, 0, .1); }
 .re0v2-check::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .08; background: var(--re0v2-theme-stage) center / cover no-repeat; mix-blend-mode: luminosity; }
-.re0v2-check__die { display: grid; width: 58px; aspect-ratio: 1; place-items: center; clip-path: polygon(50% 0, 95% 25%, 90% 78%, 50% 100%, 10% 78%, 5% 25%); color: #fff; background: linear-gradient(145deg, var(--re0v2-accent), var(--re0v2-accent-2)); box-shadow: 0 0 22px color-mix(in srgb, var(--re0v2-accent) 46%, transparent); font: 800 10px "Noto Sans SC", sans-serif; }
-.re0v2-check__copy { min-width: 0; border: 1px solid color-mix(in srgb, var(--re0v2-border) 68%, transparent); padding: 14px 16px; background: color-mix(in srgb, var(--re0v2-local-panel) 78%, transparent); backdrop-filter: blur(7px); }
+.re0v2-check__portrait { position: relative; display: grid; width: 90px; place-items: center; justify-self: center; }
+.re0v2-check .re0v2-avatar { width: 90px; box-shadow: 0 10px 30px color-mix(in srgb, var(--re0v2-character-primary) 36%, transparent); }
+.re0v2-check__die { position: absolute; right: -8px; bottom: -9px; z-index: 2; display: grid; width: 40px; aspect-ratio: 1; place-items: center; border: 2px solid var(--re0v2-surface); clip-path: polygon(50% 0, 95% 25%, 90% 78%, 50% 100%, 10% 78%, 5% 25%); color: #fff; background: linear-gradient(145deg, var(--re0v2-character-primary), var(--re0v2-character-secondary)); box-shadow: 0 0 22px color-mix(in srgb, var(--re0v2-character-primary) 46%, transparent); font: 800 9px "Noto Sans SC", sans-serif; }
+.re0v2-check__copy { min-width: 0; border: 1px solid color-mix(in srgb, var(--re0v2-character-primary) 48%, var(--re0v2-border)); padding: 14px 16px; background: color-mix(in srgb, var(--re0v2-local-panel) 78%, transparent); backdrop-filter: blur(7px); }
 .re0v2-check__copy p { margin: 0; overflow-wrap: anywhere; }
-.re0v2-check__meta { color: var(--re0v2-accent); font: 700 10px/1.5 "Noto Sans SC", sans-serif; letter-spacing: .08em; }
+.re0v2-check__meta { color: var(--re0v2-character-primary); font: 700 10px/1.5 "Noto Sans SC", sans-serif; letter-spacing: .08em; }
 .re0v2-check__ledger { color: var(--re0v2-ink); font-family: "Cascadia Mono", Consolas, monospace; font-size: .78em; }
 
 .re0v2-restart { position: relative; isolation: isolate; display: grid; min-height: 250px; overflow: hidden; align-content: center; border: 1px solid #7c3152; padding: clamp(24px, 5cqw, 48px); color: #f0dde6; background: linear-gradient(90deg, rgba(7, 4, 10, .96) 0 46%, rgba(8, 4, 11, .7) 69%, rgba(8, 4, 11, .12)), var(--re0v2-restart-art) center right / cover no-repeat, #09060b; box-shadow: inset 0 0 78px rgba(0, 0, 0, .58), 0 18px 38px rgba(0, 0, 0, .2); }
@@ -729,8 +731,10 @@
   .re0v2-scene__compass { width: 40px; }
   .re0v2-scene__copy { padding: 10px; }
   .re0v2-scene__meta { font-size: 9px; letter-spacing: .1em; }
-  .re0v2-check { grid-template-columns: 48px minmax(0, 1fr); gap: 10px; min-height: 180px; padding: 15px 12px; background-position: left center; }
-  .re0v2-check__die { width: 44px; }
+  .re0v2-check { grid-template-columns: 70px minmax(0, 1fr); gap: 10px; min-height: 180px; padding: 15px 12px; background-position: left center; }
+  .re0v2-check__portrait { width: 60px; }
+  .re0v2-check .re0v2-avatar { width: 60px; }
+  .re0v2-check__die { right: -5px; bottom: -7px; width: 32px; font-size: 8px; }
   .re0v2-check__copy { padding: 11px; }
   .re0v2-restart { min-height: 270px; padding: 24px 18px; background-position: 62% center; }
   .re0v2-restart h2,

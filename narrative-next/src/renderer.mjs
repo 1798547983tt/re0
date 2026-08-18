@@ -55,6 +55,10 @@ export function dialogueSide(block) {
   return block?.type === 'player-dialogue' ? 'player' : 'npc';
 }
 
+export function resolveCheckActor(block) {
+  return resolveCharacter(block?.actor);
+}
+
 export function mergeAdjacentDialogue(blocks) {
   const merged = [];
   for (const original of blocks ?? []) {
@@ -299,15 +303,23 @@ function renderAbility(documentRef, block) {
 }
 
 function renderCheck(documentRef, block) {
+  const character = resolveCheckActor(block);
   const check = element(documentRef, 'section', 're0v2-check');
-  check.append(
-    element(documentRef, 'span', 're0v2-check__die', 'D20'),
-    element(documentRef, 'div', 're0v2-check__copy'),
-  );
-  check.lastElementChild.append(
+  check.dataset.skin = character.skinId;
+  check.style.setProperty('--re0v2-character-primary', character.primary);
+  check.style.setProperty('--re0v2-character-secondary', character.secondary);
+
+  const portrait = element(documentRef, 'div', 're0v2-check__portrait');
+  const die = element(documentRef, 'span', 're0v2-check__die', 'D20');
+  die.setAttribute('aria-hidden', 'true');
+  portrait.append(renderAvatar(documentRef, character), die);
+
+  const copy = element(documentRef, 'div', 're0v2-check__copy');
+  copy.append(
     element(documentRef, 'p', 're0v2-check__meta', `检定｜${block.checkType} · ${block.actor} → ${block.target}`),
     element(documentRef, 'p', 're0v2-check__ledger', block.text),
   );
+  check.append(portrait, copy);
   return check;
 }
 

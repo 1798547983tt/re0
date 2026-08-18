@@ -47,6 +47,34 @@ test('all character portraits use one square frame geometry', () => {
   assert.doesNotMatch(css, /\.re0v2-avatar\[data-variant=/);
 });
 
+test('only the first narration paragraph receives the colored drop cap', () => {
+  const css = read('narrative-next/styles.css');
+  assert.doesNotMatch(css, /(?:^|\n)\.re0v2-narration::first-letter\s*\{/);
+  assert.match(
+    css,
+    /\.re0v2-story-flow\s*>\s*\.re0v2-narration:first-of-type::first-letter\s*\{[^}]*color:\s*var\(--re0v2-accent\)[^}]*2\.4em/s,
+  );
+});
+
+test('check actors use the same character and fallback portrait resolution as dialogue', () => {
+  assert.equal(typeof narrativeRenderer.resolveCheckActor, 'function');
+  assert.equal(narrativeRenderer.resolveCheckActor({ actor: '雷姆' }).stableId, 'rem');
+  const fallback = narrativeRenderer.resolveCheckActor({ actor: '路人骑士' });
+  assert.equal(fallback.kind, 'generic');
+  assert.equal(fallback.initial, '路');
+});
+
+test('check cards render the shared square avatar with character colors', () => {
+  const renderer = read('narrative-next/src/renderer.mjs');
+  const css = read('narrative-next/styles.css');
+  const checkRenderer = renderer.match(/function renderCheck\([^]*?\n\}/u)?.[0] || '';
+  assert.match(checkRenderer, /resolveCheckActor\(block\)/);
+  assert.match(checkRenderer, /renderAvatar\(documentRef, character\)/);
+  assert.match(checkRenderer, /--re0v2-character-primary/);
+  assert.match(css, /\.re0v2-check__portrait\s*\{/);
+  assert.match(css, /\.re0v2-check\s+\.re0v2-avatar\s*\{/);
+});
+
 test('generated bitmap library covers three themes, scenes, seven abilities and both special panels', () => {
   const directory = 'narrative-next/assets/generated';
   const names = [
