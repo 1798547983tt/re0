@@ -2,10 +2,10 @@
 
 ## 发布候选身份
 
-- 源码基线：`2b84f15af0e41cdeb4a5005a2c644557df50ff7c`
+- 源码基线：`f29326157d907e89d17d764cc339d4685dafd426`
 - 导入产物：`dist/regex-Re0·全变量状态栏.json`
-- 产物大小：214886 bytes
-- 产物 SHA-256：`0841f7668052ac3be5b88ff69f0f05962a9685fda3ca608ab0685ac09a01b2c1`
+- 产物大小：214931 bytes
+- 产物 SHA-256：`f772ca8c7cfaeff710d93828829c20e339d470a44142d29bd25c871949a5923a`
 - 图像固定提交：`75d39874e8b6246a0d5f9bd45779441cdaf743cf`
 - 音乐与人物头像固定提交：`3a7a36a3e16809e8d53faabb2a453a5d48f30abd`
 - 离线 QA：`reports/statusbar-offline-qa.md`
@@ -28,6 +28,8 @@
 同日的交互与透明层复验进一步确认：iframe `body`、状态栏外壳、场景头部与常驻概览的计算背景均为透明；详情面板只保留 22% 局部衬底。整栏详情常驻并用 `1fr ↔ 0fr` 过渡，点击头部或概览非控件区域开合；头像、日夜与详情控件不误触开合。手风琴在原节点内使用 `auto 0fr ↔ auto 1fr` 过渡，标签、筛选和分页只更新详情面板，不再重建整棵状态栏。1180px 下收起为 176px、展开但不打开信息组为 636px、概览核心组为 842px；320px 下日间收起为 209px、展开且信息组全收起为 653px，横向溢出均为 0。生产图片 URL 仍固定到上表提交，移动日间图实测 `opacity: 1` 且 console 无 warning/error。
 
 2026-08-19 的媒体复验确认：1180 × 900 下夜间收起状态为 176.67px，并加载 `night-tea-wide.webp`；再次展开为 988.43px，并切换到 `night-tea-mobile.webp`。320 × 900 下日间与夜间展开态分别加载 `day-archive-mobile.webp`、`night-tea-mobile.webp`，页面横向溢出均为 0。音乐页显示四首内置曲目，可从 `STYX HELIX` 顺序切到 `Memento` 和 `好喜欢你`，播放器标题与折叠摘要同步；单曲循环/顺序播放状态可切换。本地文件与 HTTPS URL 入口、四个删除按钮及恢复入口均存在，删除/恢复与本地 Blob 逻辑由自动化测试覆盖。主角 `艾米莉亚` 命中 `爱蜜莉雅.png`，人际样例 `菜月昴`、`帕克`、`蕾姆` 均命中对应内置头像。生产模式 DOM 使用固定 GitHub Raw 地址；`好喜欢你` 在生产模式下取得 243.71 秒媒体时长并开始播放，浏览器 console 无 warning/error。
+
+同日收到真实宿主日志：旧候选在 `about:srcdoc` 解析阶段报 `Identifier 'asObject' has already been declared`，因此没有任何状态栏 DOM。根因是打包器把 ES 模块展平到单个 IIFE 后，音乐模块的三个私有助手与既有模块同名。修复提交将音乐私有符号命名空间化，并新增“从最终 regex 提取 `<script>` 后使用 JavaScript 解析器编译”的回归门禁。新产物的精确 HTML 已直接启动：`.re0-statusbar` 为 1、加载/不可用占位为 0、`aria-busy=false`，浏览器 console 无 warning/error。
 
 ## 导入与取证步骤
 
