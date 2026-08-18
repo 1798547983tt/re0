@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import * as entitiesModule from '../narrative-next/src/entities.mjs';
 import { tokenizeInlineText } from '../narrative-next/src/inline-format.mjs';
 import * as protocolModule from '../narrative-next/src/protocol.mjs';
+import { formatStoryHeading } from '../narrative-next/src/titles.mjs';
 
 const {
   parseNarrative,
@@ -30,8 +31,9 @@ function fixture(name) {
 function currentResponse(body, options = {}) {
   const player = options.player === undefined ? ' player="菜月昴"' : options.player ? ` player="${options.player}"` : '';
   const volume = options.volume ?? '01';
+  const heading = options.heading ?? formatStoryHeading(volume);
   const timeText = options.timeText ?? '魔女历1000年01月01日';
-  return `<content${player}><story volume="${volume}"></story><time period="下午" layer="主线" basis="编辑演算">${timeText}</time><now_plot>${body}</now_plot></content>`;
+  return `<content${player}><story volume="${volume}">${heading}</story><time period="下午" layer="主线" basis="编辑演算">${timeText}</time><now_plot>${body}</now_plot></content>`;
 }
 
 function ability(attributes = '', children = '<effect>发动。</effect><description>说明。</description>') {
@@ -49,7 +51,7 @@ test('parses an unversioned current response into stable metadata and ordered bl
   assert.equal(result.ok, true);
   assert.equal(result.protocol, 'current');
   assert.equal(result.player, '菜月昴');
-  assert.deepEqual(result.story, { volume: '01' });
+  assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' });
   assert.deepEqual(result.time, {
     period: '下午',
     layer: '主线',
@@ -99,6 +101,34 @@ test('parses an unversioned current response into stable metadata and ordered bl
     text: '世界在白光中重启。',
   });
   assert.deepEqual(result.errors, []);
+});
+
+test('requires the current canonical volume heading in story content', () => {
+  const result = parseNarrative(currentResponse('正文。'));
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' });
+});
+
+test('rejects an empty story heading', () => {
+  const result = parseNarrative(currentResponse('正文。', { heading: '' }));
+
+  assert.equal(result.ok, false);
+  assert.ok(errorCodes(result).includes('invalid-story-content'));
+});
+
+test('rejects a story heading whose title belongs to another volume', () => {
+  const result = parseNarrative(currentResponse('正文。', { heading: '第02卷｜救赎的开始' }));
+
+  assert.equal(result.ok, false);
+  assert.ok(errorCodes(result).includes('invalid-story-content'));
+});
+
+test('rejects an unknown story heading', () => {
+  const result = parseNarrative(currentResponse('正文。', { heading: '第01卷｜不存在的篇章' }));
+
+  assert.equal(result.ok, false);
+  assert.ok(errorCodes(result).includes('invalid-story-content'));
 });
 
 test('accepts visible Witch-calendar boundary dates', () => {
@@ -759,7 +789,7 @@ test('inline lexical ownership matrix preserves outer constructs and later forma
 });
 
 test('rejects duplicate root attributes', () => {
-  const source = '<content player="甲" player="乙"><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const source = '<content player="甲" player="乙"><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const result = parseNarrative(source);
 
   assert.equal(result.ok, false);
@@ -783,7 +813,7 @@ test('rejects unknown attributes', () => {
 });
 
 test('rejects malformed unquoted attributes', () => {
-  const source = '<content player=甲><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const source = '<content player=甲><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const result = parseNarrative(source);
 
   assert.equal(result.ok, false);
@@ -799,7 +829,7 @@ test('rejects control characters in attributes', () => {
 });
 
 test('rejects a version attribute on the current root', () => {
-  const source = '<content version="2"><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const source = '<content version="2"><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const result = parseNarrative(source);
 
   assert.equal(result.ok, false);
@@ -807,7 +837,7 @@ test('rejects a version attribute on the current root', () => {
 });
 
 test('rejects root children in the wrong order', () => {
-  const source = '<content><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><story volume="01"></story><now_plot>正文。</now_plot></content>';
+  const source = '<content><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><story volume="01">第01卷｜开始的余温</story><now_plot>正文。</now_plot></content>';
   const result = parseNarrative(source);
 
   assert.equal(result.ok, false);
@@ -815,7 +845,7 @@ test('rejects root children in the wrong order', () => {
 });
 
 test('rejects duplicate required root children', () => {
-  const source = '<content><story volume="01"></story><story volume="02"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><story volume="02">第02卷｜救赎的开始</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const result = parseNarrative(source);
 
   assert.equal(result.ok, false);
@@ -823,7 +853,7 @@ test('rejects duplicate required root children', () => {
 });
 
 test('rejects unknown direct root children', () => {
-  const source = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><extra></extra><now_plot>正文。</now_plot></content>';
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><extra></extra><now_plot>正文。</now_plot></content>';
   const result = parseNarrative(source);
 
   assert.equal(result.ok, false);
@@ -883,7 +913,7 @@ test('keeps a root-looking opener inside a complete local block owned by now_plo
   ]) {
     assert.equal(result.ok, true);
     assert.equal(result.player, '菜月昴');
-    assert.deepEqual(result.story, { volume: '01' });
+    assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' });
     assert.equal(result.time.text, '魔女历1000年01月01日');
     assert.deepEqual(result.blocks.map((block) => block.type), ['narration', 'invalid', 'dialogue']);
     assert.equal(result.blocks[1].rawText, local);
@@ -917,7 +947,7 @@ test('keeps a root-looking close inside attempted dialogue owned by now_plot', (
   ]) {
     assert.equal(result.ok, true);
     assert.equal(result.player, '菜月昴');
-    assert.deepEqual(result.story, { volume: '01' });
+    assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' });
     assert.equal(result.time.text, '魔女历1000年01月01日');
     assert.deepEqual(result.blocks.map((block) => block.type), ['invalid', 'dialogue']);
     assert.equal(result.blocks[0].rawText, attempted);
@@ -997,7 +1027,7 @@ test('keeps a closed local now_plot pair owned when any later completed sibling 
 
 test('follow-up: a closed local now_plot pair cannot substitute for the missing established outer close', () => {
   const local = '<now_plot>坏。</now_plot>';
-  const source = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
     + `前。\n\n${local}</content>`;
   const complete = parseNarrative(source);
   const streaming = parseStreamingNarrative(source);
@@ -1014,7 +1044,7 @@ test('follow-up: a closed local now_plot pair cannot substitute for the missing 
 
 test('keeps the sole close with a complete unsupported now_plot pair instead of promoting its dialogue', () => {
   const local = '<now_plot>坏一。\n\n{甲}「坏二。」</now_plot>';
-  const source = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
     + `${local}</content>`;
   const complete = parseNarrative(source);
   const streaming = parseStreamingNarrative(source);
@@ -1033,7 +1063,7 @@ test('keeps the sole close with a complete unsupported now_plot pair instead of 
 
 test('keeps a complete unsupported now_plot pair atomic after preceding outer narration while awaiting the true outer close', () => {
   const local = '<now_plot>坏一。\n\n{甲}「坏二。」</now_plot>';
-  const openSource = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
+  const openSource = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
     + `前。\n\n${local}`;
   const closedSource = `${openSource}</now_plot></content>`;
   const openStreaming = parseStreamingNarrative(openSource);
@@ -1059,7 +1089,7 @@ test('keeps a complete unsupported now_plot pair atomic after preceding outer na
 
 test('abandons an unsupported now_plot opener at recovery while preserving the established close', () => {
   const local = '<now_plot>坏。\n\n';
-  const source = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>'
     + `${local}后续旁白。</now_plot></content>`;
   const complete = parseNarrative(source);
   const streaming = parseStreamingNarrative(source);
@@ -1458,7 +1488,7 @@ test('rejects non-whitespace after a completed UpdateVariable block', () => {
 });
 
 test('splits UpdateVariable after a structurally closed but schema-invalid root', () => {
-  const content = '<content><story volume="01"></story><story volume="02"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const content = '<content><story volume="01">第01卷｜开始的余温</story><story volume="02">第02卷｜救赎的开始</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const separator = '\n';
   const updateVariable = '<UpdateVariable>{"x":1}</UpdateVariable>';
   const source = content + separator + updateVariable;
@@ -1481,7 +1511,7 @@ test('splits UpdateVariable after a structurally closed but schema-invalid root'
 });
 
 test('splits UpdateVariable after a closed root with an invalid child after now_plot', () => {
-  const content = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot><extra></extra></content>';
+  const content = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot><extra></extra></content>';
   const separator = '\n';
   const updateVariable = '<UpdateVariable>{"x":1}</UpdateVariable>';
   const source = content + separator + updateVariable;
@@ -1504,7 +1534,7 @@ test('splits UpdateVariable after a closed root with an invalid child after now_
 });
 
 test('splits UpdateVariable when root schema deviations surround now_plot', () => {
-  const content = '<content><story volume="01"></story><story volume="02"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot><extra></extra></content>';
+  const content = '<content><story volume="01">第01卷｜开始的余温</story><story volume="02">第02卷｜救赎的开始</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot><extra></extra></content>';
   const updateVariable = '<UpdateVariable>{"x":1}</UpdateVariable>';
   const source = `${content}\n${updateVariable}`;
 
@@ -1797,7 +1827,7 @@ test('streaming parsing retains a closed now_plot while content is still open', 
   assert.equal(result.streaming, true);
   assert.equal(result.complete, false);
   assert.equal(result.player, '菜月昴');
-  assert.deepEqual(result.story, { volume: '01' });
+  assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' });
   assert.equal(result.time.text, '魔女历1000年01月01日');
   assert.deepEqual(result.blocks, [{ type: 'narration', text: '已完成。' }]);
   assert.equal(result.progressText, '');
@@ -2456,7 +2486,7 @@ test('scanner C3 keeps a terminal local content owner inside the established ope
   const terminal = '</now_plot></content>';
   const header = currentResponse('').slice(0, -terminal.length);
   const updateVariable = '<UpdateVariable>{"x":1}</UpdateVariable>';
-  const local = '<content><story volume="02"></story><time period="夜间" layer="主线" basis="编辑演算">魔女历1000年01月02日</time><now_plot>内一。\n\n内二。</now_plot></content>';
+  const local = '<content><story volume="02">第02卷｜救赎的开始</story><time period="夜间" layer="主线" basis="编辑演算">魔女历1000年01月02日</time><now_plot>内一。\n\n内二。</now_plot></content>';
   const openSource = `${header}${local}\n${updateVariable}`;
   const closedSource = `${openSource}${terminal}`;
   const split = splitUpdateVariable(openSource);
@@ -2588,7 +2618,7 @@ test('scanner C4 rejects a retained local root pair as overflow terminal proof',
   const terminal = '</now_plot></content>';
   const header = currentResponse('').slice(0, -terminal.length);
   const updateVariable = '<UpdateVariable>{"x":1}</UpdateVariable>';
-  const local = '<content><story volume="02"></story>'
+  const local = '<content><story volume="02">第02卷｜救赎的开始</story>'
     + '<time period="夜间" layer="主线" basis="编辑演算">魔女历1000年01月02日</time>'
     + '<now_plot>内。</now_plot></content>';
 
@@ -2621,9 +2651,9 @@ test('scanner C4 rejects a retained local root pair as overflow terminal proof',
 });
 
 test('scanner C5 carries local root ownership across omitted retained partitions', () => {
-  const header = '<content><story volume="01"></story>'
+  const header = '<content><story volume="01">第01卷｜开始的余温</story>'
     + '<time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>';
-  const local = '<content><story volume="02"></story>'
+  const local = '<content><story volume="02">第02卷｜救赎的开始</story>'
     + '<time period="夜间" layer="主线" basis="编辑演算">魔女历1000年01月02日</time><now_plot>'
     + '<z></z>'.repeat(40)
     + '</now_plot></content>';
@@ -2688,7 +2718,7 @@ test('scanner C6 keeps unterminated UpdateVariable attempts inside the closed co
     for (const result of [complete, streaming]) {
       assert.equal(result.ok, true, label);
       assert.equal(result.player, '菜月昴', label);
-      assert.deepEqual(result.story, { volume: '01' }, label);
+      assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' }, label);
       assert.deepEqual(result.time, expectedTime, label);
       assert.deepEqual(result.blocks.map((block) => block.type), ['narration', 'invalid', 'dialogue'], label);
       assert.deepEqual(result.blocks[0], { type: 'narration', text: '前。' }, label);
@@ -2987,7 +3017,7 @@ test('scanner C7 requires the established plot close before proving the outer co
     for (const result of [parseNarrative(source), parseStreamingNarrative(source)]) {
       assert.equal(result.ok, true, label);
       assert.equal(result.player, '菜月昴', label);
-      assert.deepEqual(result.story, { volume: '01' }, label);
+      assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' }, label);
       assert.deepEqual(result.time, expectedTime, label);
       assert.deepEqual(result.blocks, [
         { type: 'narration', text: '前。' },
@@ -3152,7 +3182,7 @@ test('scanner C8 keeps later sibling evidence after a premature root-close pair'
         assert.equal(result.ok, true, label);
         assert.equal(result.protocol, 'current', label);
         assert.equal(result.player, '菜月昴', label);
-        assert.deepEqual(result.story, { volume: '01' }, label);
+        assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' }, label);
         assert.deepEqual(result.time, expectedTime, label);
         assert.deepEqual(result.blocks.slice(0, 3), [
           { type: 'narration', text: '前。' },
@@ -3530,7 +3560,7 @@ test('scanner C10 accepts completed local element evidence only before a still-l
   const terminal = '</now_plot></content>';
   const header = currentResponse('').slice(0, -terminal.length);
   const updateVariable = '<UpdateVariable>{"x":1}</UpdateVariable>';
-  const localStructuredContent = '<content><story volume="02"></story>'
+  const localStructuredContent = '<content><story volume="02">第02卷｜救赎的开始</story>'
     + '<time period="夜间" layer="主线" basis="编辑演算">魔女历1000年01月02日</time>'
     + '<now_plot>内。</now_plot></content>';
   const cases = [
@@ -3812,7 +3842,7 @@ test('scanner C8 preserves terminal UpdateVariable ownership after structural ov
     for (const result of [parseNarrative(source), parseStreamingNarrative(source)]) {
       assert.equal(result.ok, true, label);
       assert.equal(result.player, '菜月昴', label);
-      assert.deepEqual(result.story, { volume: '01' }, label);
+      assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' }, label);
       assert.ok(result.blocks.some((block) => block.type === 'dialogue' && block.text === '后。'), label);
       assert.equal(result.blocks.at(-1).reason, 'block-count-exceeded', label);
       assert.ok(errorCodes(result).includes('block-count-exceeded'), label);
@@ -4284,7 +4314,7 @@ test('a malformed local opener stays local before a later dialogue sibling', () 
 });
 
 test('streaming parsing does not treat a closing-tag substring in an open tail as a closed response', () => {
-  const source = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>仍在生成 </content> 后续';
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>仍在生成 </content> 后续';
   const result = parseStreamingNarrative(source);
 
   assert.equal(result.ok, true);
@@ -4303,7 +4333,7 @@ test('streaming parsing does not treat a closing-tag substring in an open tail a
 });
 
 test('streaming parsing marks a syntactically closed invalid response as non-streaming', () => {
-  const source = '<content version="2"><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const source = '<content version="2"><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const result = parseStreamingNarrative(source);
 
   assert.equal(result.ok, false);
@@ -4331,7 +4361,7 @@ test('streaming parsing keeps an unterminated content opener incomplete', () => 
 });
 
 test('streaming parsing treats a closed content root missing now_plot as complete but invalid', () => {
-  const source = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time></content>';
+  const source = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time></content>';
   const result = parseStreamingNarrative(source);
 
   assert.equal(result.ok, false);
@@ -4356,7 +4386,7 @@ test('streaming parsing preserves closed content for every partial legal UpdateV
     assert.equal(result.streaming, true, partial);
     assert.equal(result.complete, false, partial);
     assert.equal(result.player, '菜月昴', partial);
-    assert.deepEqual(result.story, { volume: '01' }, partial);
+    assert.deepEqual(result.story, { volume: '01', heading: '第01卷｜开始的余温' }, partial);
     assert.deepEqual(result.time, {
       period: '下午',
       layer: '主线',
@@ -4655,7 +4685,7 @@ test('preserves ordered valid structured blocks through the configured limit', (
 });
 
 test('applies the configured block limit to a completed streaming prefix', () => {
-  const prefix = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>';
+  const prefix = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>';
   const source = prefix + '<x></x>'.repeat(LIMITS.BLOCKS + 10);
   const result = parseStreamingNarrative(source);
 
@@ -5771,7 +5801,7 @@ test('round T rejects unsupported, unsafe, and malformed attribute entity refere
   const headerCases = [
     currentResponse('正文。', { player: '艾&bogus;米' }),
     '<content><story volume="0&bogus;"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>',
-    '<content><story volume="01"></story><time period="下&bogus;午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>',
+    '<content><story volume="01">第01卷｜开始的余温</story><time period="下&bogus;午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>',
   ];
   for (const source of headerCases) {
     const result = parseNarrative(source);

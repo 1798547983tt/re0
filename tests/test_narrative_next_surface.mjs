@@ -59,6 +59,7 @@ test('renderer constructs inert DOM and exposes settings, title, bubbles and ope
   assert.match(source, /replaceChildren/);
   assert.match(source, /splitEmphasizedName/);
   assert.match(source, /resolveCharacter/);
+  assert.match(source, /resolveVolumeTitle\(parsed\.story\?\.heading\)/);
   assert.match(source, /details\.open\s*=\s*true/);
   assert.match(source, /aria-expanded/);
   assert.match(source, /aria-pressed/);

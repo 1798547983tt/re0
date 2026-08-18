@@ -1,5 +1,5 @@
 import { CHARACTER_REGISTRY } from './characters.mjs';
-import { VOLUME_TITLES } from './titles.mjs';
+import { VOLUME_TITLES, formatStoryHeading } from './titles.mjs';
 import { renderNarrative } from './renderer.mjs';
 
 const mount = document.querySelector('[data-re0v2-mount]');
@@ -15,8 +15,12 @@ function option(value, label) {
 }
 
 function selectedSource(baseSource) {
+  const volume = VOLUME_TITLES.find((entry) => entry.volume === volumeSelect.value) ?? VOLUME_TITLES[0];
   return baseSource
-    .replace(/<story volume="\d{2}">/u, `<story volume="${volumeSelect.value}">`)
+    .replace(
+      /<story volume="\d{2}">[\s\S]*?<\/story>/u,
+      `<story volume="${volume.volume}">${formatStoryHeading(volume)}</story>`,
+    )
     .replace('{艾姬多娜}「知识并不保证正确答案，但它至少会让错误变得有趣。」', `{${characterSelect.value}}「这是一条用于检验专属头像、姓名强调、符号与流动文字的预览对白。」`);
 }
 

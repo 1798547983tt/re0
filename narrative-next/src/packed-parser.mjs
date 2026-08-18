@@ -1,3 +1,5 @@
+import { matchesStoryHeading } from './titles.mjs';
+
 const PACKED_PERIODS = new Set([
   '黎明', '清晨', '上午', '正午', '下午', '傍晚', '夜间', '深夜', '凌晨', '时段未详',
 ]);
@@ -170,27 +172,33 @@ function packedInnerSource(value) {
 export function parsePackedContentEnvelope(value) {
   const root = packedInnerSource(value);
   const source = root.inner;
-  const storyOpen = /^\s*<story\b([^>]*)>\s*<\/story>/iu.exec(source);
+  const storyOpen = /^\s*<story\b([^>]*)>\s*([\s\S]*?)\s*<\/story>/iu.exec(source);
   if (!storyOpen) {
     return { ok: false, streaming: root.streaming, player: root.player, story: null, time: null, blocks: [], errors: [{ code: 'missing-story', message: '缺少卷信息。' }] };
   }
   const storyAttributes = packedAttributes(storyOpen[1], new Set(['volume']), ['volume']);
-  if (!storyAttributes || !/^(?:0[1-9]|[12]\d|3\d)$/u.test(storyAttributes.volume)) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: null, time: null, blocks: [], errors: [{ code: 'invalid-story', message: '卷号无效。' }] };
+  const storyHeading = storyOpen[2].trim();
+  if (
+    !storyAttributes
+    || !/^(?:0[1-9]|[12]\d|3\d)$/u.test(storyAttributes.volume)
+    || !matchesStoryHeading(storyAttributes.volume, storyHeading)
+  ) {
+    return { ok: false, streaming: root.streaming, player: root.player, story: null, time: null, blocks: [], errors: [{ code: 'invalid-story', message: '卷号或篇章无效。' }] };
   }
+  const story = { volume: storyAttributes.volume, heading: storyHeading };
   const afterStory = source.slice(storyOpen[0].length);
   const timeOpen = /^\s*<time\b([^>]*)>\s*([\s\S]*?)\s*<\/time>/iu.exec(afterStory);
   if (!timeOpen) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: { volume: storyAttributes.volume }, time: null, blocks: [], errors: [{ code: 'missing-time', message: '缺少时间信息。' }] };
+    return { ok: false, streaming: root.streaming, player: root.player, story, time: null, blocks: [], errors: [{ code: 'missing-time', message: '缺少时间信息。' }] };
   }
   const timeAttributes = packedAttributes(timeOpen[1], new Set(['period', 'layer', 'basis']), ['period', 'layer', 'basis']);
   if (!timeAttributes || !PACKED_PERIODS.has(timeAttributes.period) || !PACKED_LAYERS.has(timeAttributes.layer) || !PACKED_BASES.has(timeAttributes.basis)) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: { volume: storyAttributes.volume }, time: null, blocks: [], errors: [{ code: 'invalid-time', message: '时间属性无效。' }] };
+    return { ok: false, streaming: root.streaming, player: root.player, story, time: null, blocks: [], errors: [{ code: 'invalid-time', message: '时间属性无效。' }] };
   }
   const afterTime = afterStory.slice(timeOpen[0].length);
   const plotOpen = /^\s*<now_plot>\s*/iu.exec(afterTime);
   if (!plotOpen) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: { volume: storyAttributes.volume }, time: { ...timeAttributes, text: timeOpen[2].trim() }, blocks: [], errors: [{ code: 'missing-plot', message: '缺少正文。' }] };
+    return { ok: false, streaming: root.streaming, player: root.player, story, time: { ...timeAttributes, text: timeOpen[2].trim() }, blocks: [], errors: [{ code: 'missing-plot', message: '缺少正文。' }] };
   }
   const plotTail = afterTime.slice(plotOpen[0].length);
   const plotClose = /<\/now_plot>\s*$/iu.exec(plotTail);
@@ -201,7 +209,7 @@ export function parsePackedContentEnvelope(value) {
     streaming,
     complete: !streaming,
     player: root.player,
-    story: { volume: storyAttributes.volume },
+    story,
     time: { ...timeAttributes, text: timeOpen[2].trim() },
     blocks: packedPlot(plot),
     errors: [],

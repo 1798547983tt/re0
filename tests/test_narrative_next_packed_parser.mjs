@@ -34,11 +34,24 @@ test('lightweight packed parser reads the captured inner content', async () => {
 
 test('lightweight packed parser keeps player and named dialogue structured', async () => {
   const { parsePackedContentEnvelope } = await loadPackedParser();
-  const inner = '<story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>{蕾姆}「你好。」\n\n{#}「出发。」</now_plot>';
+  const inner = '<story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>{蕾姆}「你好。」\n\n{#}「出发。」</now_plot>';
   const parsed = parsePackedContentEnvelope(inner);
   assert.deepEqual(parsed.blocks.map((block) => block.type), ['dialogue', 'player-dialogue']);
   assert.equal(parsed.blocks[0].speaker, '蕾姆');
   assert.equal(parsed.blocks[1].speaker, '#');
+});
+
+test('lightweight packed parser validates the story heading against its volume', async () => {
+  const { parsePackedContentEnvelope } = await loadPackedParser();
+  const valid = '<story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot>';
+  const mismatch = valid.replace('第01卷｜开始的余温', '第02卷｜救赎的开始');
+
+  assert.deepEqual(parsePackedContentEnvelope(valid).story, {
+    volume: '01',
+    heading: '第01卷｜开始的余温',
+  });
+  assert.equal(parsePackedContentEnvelope(mismatch).ok, false);
+  assert.equal(parsePackedContentEnvelope(mismatch).errors[0].code, 'invalid-story');
 });
 
 test('lightweight packed parser fails visibly without inventing missing metadata', async () => {

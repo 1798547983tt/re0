@@ -39,8 +39,8 @@ test('build emits one simple import plus an explicit streaming/completed pair', 
 
 test('main import uses the requested completed content matcher while the pair owns streaming', () => {
   const { main } = buildArtifacts();
-  const streaming = '<content player="菜月昴"><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「还在生成';
-  const completed = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「完成。」</now_plot></content>\n<UpdateVariable>{"x":1}</UpdateVariable>';
+  const streaming = '<content player="菜月昴"><story volume="01">第01卷｜开始的余温</story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「还在生成';
+  const completed = '<content><story volume="01">第01卷｜开始的余温</story><time>魔女历1000年01月01日</time><now_plot>{蕾姆}「完成。」</now_plot></content>\n<UpdateVariable>{"x":1}</UpdateVariable>';
   assert.equal(main.findRegex, '/<content>([\\s\\S]*?)<\\/content>/is');
   assert.equal(applyRegex(streaming, main), streaming);
   const replaced = applyRegex(completed, main);
@@ -50,8 +50,8 @@ test('main import uses the requested completed content matcher while the pair ow
 
 test('paired rules are mutually exclusive for their intended states', () => {
   const { streaming, completed } = buildArtifacts();
-  const open = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>生成中';
-  const closed = '<content><story volume="01"></story><time>魔女历1000年01月01日</time><now_plot>完成。</now_plot></content>';
+  const open = '<content><story volume="01">第01卷｜开始的余温</story><time>魔女历1000年01月01日</time><now_plot>生成中';
+  const closed = '<content><story volume="01">第01卷｜开始的余温</story><time>魔女历1000年01月01日</time><now_plot>完成。</now_plot></content>';
   assert.equal(toRegExp(streaming.findRegex).test(open), true);
   assert.equal(toRegExp(streaming.findRegex).test(closed), false);
   assert.equal(toRegExp(completed.findRegex).test(open), false);
@@ -74,8 +74,8 @@ test('replacement embeds the full visual system and only one capture token', () 
 
 test('main matcher accepts only the requested literal unversioned content opener', () => {
   const { main } = buildArtifacts();
-  const attributed = '<content player="菜月昴"><story volume="01"></story></content>';
-  const versioned = '<content version="2"><story volume="01"></story></content>';
+  const attributed = '<content player="菜月昴"><story volume="01">第01卷｜开始的余温</story></content>';
+  const versioned = '<content version="2"><story volume="01">第01卷｜开始的余温</story></content>';
   assert.equal(applyRegex(attributed, main), attributed);
   assert.equal(applyRegex(versioned, main), versioned);
 });
@@ -92,7 +92,7 @@ test('reference-style staged runtime scripts parse and artifact serialization is
 });
 
 test('packager produces a normal local HTML preview from the exact generated replacement', () => {
-  const preview = buildPackedPreview('<content><story volume="39"></story><time>魔女历1000年01月01日</time><now_plot>新的旅程。</now_plot></content>');
+  const preview = buildPackedPreview('<content><story volume="39">第39卷｜新的旅程</story><time>魔女历1000年01月01日</time><now_plot>新的旅程。</now_plot></content>');
   assert.match(preview, /^<!doctype html>/i);
   assert.match(preview, /data-re0v2-mount/);
   assert.match(preview, /<textarea[^>]*data-re0v2-source[^>]*><story\b/);

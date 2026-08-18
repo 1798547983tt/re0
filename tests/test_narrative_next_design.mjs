@@ -126,6 +126,14 @@ test('all 39 supplied volume titles resolve through seven kinetic families', () 
   assert.equal(resolveVolumeTitle('39').family, 'departure');
 });
 
+test('a canonical story heading resolves the matching beautified volume title', () => {
+  const resolved = resolveVolumeTitle('第20卷｜月下狂想曲');
+
+  assert.equal(resolved.volume, '20');
+  assert.equal(resolved.title, '月下狂想曲');
+  assert.equal(resolved.heading, '第20卷｜月下狂想曲');
+});
+
 test('seven ability categories retain distinct effect identities and unknown kinds fail closed', () => {
   assert.deepEqual(ABILITY_KINDS.map((item) => item.kind), [
     '一般技能', '权能', '加护', '魔法', '精灵术', '种族能力', '武技',

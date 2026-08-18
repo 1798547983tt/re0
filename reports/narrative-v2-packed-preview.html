@@ -778,7 +778,7 @@
 <body class="re0v2-preview-page">
 <div class="re0v2-shell" data-re0v2-mount>
 <main id="re0v2-app" data-re0v2-app aria-live="polite" aria-busy="true"></main>
-<textarea id="re0v2-source" data-re0v2-source hidden aria-hidden="true"><story volume="20"></story><time period="深夜" layer="主线" basis="编辑演算">魔女历1000年08月17日</time><now_plot>月色落进水路，远处的钟声被雾切成七段。城市仍在呼吸，却没有一扇窗愿意先亮起来。
+<textarea id="re0v2-source" data-re0v2-source hidden aria-hidden="true"><story volume="20">第20卷｜月下狂想曲</story><time period="深夜" layer="主线" basis="编辑演算">魔女历1000年08月17日</time><now_plot>月色落进水路，远处的钟声被雾切成七段。城市仍在呼吸，却没有一扇窗愿意先亮起来。
 
 {艾姬多娜}「知识并不保证正确答案，但它至少会让错误变得有趣。」
 
@@ -1578,6 +1578,20 @@ function normalizeVolume(value) {
   return String(number).padStart(2, '0');
 }
 
+function formatStoryHeading(value) {
+  const normalized = normalizeVolume(typeof value === 'object' ? value?.volume : value);
+  const record = typeof value === 'object'
+    ? value
+    : VOLUME_TITLES.find((entry) => entry.volume === normalized) ?? VOLUME_TITLES[0];
+  return `第${record.volume}卷｜${record.title}`;
+}
+
+function matchesStoryHeading(volume, heading) {
+  const normalizedVolume = String(volume ?? '').trim();
+  const record = VOLUME_TITLES.find((entry) => entry.volume === normalizedVolume);
+  return Boolean(record && String(heading ?? '').trim() === formatStoryHeading(record));
+}
+
 function hashText(text) {
   let hash = 2166136261;
   for (const character of text) {
@@ -1602,13 +1616,16 @@ function accentIndexes(characters, volume) {
 }
 
 function resolveVolumeTitle(volume) {
-  const normalized = normalizeVolume(volume);
-  const record = VOLUME_TITLES.find((entry) => entry.volume === normalized) ?? VOLUME_TITLES[0];
+  const lookup = String(volume ?? '').trim();
+  const headingRecord = VOLUME_TITLES.find((entry) => formatStoryHeading(entry) === lookup);
+  const normalized = headingRecord?.volume ?? normalizeVolume(lookup);
+  const record = headingRecord ?? VOLUME_TITLES.find((entry) => entry.volume === normalized) ?? VOLUME_TITLES[0];
   const numeric = Number.parseInt(normalized, 10);
   const family = SPECIAL_FAMILIES[normalized] ?? TITLE_FAMILIES[(numeric - 1) % TITLE_FAMILIES.length];
   const characters = Array.from(record.title);
   return {
     ...record,
+    heading: formatStoryHeading(record),
     family,
     characters,
     accentIndexes: accentIndexes(characters, normalized),
@@ -1879,27 +1896,33 @@ function packedInnerSource(value) {
 function parsePackedContentEnvelope(value) {
   const root = packedInnerSource(value);
   const source = root.inner;
-  const storyOpen = /^\s*<story\b([^>]*)>\s*<\/story>/iu.exec(source);
+  const storyOpen = /^\s*<story\b([^>]*)>\s*([\s\S]*?)\s*<\/story>/iu.exec(source);
   if (!storyOpen) {
     return { ok: false, streaming: root.streaming, player: root.player, story: null, time: null, blocks: [], errors: [{ code: 'missing-story', message: '缺少卷信息。' }] };
   }
   const storyAttributes = packedAttributes(storyOpen[1], new Set(['volume']), ['volume']);
-  if (!storyAttributes || !/^(?:0[1-9]|[12]\d|3\d)$/u.test(storyAttributes.volume)) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: null, time: null, blocks: [], errors: [{ code: 'invalid-story', message: '卷号无效。' }] };
+  const storyHeading = storyOpen[2].trim();
+  if (
+    !storyAttributes
+    || !/^(?:0[1-9]|[12]\d|3\d)$/u.test(storyAttributes.volume)
+    || !matchesStoryHeading(storyAttributes.volume, storyHeading)
+  ) {
+    return { ok: false, streaming: root.streaming, player: root.player, story: null, time: null, blocks: [], errors: [{ code: 'invalid-story', message: '卷号或篇章无效。' }] };
   }
+  const story = { volume: storyAttributes.volume, heading: storyHeading };
   const afterStory = source.slice(storyOpen[0].length);
   const timeOpen = /^\s*<time\b([^>]*)>\s*([\s\S]*?)\s*<\/time>/iu.exec(afterStory);
   if (!timeOpen) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: { volume: storyAttributes.volume }, time: null, blocks: [], errors: [{ code: 'missing-time', message: '缺少时间信息。' }] };
+    return { ok: false, streaming: root.streaming, player: root.player, story, time: null, blocks: [], errors: [{ code: 'missing-time', message: '缺少时间信息。' }] };
   }
   const timeAttributes = packedAttributes(timeOpen[1], new Set(['period', 'layer', 'basis']), ['period', 'layer', 'basis']);
   if (!timeAttributes || !PACKED_PERIODS.has(timeAttributes.period) || !PACKED_LAYERS.has(timeAttributes.layer) || !PACKED_BASES.has(timeAttributes.basis)) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: { volume: storyAttributes.volume }, time: null, blocks: [], errors: [{ code: 'invalid-time', message: '时间属性无效。' }] };
+    return { ok: false, streaming: root.streaming, player: root.player, story, time: null, blocks: [], errors: [{ code: 'invalid-time', message: '时间属性无效。' }] };
   }
   const afterTime = afterStory.slice(timeOpen[0].length);
   const plotOpen = /^\s*<now_plot>\s*/iu.exec(afterTime);
   if (!plotOpen) {
-    return { ok: false, streaming: root.streaming, player: root.player, story: { volume: storyAttributes.volume }, time: { ...timeAttributes, text: timeOpen[2].trim() }, blocks: [], errors: [{ code: 'missing-plot', message: '缺少正文。' }] };
+    return { ok: false, streaming: root.streaming, player: root.player, story, time: { ...timeAttributes, text: timeOpen[2].trim() }, blocks: [], errors: [{ code: 'missing-plot', message: '缺少正文。' }] };
   }
   const plotTail = afterTime.slice(plotOpen[0].length);
   const plotClose = /<\/now_plot>\s*$/iu.exec(plotTail);
@@ -1910,7 +1933,7 @@ function parsePackedContentEnvelope(value) {
     streaming,
     complete: !streaming,
     player: root.player,
-    story: { volume: storyAttributes.volume },
+    story,
     time: { ...timeAttributes, text: timeOpen[2].trim() },
     blocks: packedPlot(plot),
     errors: [],
@@ -2104,7 +2127,7 @@ function titleFitCqw(title) {
 }
 
 function renderTitle(documentRef, parsed) {
-  const title = resolveVolumeTitle(parsed.story?.volume);
+  const title = resolveVolumeTitle(parsed.story?.heading);
   const stage = element(documentRef, 'section', 're0v2-title-stage');
   stage.dataset.family = title.family;
   stage.dataset.length = title.characters.length > 18 ? 'long' : title.characters.length > 9 ? 'medium' : 'short';

@@ -28,6 +28,20 @@ function normalizeVolume(value) {
   return String(number).padStart(2, '0');
 }
 
+export function formatStoryHeading(value) {
+  const normalized = normalizeVolume(typeof value === 'object' ? value?.volume : value);
+  const record = typeof value === 'object'
+    ? value
+    : VOLUME_TITLES.find((entry) => entry.volume === normalized) ?? VOLUME_TITLES[0];
+  return `第${record.volume}卷｜${record.title}`;
+}
+
+export function matchesStoryHeading(volume, heading) {
+  const normalizedVolume = String(volume ?? '').trim();
+  const record = VOLUME_TITLES.find((entry) => entry.volume === normalizedVolume);
+  return Boolean(record && String(heading ?? '').trim() === formatStoryHeading(record));
+}
+
 function hashText(text) {
   let hash = 2166136261;
   for (const character of text) {
@@ -52,13 +66,16 @@ function accentIndexes(characters, volume) {
 }
 
 export function resolveVolumeTitle(volume) {
-  const normalized = normalizeVolume(volume);
-  const record = VOLUME_TITLES.find((entry) => entry.volume === normalized) ?? VOLUME_TITLES[0];
+  const lookup = String(volume ?? '').trim();
+  const headingRecord = VOLUME_TITLES.find((entry) => formatStoryHeading(entry) === lookup);
+  const normalized = headingRecord?.volume ?? normalizeVolume(lookup);
+  const record = headingRecord ?? VOLUME_TITLES.find((entry) => entry.volume === normalized) ?? VOLUME_TITLES[0];
   const numeric = Number.parseInt(normalized, 10);
   const family = SPECIAL_FAMILIES[normalized] ?? TITLE_FAMILIES[(numeric - 1) % TITLE_FAMILIES.length];
   const characters = Array.from(record.title);
   return {
     ...record,
+    heading: formatStoryHeading(record),
     family,
     characters,
     accentIndexes: accentIndexes(characters, normalized),

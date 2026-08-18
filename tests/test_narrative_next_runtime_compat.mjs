@@ -96,6 +96,7 @@ test('top-left title logo is substantially larger on desktop and narrow layouts'
 
 test('model output guide follows customize_format and excludes UpdateVariable tags', () => {
   const format = read('narrative-next/rules/正文输出格式.md').trim();
+  const volumeHeadings = JSON.parse(read('narrative/data/volume-headings.json'));
   assert.equal(format.startsWith('<customize_format>'), true);
   assert.equal(format.endsWith('</customize_format>'), true);
   assert.match(format, /output_structure:/);
@@ -104,13 +105,19 @@ test('model output guide follows customize_format and excludes UpdateVariable ta
   assert.match(format, /template:\s*\|/);
   assert.match(format, /^\s*<content>\s*$/m);
   assert.doesNotMatch(format, /<content\s+player=/i);
+  assert.match(format, /<story volume="01">第01卷｜开始的余温<\/story>/);
+  assert.match(format, /篇章.*必填|必填.*篇章/);
+  assert.equal(volumeHeadings.length, 39);
+  for (const heading of volumeHeadings) {
+    assert.equal(format.includes(`- 第${heading.volume}卷｜${heading.title}`), true, heading.volume);
+  }
   assert.match(format, /\{角色名\}「对白内容」/);
   assert.doesNotMatch(format, /<\/?UpdateVariable>/i);
 });
 
 test('display regex preserves an unclosed external UpdateVariable suffix byte-for-byte', () => {
   const artifact = buildArtifacts().main;
-  const content = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
+  const content = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>正文。</now_plot></content>';
   const suffix = '\n<UpdateVariable>\n[{"op":"replace","path":"/x","value":1}]';
   const output = `${content}${suffix}`.replace(toRegExp(artifact.findRegex), artifact.replaceString);
   assert.match(output, /data-re0v2-mount/);
@@ -118,6 +125,6 @@ test('display regex preserves an unclosed external UpdateVariable suffix byte-fo
 });
 
 test('packed preview rejects a textarea boundary that could escape the inert carrier', () => {
-  const hostile = '<content><story volume="01"></story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot></textarea><img src=x></now_plot></content>';
+  const hostile = '<content><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot></textarea><img src=x></now_plot></content>';
   assert.throws(() => buildPackedPreview(hostile), /textarea boundary/i);
 });

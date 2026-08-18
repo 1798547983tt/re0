@@ -1,3 +1,5 @@
+import { matchesStoryHeading } from './titles.mjs';
+
 const NAMED_ENTITIES = Object.freeze({
   amp: '&',
   apos: "'",
@@ -112,6 +114,7 @@ const DIAGNOSTIC_MESSAGES = Object.freeze({
   'invalid-root-structure': 'The required root structure is invalid.',
   'invalid-source': 'The source must be a string.',
   'invalid-story-attributes': 'The story attributes are invalid.',
+  'invalid-story-content': 'The story heading is missing or does not match its volume.',
   'invalid-time-attributes': 'The time attributes are invalid.',
   'invalid-time-content': 'The time text is invalid.',
   'invalid-trailing-content': 'Unexpected content follows the content root.',
@@ -882,7 +885,7 @@ function emptyResult(errorCodes, updateVariable = null) {
     ok: false,
     protocol: 'current',
     player: null,
-    story: { volume: null },
+    story: { volume: null, heading: null },
     time: { period: null, layer: null, basis: null, text: null },
     blocks: [],
     updateVariable,
@@ -968,9 +971,23 @@ function parseHeaderPrefix(scanner, end = scanner.source.length) {
   if (!storyAttributes.ok || !/^(?:0[1-9]|[12][0-9]|3[0-9])$/u.test(storyAttributes.values.volume ?? '')) {
     return { ok: false, errors: attributeErrorCodes('invalid-story-attributes', storyAttributes) };
   }
-  const storyClose = scanner.tagAt(story.end, 'close', 'story');
+  const storyClose = scanner.matchingClose(story, end);
   if (!storyClose || storyClose.end > end) {
     return { ok: false, errors: ['invalid-root-structure'] };
+  }
+  const rawStoryHeading = source.slice(story.end, storyClose.start).trim();
+  const storyHeading = decodeXmlEntities(rawStoryHeading);
+  if (
+    !rawStoryHeading
+    || rawStoryHeading.includes('<')
+    || rawStoryHeading.length > LIMITS.ATTRIBUTE
+    || containsUnsafeTextControl(rawStoryHeading)
+    || !matchesStoryHeading(storyAttributes.values.volume, storyHeading)
+  ) {
+    const codes = rawStoryHeading.length > LIMITS.ATTRIBUTE
+      ? ['invalid-story-content', 'attribute-too-long']
+      : ['invalid-story-content'];
+    return { ok: false, errors: codes };
   }
 
   cursor = skipWhitespace(source, storyClose.end);
@@ -1018,7 +1035,7 @@ function parseHeaderPrefix(scanner, end = scanner.source.length) {
     cursor: nowPlot.end,
     nowPlot,
     player: (contentAttributes.values.player ?? '').trim() || null,
-    story: { volume: storyAttributes.values.volume },
+    story: { volume: storyAttributes.values.volume, heading: storyHeading },
     time: {
       period: normalizedTime.period,
       layer: normalizedTime.layer,
@@ -1062,7 +1079,7 @@ function parseRootContextFromOpening(scanner, content, end = scanner.source.leng
   if (story.selfClosing) {
     cursor = story.end;
   } else {
-    const storyClose = scanner.tagAt(story.end, 'close', 'story');
+    const storyClose = scanner.matchingClose(story, end);
     if (!storyClose || storyClose.end > end) {
       return recoverRootContext(scanner, root, content.end, end);
     }

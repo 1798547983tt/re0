@@ -184,7 +184,7 @@ export function titleFitCqw(title) {
 }
 
 function renderTitle(documentRef, parsed) {
-  const title = resolveVolumeTitle(parsed.story?.volume);
+  const title = resolveVolumeTitle(parsed.story?.heading);
   const stage = element(documentRef, 'section', 're0v2-title-stage');
   stage.dataset.family = title.family;
   stage.dataset.length = title.characters.length > 18 ? 'long' : title.characters.length > 9 ? 'medium' : 'short';
