@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Re:0 Variable Update Receipt Preview</title>
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+        background: #050609;
+      }
+
+      body {
+        padding: clamp(1rem, 4vw, 4rem);
+      }
+
+      [data-re0-vu-preview-stage] {
+        display: grid;
+        gap: 2rem;
+        width: min(100%, 52rem);
+        margin: 0 auto;
+      }
+
+      [data-re0-vu-preview-state] {
+        display: grid;
+        gap: 0.7rem;
+      }
+
+      [data-re0-vu-preview-label],
+      [data-re0-vu-preview-error] {
+        margin: 0;
+        color: #a9a293;
+        font: 0.7rem/1.5 "Cascadia Mono", Consolas, monospace;
+        letter-spacing: 0.14em;
+      }
+
+      [data-re0-vu-preview-mount] [data-re0-vu-root] {
+        --re0-vu-seal-image: url("./assets/fate-ledger-seal.webp");
+      }
+    </style>
+  </head>
+  <body>
+    <main data-re0-vu-preview-stage>
+      <div data-re0-vu-preview-mount aria-live="polite"></div>
+    </main>
+    <script type="module" src="./preview.mjs"></script>
+  </body>
+</html>
