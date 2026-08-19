@@ -1,0 +1,17 @@
+{
+  "disabled": false,
+  "findRegex": "/<UpdateVariable>(?![\\s\\S]*<\\/UpdateVariable>)[\\s\\S]*$/g",
+  "id": "b3382080-9fb0-4c94-a16c-14d4fa7e8b67",
+  "markdownOnly": true,
+  "maxDepth": null,
+  "minDepth": null,
+  "placement": [
+    2
+  ],
+  "promptOnly": false,
+  "replaceString": "<section data-re0-vu-root data-re0-vu-state=\"pending\">\n  <details class=\"re0-vu-receipt\" aria-busy=\"true\">\n    <summary class=\"re0-vu-summary\">\n      <span class=\"re0-vu-brand\">RE:0 · FATE LEDGER</span>\n      <strong class=\"re0-vu-title\">命运演算中</strong>\n      <span class=\"re0-vu-subtitle\">正在核对本轮可持久化事实</span>\n    </summary>\n    <div class=\"re0-vu-body\">\n      <p>变量块仍在生成；回执将在依据与补丁闭合后呈现完整记录。</p>\n      <p class=\"re0-vu-protocol\" aria-label=\"状态协议领域\">\n        <span>世界</span><span>主角</span><span>轮回</span><span>关系</span>\n        <span>事件</span><span>线索</span><span>资产</span><span>规则</span>\n      </p>\n    </div>\n  </details>\n</section>\n<style>\n[data-re0-vu-root] {\n  --re0-vu-void: #08090d;\n  --re0-vu-ink: #eee7d9;\n  --re0-vu-muted: #a69d90;\n  --re0-vu-ice: #8fd6e8;\n  --re0-vu-blood: #9b3041;\n  --re0-vu-seal-image: url(\"https://cdn.jsdelivr.net/gh/1798547983tt/re0@f7bf19afb8a09240cd5da9f51cd91df570d486bc/variable-update/assets/fate-ledger-seal.webp\");\n  box-sizing: border-box;\n  max-width: 48rem;\n  margin: 0 auto;\n  color: var(--re0-vu-ink);\n  font-family: system-ui, \"Microsoft YaHei\", sans-serif;\n}\n\n[data-re0-vu-root] .re0-vu-receipt {\n  border: 1px solid color-mix(in srgb, var(--re0-vu-muted) 45%, transparent);\n  border-radius: 0.75rem;\n  background: var(--re0-vu-void) var(--re0-vu-seal-image) no-repeat right 1rem top 1rem / 4rem;\n}\n\n[data-re0-vu-root] .re0-vu-summary,\n[data-re0-vu-root] .re0-vu-body {\n  padding: 1rem;\n}\n\n[data-re0-vu-root] .re0-vu-summary {\n  display: grid;\n  gap: 0.25rem;\n  cursor: pointer;\n}\n\n[data-re0-vu-root] .re0-vu-brand,\n[data-re0-vu-root] .re0-vu-subtitle,\n[data-re0-vu-root] .re0-vu-section-title {\n  color: var(--re0-vu-muted);\n}\n\n[data-re0-vu-root] .re0-vu-body {\n  border-top: 1px solid color-mix(in srgb, var(--re0-vu-muted) 30%, transparent);\n}\n\n[data-re0-vu-root] .re0-vu-protocol {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 0.5rem;\n}\n\n[data-re0-vu-root] .re0-vu-source {\n  overflow: auto;\n  white-space: pre-wrap;\n  overflow-wrap: anywhere;\n  color: var(--re0-vu-ink);\n}\n\n[data-re0-vu-root] .re0-vu-patch {\n  margin-top: 1rem;\n}\n</style>",
+  "runOnEdit": false,
+  "scriptName": "[美化]Re:Zero·变量更新中",
+  "substituteRegex": 0,
+  "trimStrings": []
+}

@@ -1,0 +1,57 @@
+[data-re0-vu-root] {
+  --re0-vu-void: #08090d;
+  --re0-vu-ink: #eee7d9;
+  --re0-vu-muted: #a69d90;
+  --re0-vu-ice: #8fd6e8;
+  --re0-vu-blood: #9b3041;
+  --re0-vu-seal-image: url("__RE0_FATE_LEDGER_SEAL__");
+  box-sizing: border-box;
+  max-width: 48rem;
+  margin: 0 auto;
+  color: var(--re0-vu-ink);
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+}
+
+[data-re0-vu-root] .re0-vu-receipt {
+  border: 1px solid color-mix(in srgb, var(--re0-vu-muted) 45%, transparent);
+  border-radius: 0.75rem;
+  background: var(--re0-vu-void) var(--re0-vu-seal-image) no-repeat right 1rem top 1rem / 4rem;
+}
+
+[data-re0-vu-root] .re0-vu-summary,
+[data-re0-vu-root] .re0-vu-body {
+  padding: 1rem;
+}
+
+[data-re0-vu-root] .re0-vu-summary {
+  display: grid;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+[data-re0-vu-root] .re0-vu-brand,
+[data-re0-vu-root] .re0-vu-subtitle,
+[data-re0-vu-root] .re0-vu-section-title {
+  color: var(--re0-vu-muted);
+}
+
+[data-re0-vu-root] .re0-vu-body {
+  border-top: 1px solid color-mix(in srgb, var(--re0-vu-muted) 30%, transparent);
+}
+
+[data-re0-vu-root] .re0-vu-protocol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+[data-re0-vu-root] .re0-vu-source {
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--re0-vu-ink);
+}
+
+[data-re0-vu-root] .re0-vu-patch {
+  margin-top: 1rem;
+}

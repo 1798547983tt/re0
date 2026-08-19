@@ -1,0 +1,18 @@
+{
+  "disabled": false,
+  "findRegex": "/<UpdateVariable>\\s*<(?:[Aa]nalysis|[Aa]nalyze)>\\s*((?:(?!<|\\x60{3}|~{3})[\\s\\S])*?)\\s*<\\/(?:[Aa]nalysis|[Aa]nalyze)>\\s*<JSONPatch>\\s*(\\[(?:(?!<|\\x60{3}|~{3})[\\s\\S])*?\\])\\s*<\\/JSONPatch>\\s*<\\/UpdateVariable>/g",
+  "id": "4f84f2b6-57e9-45a9-9b51-1ed99c6c53ce",
+  "markdownOnly": true,
+  "maxDepth": null,
+  "minDepth": null,
+  "placement": [
+    1,
+    2
+  ],
+  "promptOnly": false,
+  "replaceString": "<section data-re0-vu-root data-re0-vu-state=\"complete\">\n  <details class=\"re0-vu-receipt\">\n    <summary class=\"re0-vu-summary\">\n      <span class=\"re0-vu-brand\">RE:0 · FATE LEDGER</span>\n      <strong class=\"re0-vu-title\">世界线记录已闭合</strong>\n      <span class=\"re0-vu-subtitle\">本轮更新依据与补丁已完整生成</span>\n    </summary>\n    <div class=\"re0-vu-body\">\n      <p class=\"re0-vu-section-title\">更新依据</p>\n      <pre class=\"re0-vu-source\" role=\"textbox\" aria-readonly=\"true\" readonly tabindex=\"0\">$1</pre>\n      <details class=\"re0-vu-patch\">\n        <summary>原始 JSON Patch</summary>\n        <pre class=\"re0-vu-source\" role=\"textbox\" aria-readonly=\"true\" readonly tabindex=\"0\">$2</pre>\n      </details>\n    </div>\n  </details>\n</section>\n<style>\n[data-re0-vu-root] {\n  --re0-vu-void: #08090d;\n  --re0-vu-ink: #eee7d9;\n  --re0-vu-muted: #a69d90;\n  --re0-vu-ice: #8fd6e8;\n  --re0-vu-blood: #9b3041;\n  --re0-vu-seal-image: url(\"https://cdn.jsdelivr.net/gh/1798547983tt/re0@f7bf19afb8a09240cd5da9f51cd91df570d486bc/variable-update/assets/fate-ledger-seal.webp\");\n  box-sizing: border-box;\n  max-width: 48rem;\n  margin: 0 auto;\n  color: var(--re0-vu-ink);\n  font-family: system-ui, \"Microsoft YaHei\", sans-serif;\n}\n\n[data-re0-vu-root] .re0-vu-receipt {\n  border: 1px solid color-mix(in srgb, var(--re0-vu-muted) 45%, transparent);\n  border-radius: 0.75rem;\n  background: var(--re0-vu-void) var(--re0-vu-seal-image) no-repeat right 1rem top 1rem / 4rem;\n}\n\n[data-re0-vu-root] .re0-vu-summary,\n[data-re0-vu-root] .re0-vu-body {\n  padding: 1rem;\n}\n\n[data-re0-vu-root] .re0-vu-summary {\n  display: grid;\n  gap: 0.25rem;\n  cursor: pointer;\n}\n\n[data-re0-vu-root] .re0-vu-brand,\n[data-re0-vu-root] .re0-vu-subtitle,\n[data-re0-vu-root] .re0-vu-section-title {\n  color: var(--re0-vu-muted);\n}\n\n[data-re0-vu-root] .re0-vu-body {\n  border-top: 1px solid color-mix(in srgb, var(--re0-vu-muted) 30%, transparent);\n}\n\n[data-re0-vu-root] .re0-vu-protocol {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 0.5rem;\n}\n\n[data-re0-vu-root] .re0-vu-source {\n  overflow: auto;\n  white-space: pre-wrap;\n  overflow-wrap: anywhere;\n  color: var(--re0-vu-ink);\n}\n\n[data-re0-vu-root] .re0-vu-patch {\n  margin-top: 1rem;\n}\n</style>",
+  "runOnEdit": false,
+  "scriptName": "[美化]Re:Zero·完整变量更新",
+  "substituteRegex": 0,
+  "trimStrings": []
+}
