@@ -197,12 +197,19 @@ test('production-source safety rejects event handlers and every external URL sur
   const fragment = readFileSync(SOURCE_PATHS.pending, 'utf8');
   const css = readFileSync(SOURCE_PATHS.css, 'utf8');
   assert.doesNotThrow(() => assertSafeProductionSource(fragment, css));
+  assert.doesNotThrow(() => assertSafeProductionSource('RE:0 // FATE LEDGER', css));
   assert.throws(() => assertSafeProductionSource('<svg/onload=alert(1)>', css), /script-free|unsafe/i);
   assert.throws(() => assertSafeProductionSource(fragment, 'x { background: url(//evil.test/a.png) }'), /external|unsafe/i);
   assert.throws(() => assertSafeProductionSource('<img src="//evil.test/a.png">', css), /external|unsafe/i);
   assert.throws(() => assertSafeProductionSource('<img/src=//evil.test/a.png>', css), /external|unsafe/i);
   assert.throws(() => assertSafeProductionSource('<a href="https://evil.test/">x</a>', css), /external|unsafe/i);
   assert.throws(() => assertSafeProductionSource('<svg><use xlink:href="http://evil.test/a.svg#x"></use></svg>', css), /external|unsafe/i);
+  assert.throws(() => assertSafeProductionSource('<object data=//evil.test/payload.svg>', css), /external|unsafe/i);
+  assert.throws(() => assertSafeProductionSource('<video poster=https://evil.test/pixel.png>', css), /external|unsafe/i);
+  assert.throws(
+    () => assertSafeProductionSource('<img srcset="local.png 1x, //evil.test/a.png 2x">', css),
+    /external|unsafe/i,
+  );
 });
 
 test('asset manifest validation pins the exact revision and jsDelivr release URL', () => {

@@ -59,9 +59,8 @@ export function assertSafeProductionSource(fragment, css) {
   if (/<script\b|(?:[\s/<])on[a-z][\w:-]*\s*=|javascript\s*:/iu.test(source)) {
     throw new Error('production source must remain script-free');
   }
-  const externalCssUrl = /url\(\s*['"]?(?:https?:)?\/\//iu;
-  const externalHtmlUrl = /(?:[\s/<])(?:src|href|xlink:href)\s*=\s*['"]?\s*(?:https?:)?\/\//iu;
-  if (/@import\b|@font-face\b/iu.test(source) || externalCssUrl.test(source) || externalHtmlUrl.test(source)) {
+  const externalUrl = /https?:\/\/|\/\/[^\s"'<>),;]+/iu;
+  if (/@import\b|@font-face\b/iu.test(source) || externalUrl.test(source)) {
     throw new Error('production source must not load external code or fonts');
   }
   if (css.toLowerCase().includes('</style')) {
