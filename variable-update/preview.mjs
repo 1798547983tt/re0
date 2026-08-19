@@ -16,6 +16,10 @@ const SAMPLE_PATCH = JSON.stringify([
   },
 ], null, 2);
 
+const FRAGMENT_PATHS = Object.freeze({
+  pending: './pending.html',
+  complete: './complete.html',
+});
 const mount = document.querySelector('[data-re0-vu-preview-mount]');
 const params = new URLSearchParams(window.location.search);
 const requestedState = params.get('state');
@@ -23,39 +27,45 @@ const state = new Set(['pending', 'complete', 'both']).has(requestedState) ? req
 const shouldOpen = params.get('open') === 'all';
 const states = state === 'both' ? ['pending', 'complete'] : [state];
 
+function buildPreviewState(fragmentState, fragmentSource) {
+  const wrapper = document.createElement('section');
+  wrapper.setAttribute('data-re0-vu-preview-state', '');
+
+  const label = document.createElement('p');
+  label.setAttribute('data-re0-vu-preview-label', '');
+  label.textContent = `${fragmentState.toUpperCase()} // SOURCE FRAGMENT`;
+  wrapper.append(label);
+
+  const template = document.createElement('template');
+  template.innerHTML = fragmentSource;
+  wrapper.append(template.content.cloneNode(true));
+
+  const analysisSource = wrapper.querySelector('.re0-vu-analysis-source');
+  if (analysisSource) analysisSource.textContent = SAMPLE_ANALYSIS;
+  const patchSource = wrapper.querySelector('.re0-vu-patch-source');
+  if (patchSource) patchSource.textContent = SAMPLE_PATCH;
+
+  if (shouldOpen) {
+    for (const details of wrapper.querySelectorAll('details')) details.open = true;
+  }
+  return wrapper;
+}
+
+async function loadFragment(fragmentState) {
+  const response = await fetch(FRAGMENT_PATHS[fragmentState], { cache: 'no-store' });
+  if (!response.ok) throw new Error(`${fragmentState} fragment returned HTTP ${response.status}`);
+  return buildPreviewState(fragmentState, await response.text());
+}
+
 async function render() {
   try {
-    const [pendingResponse, completeResponse] = await Promise.all([
-      fetch('./pending.html', { cache: 'no-store' }),
-      fetch('./complete.html', { cache: 'no-store' }),
-    ]);
-    if (!pendingResponse.ok) throw new Error(`pending fragment returned HTTP ${pendingResponse.status}`);
-    if (!completeResponse.ok) throw new Error(`complete fragment returned HTTP ${completeResponse.status}`);
-    const [pendingTemplate, completeTemplate] = await Promise.all([
-      pendingResponse.text(),
-      completeResponse.text(),
-    ]);
-    const templates = new Map([
-      ['pending', pendingTemplate],
-      ['complete', completeTemplate],
-    ]);
-    const rendered = states.map((fragmentState) => {
-      const fragment = templates.get(fragmentState)
-        .split('$1').join(SAMPLE_ANALYSIS)
-        .split('$2').join(SAMPLE_PATCH);
-      return `<section data-re0-vu-preview-state><p data-re0-vu-preview-label>${fragmentState.toUpperCase()} // SOURCE FRAGMENT</p>${fragment}</section>`;
-    }).join('');
-
-    mount.innerHTML = rendered;
-    if (shouldOpen) {
-      for (const details of mount.querySelectorAll('details')) details.open = true;
-    }
+    const previews = await Promise.all(states.map((fragmentState) => loadFragment(fragmentState)));
+    mount.replaceChildren(...previews);
   } catch (error) {
-    mount.replaceChildren();
     const message = document.createElement('p');
     message.setAttribute('data-re0-vu-preview-error', '');
     message.textContent = `无法载入变量更新回执预览：${error instanceof Error ? error.message : String(error)}`;
-    mount.append(message);
+    mount.replaceChildren(message);
   }
 }
 

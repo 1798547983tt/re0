@@ -5,6 +5,7 @@
   --re0-vu-silver: #b9bec1;
   --re0-vu-ice: #8fd6e8;
   --re0-vu-blood: #9b3041;
+  --re0-vu-blood-bright: #d47a87;
   --re0-vu-panel: #101116;
   --re0-vu-panel-deep: #0b0c11;
   --re0-vu-line: rgba(185, 190, 193, 0.34);
@@ -280,14 +281,14 @@
 
 [data-re0-vu-root] .re0-vu-state-code {
   font-family: var(--re0-vu-mono);
-  font-size: 0.61rem;
+  font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   line-height: 1.2;
 }
 
 [data-re0-vu-root] .re0-vu-state-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.15em;
   line-height: 1.25;
 }
@@ -632,7 +633,7 @@
 }
 
 [data-re0-vu-root][data-re0-vu-state="complete"] .re0-vu-state-chip {
-  color: color-mix(in srgb, var(--re0-vu-blood) 82%, var(--re0-vu-silver));
+  color: var(--re0-vu-blood-bright);
 }
 
 [data-re0-vu-root][data-re0-vu-state="complete"] .re0-vu-sigil-art {

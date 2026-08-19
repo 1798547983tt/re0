@@ -62,11 +62,38 @@ function ruleBlock(css, selector) {
   return match[1];
 }
 
-function assertSingleRoot(html, state) {
+function relativeLuminance(hex) {
+  const channels = hex.slice(1).match(/.{2}/gu).map((value) => Number.parseInt(value, 16) / 255);
+  const linear = channels.map((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4));
+  return (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+}
+
+function contrastRatio(first, second) {
+  const [lighter, darker] = [relativeLuminance(first), relativeLuminance(second)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function tokenHex(block, name) {
+  const match = block.match(new RegExp(`--re0-vu-${name}:\\s*(#[0-9a-f]{6})`, 'iu'));
+  assert.ok(match, `missing exact hexadecimal ${name} token`);
+  return match[1].toLowerCase();
+}
+
+function assertSingleRoot(html, state, label) {
   const roots = openingTags(html, 'section').filter((attrs) => hasAttribute(attrs, 'data-re0-vu-root'));
   assert.equal(roots.length, 1, `${state} must contain one data-re0-vu-root section`);
   assert.ok(hasAttribute(roots[0], 'data-re0-vu-state', state), `${state} root must expose its exact state`);
+  assert.ok(hasAttribute(roots[0], 'aria-label', label), `${state} root must expose a distinct direct accessible label`);
 }
+
+test('fragments remain multi-message safe without fixed IDs or ID references', () => {
+  for (const [state, html] of Object.entries({ pending: source.pending, complete: source.complete })) {
+    assert.doesNotMatch(html, /\sid\s*=/iu, `${state} must not duplicate fixed IDs across messages`);
+    assert.doesNotMatch(html, /\saria-labelledby\s*=/iu, `${state} must use direct accessible names`);
+  }
+  assertSingleRoot(source.pending, 'pending', '变量更新回执：命运演算中');
+  assertSingleRoot(source.complete, 'complete', '变量更新回执：世界线记录已闭合');
+});
 
 test('summary anatomy adds a fallback-safe fate sigil, heading group, state code, and chevron', () => {
   for (const [state, html] of Object.entries({ pending: source.pending, complete: source.complete })) {
@@ -83,13 +110,15 @@ test('summary anatomy adds a fallback-safe fate sigil, heading group, state code
     assert.match(html, /class="re0-vu-state-chip"/u, `${state} summary must include a state chip`);
     assert.match(html, /class="re0-vu-state-code"/u, `${state} summary must include a state code`);
     assert.match(html, /class="re0-vu-chevron"[^>]*aria-hidden="true"/u, `${state} summary must include a decorative chevron`);
+    const title = html.match(/<([a-z][\w-]*)\b([^>]*class="[^"]*re0-vu-title[^"]*"[^>]*)>/iu);
+    assert.ok(title, `${state} summary must include its title phrasing element`);
+    assert.notEqual(title[1].toLowerCase(), 'h2', `${state} summary title must remain phrasing content`);
+    assert.ok(hasAttribute(title[2], 'role', 'heading'), `${state} summary title must expose heading semantics`);
+    assert.ok(hasAttribute(title[2], 'aria-level', '2'), `${state} summary title must be heading level 2`);
   }
 });
 
 test('fragments use one closed native details tree with exact pending and complete state contracts', () => {
-  assertSingleRoot(source.pending, 'pending');
-  assertSingleRoot(source.complete, 'complete');
-
   const pendingDetails = openingTags(source.pending, 'details');
   const completeDetails = openingTags(source.complete, 'details');
   assert.equal(pendingDetails.length, 1, 'pending has only the outer receipt details');
@@ -118,6 +147,8 @@ test('visible copy is exact, original, and never overstates validation or execut
 
 test('both states expose the eight protocol domains once as a semantic ledger rail', () => {
   for (const [state, html] of Object.entries({ pending: source.pending, complete: source.complete })) {
+    assert.doesNotMatch(html, /<nav\b/iu, `${state} domain index must not create a navigation landmark without links`);
+    assert.match(html, /<(?:section|div)\b[^>]*class="[^"]*re0-vu-domain-index[^"]*"[^>]*aria-label="状态协议八域"/iu);
     const rail = html.match(/<(?:ol|ul)\b[^>]*class="[^"]*re0-vu-domain-rail[^"]*"[^>]*>([\s\S]*?)<\/(?:ol|ul)>/iu);
     assert.ok(rail, `${state} must use an ol or ul domain rail`);
     const items = [...rail[1].matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/giu)].map((match) => stripTags(match[1]));
@@ -138,6 +169,12 @@ test('indexed bodies disclose rationale before a separately focusable raw patch'
   assert.match(source.complete, /data-re0-vu-section="02"/u);
   assert.match(source.complete, />\s*02\s*</u);
   assert.match(source.complete, />\s*RAW JSON PATCH\s*</u);
+  assert.match(source.pending, /<h3\b[^>]*class="re0-vu-section-title"[^>]*>\s*世界线尚未落笔\s*<\/h3>/u);
+  assert.match(source.complete, /<h3\b[^>]*class="re0-vu-section-title"[^>]*>\s*更新依据\s*<\/h3>/u);
+  assert.match(
+    source.complete,
+    /class="re0-vu-section-title"[^>]*role="heading"[^>]*aria-level="3"[^>]*>\s*原始 JSON Patch\s*</u,
+  );
 
   const completePres = [...source.complete.matchAll(/<pre\b([^>]*)>([\s\S]*?)<\/pre>/giu)];
   assert.equal(completePres.length, 2, 'complete must expose exactly two readonly pre regions');
@@ -146,7 +183,10 @@ test('indexed bodies disclose rationale before a separately focusable raw patch'
     assert.ok(hasAttribute(match[1], 'role', 'textbox'), `pre ${index + 1} must use role=textbox`);
     assert.ok(hasAttribute(match[1], 'aria-readonly', 'true'), `pre ${index + 1} must be aria-readonly`);
     assert.ok(hasAttribute(match[1], 'tabindex', '0'), `pre ${index + 1} must be focusable`);
+    assert.equal(hasAttribute(match[1], 'readonly'), false, `pre ${index + 1} must not use the invalid readonly HTML attribute`);
   }
+  assert.ok(hasAttribute(completePres[0][1], 'aria-label', '本轮变量更新依据'));
+  assert.ok(hasAttribute(completePres[1][1], 'aria-label', '原始 JSON Patch'));
   assert.doesNotMatch(source.pending, /\$(?:1|2)/u, 'pending must never contain replacement tokens');
 });
 
@@ -179,6 +219,22 @@ test('local typography pairs a Chinese serif face with a compact mono ledger fac
   assert.match(source.css, /font-family:[^;]*(?:Songti|STSong|Noto Serif|Source Han|Iowan|Georgia)/iu);
   assert.match(source.css, /--re0-vu-mono:[^;]*(?:Cascadia|SFMono|Consolas|Liberation Mono)/iu);
   assert.doesNotMatch(source.css, /\bArial\b|\bRoboto\b|\bInter\b|Space Grotesk|system-ui/iu);
+});
+
+test('complete state microcopy uses a WCAG-readable bright seal color', () => {
+  const root = rootBlock(source.css);
+  const panel = tokenHex(root, 'panel');
+  const bright = tokenHex(root, 'blood-bright');
+  assert.equal(panel, '#101116');
+  assert.equal(bright, '#d47a87');
+  assert.ok(contrastRatio(bright, panel) >= 4.5, 'bright seal text must reach 4.5:1 against the ledger panel');
+
+  const completeChip = ruleBlock(
+    source.css,
+    '[data-re0-vu-root][data-re0-vu-state="complete"] .re0-vu-state-chip',
+  );
+  assert.match(completeChip, /color:\s*var\(--re0-vu-blood-bright\)/u);
+  assert.doesNotMatch(completeChip, /var\(--re0-vu-blood\)/u, 'dark blood is decorative, not complete-state microcopy');
 });
 
 test('native disclosure and readonly sheets remain touchable, focusable, and overflow-safe', () => {
@@ -220,7 +276,6 @@ test('container and viewport fallbacks reflow the summary, side code, rail, and 
 
 test('state motion is semantic, decorative, namespaced, and fully removable', () => {
   const keyframes = [...source.css.matchAll(/@keyframes\s+([\w-]+)/gu)].map((match) => match[1]);
-  assert.ok(keyframes.length >= 6, 'coordinated pending and complete motion keyframes are required');
   for (const name of keyframes) assert.match(name, /^re0-vu-/u, `keyframe ${name} must be namespaced`);
   for (const semantic of ['orbit', 'worldline', 'pulse', 'trace', 'seal-settle', 'reveal']) {
     assert.ok(keyframes.some((name) => name.includes(semantic)), `missing ${semantic} motion`);
@@ -270,8 +325,8 @@ test('development preview supports both states, forced disclosure, long inert sa
   assert.match(html, /--re0-vu-seal-image:\s*url\(["']\.\/assets\/fate-ledger-seal\.webp["']\)/u);
   assert.match(html, /data-re0-vu-preview-mount/u);
   assert.match(html, /<script\s+type="module"\s+src="\.\/preview\.mjs"/u);
-  assert.match(js, /fetch\(["']\.\/pending\.html["']/u);
-  assert.match(js, /fetch\(["']\.\/complete\.html["']/u);
+  assert.match(js, /pending:\s*["']\.\/pending\.html["']/u);
+  assert.match(js, /complete:\s*["']\.\/complete\.html["']/u);
   assert.match(js, /URLSearchParams/u);
   assert.match(js, /state/u);
   assert.match(js, /pending/u);
@@ -279,8 +334,15 @@ test('development preview supports both states, forced disclosure, long inert sa
   assert.match(js, /both/u);
   assert.match(js, /open/u);
   assert.match(js, /all/u);
+  assert.match(js, /states\.map\(/u, 'preview must fetch only the requested state set');
+  assert.match(js, /fetch\(FRAGMENT_PATHS\[fragmentState\]/u);
   assert.match(js, /querySelectorAll\(["']details["']\)/u);
-  assert.match(js, /innerHTML/u, 'preview may mount its trusted local fragments');
+  assert.match(js, /\.innerHTML\s*=\s*fragmentSource/u, 'preview may parse only its trusted local fragment source');
+  assert.doesNotMatch(js, /mount\.innerHTML|\.split\(["']\$[12]/u, 'sample values must not be spliced into HTML strings');
+  assert.match(js, /querySelector\(["']\.re0-vu-analysis-source["']\)/u);
+  assert.match(js, /querySelector\(["']\.re0-vu-patch-source["']\)/u);
+  assert.match(js, /analysisSource\.textContent\s*=\s*SAMPLE_ANALYSIS/u);
+  assert.match(js, /patchSource\.textContent\s*=\s*SAMPLE_PATCH/u);
   assert.match(js, /textContent/u, 'preview errors must render as inert readable text');
   assert.match(js, /[\u4e00-\u9fff][\s\S]{180,}/u, 'preview must include a long CJK stress sample');
   assert.match(js, /JSON\.stringify|"op"|\/世界\//u, 'preview must include a JSON patch stress sample');
