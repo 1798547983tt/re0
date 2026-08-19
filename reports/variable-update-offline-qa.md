@@ -41,7 +41,7 @@
 
 窄屏交互测量为 `360×900`，视觉记录包含 `360×1900` 的截图设置：document `clientWidth/scrollWidth` 都是 `345`（滚动条占用宽度），roots 约 `313px`。在 `320×640` 时 document `clientWidth/scrollWidth` 都是 `305`，roots 约 `273px`；summary 为两列（`57.6px + minmax`），domain rail 保持四列。`pre` 为 `overflow: auto`，无页面横向溢出。
 
-长 CJK/JSON 证据：`360px` 时 `pre clientWidth/scrollWidth = 271/255`，`320px` 时为 `231/215`；均保持 `overflow: auto` 与 `pre-wrap`，patch 允许纵向滚动而没有带来页面横向滚动。
+长 CJK/JSON 证据：`360px` 时两个 `<pre>` 的 `clientWidth/scrollWidth` 分别为 `271/271` 与 `255/255`；`320px` 时分别为 `231/231` 与 `215/215`；均保持 `overflow: auto` 与 `pre-wrap`，patch 允许纵向滚动而没有带来页面横向滚动。
 
 浏览器原始截图先以 JPEG 返回；随后以 Pillow `save(format='PNG', optimize=True)` 无缩放、无裁切转为真实 PNG。转码保持解码后的 RGB 画面与尺寸不变；以下均为最终文件的 Pillow 解码与 8-byte magic 验证。
 
