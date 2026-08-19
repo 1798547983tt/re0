@@ -1,0 +1,16 @@
+<content player="菜月昴"><story volume="01">第01卷｜开始的余温</story><time period="下午" layer="主线" basis="编辑演算">魔女历1000年01月01日</time><now_plot>风穿过王都的街巷。
+
+{艾米莉亚}「我们走吧。」
+
+{#}「好。」
+
+<scene location="王都" time="下午" mood="不安">人群忽然安静下来。</scene>
+
+<ability user="贝亚特丽丝" name="阴魔法" kind="魔法" affinity="火,风,阴"><effect>紫色光幕挡住飞刃。</effect><description>以阴属性构筑屏障。</description></ability>
+
+<check type="闪避" actor="菜月昴" target="艾尔莎">1d20=14｜情境+2｜DC15｜成功｜擦身避开</check>
+
+<restart deathId="loop-001" checkpoint="赃物库前">世界在白光中重启。</restart></now_plot></content>
+<UpdateVariable>
+{"loop":1}
+</UpdateVariable>

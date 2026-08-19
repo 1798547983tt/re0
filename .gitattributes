@@ -1,0 +1,16 @@
+/narrative/**/*.mjs text eol=lf
+/narrative/**/*.json text eol=lf
+/narrative/**/*.md text eol=lf
+/narrative/*.html text eol=lf
+/narrative/*.css text eol=lf
+/narrative/*.md text eol=lf
+/narrative-next/** text eol=lf
+/narrative-next/assets/**/*.webp binary
+/dist/regex-Re0·正文美化.json text eol=lf
+/dist/regex-Re0·正文美化-v2*.json text eol=lf
+/tools/package_narrative_regex.mjs text eol=lf
+/tools/package_narrative_next_regex.mjs text eol=lf
+/tests/test_narrative_*.mjs text eol=lf
+/reports/narrative-*.md text eol=lf
+/reports/narrative-v2-packed-preview.html text eol=lf
+/docs/superpowers/plans/2026-08-15-re0-narrative-combat.md text eol=lf
