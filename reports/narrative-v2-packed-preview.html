@@ -227,11 +227,11 @@
   position: relative;
   z-index: 8;
   display: flex;
-  min-height: 136px;
+  min-height: 0;
   align-items: center;
   justify-content: space-between;
   gap: 22px;
-  padding: 10px clamp(16px, 4vw, 38px);
+  padding: 2px clamp(16px, 4vw, 38px);
   border-bottom: 1px solid var(--re0v2-theme-line);
   background: color-mix(in srgb, var(--re0v2-surface) 92%, transparent);
   backdrop-filter: blur(14px);
@@ -261,8 +261,8 @@
 }
 
 .re0v2-identity { display: flex; min-width: 0; align-items: center; gap: 16px; }
-.re0v2-logo { position: relative; display: grid; width: clamp(320px, 50vw, 540px); min-height: 172px; place-items: center start; }
-.re0v2-logo img { position: relative; z-index: 1; display: block; width: 100%; max-height: 184px; object-fit: contain; object-position: left center; filter: drop-shadow(0 6px 16px rgba(0, 0, 0, .18)); }
+.re0v2-logo { position: relative; display: grid; width: clamp(320px, 50vw, 540px); height: 134px; overflow: hidden; place-items: center start; }
+.re0v2-logo img { position: relative; z-index: 1; display: block; width: 100%; max-height: 184px; object-fit: contain; object-position: left center; filter: drop-shadow(0 6px 16px rgba(0, 0, 0, .18)); transform: translateY(-25px); }
 [data-theme="night"] .re0v2-logo img { filter: drop-shadow(0 0 18px rgba(207, 63, 120, .22)) drop-shadow(0 8px 18px rgba(0, 0, 0, .62)); }
 [data-theme="tea"] .re0v2-logo img { filter: sepia(.18) drop-shadow(0 5px 10px rgba(63, 46, 21, .22)); }
 
@@ -535,9 +535,6 @@
 }
 .re0v2-avatar img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; }
 .re0v2-avatar__initial { position: relative; z-index: 0; font: 900 32px/1 "Noto Serif SC", serif; text-shadow: 0 2px 8px rgba(0, 0, 0, .4); }
-.re0v2-avatar__edit { position: absolute; right: 4px; bottom: 4px; z-index: 3; display: grid; width: 24px; aspect-ratio: 1; place-items: center; border: 1px solid rgba(255, 255, 255, .72); border-radius: 50%; color: #fff; background: rgba(8, 10, 16, .72); box-shadow: 0 3px 10px rgba(0, 0, 0, .35); font: 800 12px/1 sans-serif; opacity: .78; transition: opacity 160ms ease, transform 160ms ease; }
-.re0v2-avatar[data-action="edit-avatar"]:hover .re0v2-avatar__edit,
-.re0v2-avatar[data-action="edit-avatar"]:focus-visible .re0v2-avatar__edit { opacity: 1; transform: scale(1.08); }
 [data-theme="day"] .re0v2-avatar { box-shadow: 0 9px 24px rgba(36, 93, 119, .2); }
 [data-theme="night"] .re0v2-avatar { border-radius: 8px; box-shadow: 0 0 0 2px rgba(8, 4, 12, .9), 0 0 22px color-mix(in srgb, var(--re0v2-character-primary) 45%, transparent); }
 [data-theme="tea"] .re0v2-avatar { box-shadow: 4px 5px 0 rgba(76, 57, 30, .14); }
@@ -783,9 +780,9 @@
 
 @container (max-width: 420px) {
   .re0v2-reader { border-radius: 10px 3px 10px 3px; }
-  .re0v2-topbar { min-height: 106px; gap: 8px; padding: 8px 12px; }
-  .re0v2-logo { width: 220px; min-height: 104px; }
-  .re0v2-logo img { max-height: 114px; }
+  .re0v2-topbar { min-height: 0; gap: 8px; padding: 2px 12px; }
+  .re0v2-logo { width: 220px; height: 84px; }
+  .re0v2-logo img { max-height: 114px; transform: translateY(-16px); }
   .re0v2-settings-toggle { width: 44px; min-width: 44px; height: 44px; overflow: hidden; padding: 0; color: transparent; font-size: 0; }
   .re0v2-settings-toggle__glyph { color: var(--re0v2-ink); font-size: 18px; }
   .re0v2-settings-panel { right: -2px; width: calc(100cqw - 24px); }
@@ -797,7 +794,6 @@
   .re0v2-dialogue[data-side="player"] { grid-template-columns: minmax(0, 1fr) 64px; }
   .re0v2-avatar { width: 60px; }
   .re0v2-avatar__initial { font-size: 23px; }
-  .re0v2-avatar__edit { right: 3px; bottom: 3px; width: 20px; font-size: 10px; }
   .re0v2-avatar-editor { padding: 7px; }
   .re0v2-avatar-editor__panel { width: 100%; max-height: calc(100dvh - 14px); gap: 13px; border-radius: 15px 3px 15px 3px; padding: 17px 13px; }
   .re0v2-avatar-editor__heading { grid-template-columns: 78px minmax(0, 1fr); gap: 12px; padding-right: 34px; }
@@ -2375,11 +2371,6 @@ function renderAvatar(documentRef, character, storage, { interactive = true } = 
     frame.append(image);
   } else {
     frame.dataset.fallback = 'initial';
-  }
-  if (interactive) {
-    const edit = element(documentRef, 'span', 're0v2-avatar__edit', '✎');
-    edit.setAttribute('aria-hidden', 'true');
-    frame.append(edit);
   }
   return frame;
 }

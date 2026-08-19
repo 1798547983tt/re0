@@ -74,6 +74,8 @@ test('avatars open one local editor with file, HTTPS URL, reset and accessible d
   const source = read('narrative-next/src/renderer.mjs');
   const css = read('narrative-next/styles.css');
   assert.match(source, /data\.action\s*=\s*'edit-avatar'|button\([^)]*'edit-avatar'/);
+  assert.doesNotMatch(source, /re0v2-avatar__edit|['"]✎['"]/);
+  assert.doesNotMatch(css, /\.re0v2-avatar__edit/);
   assert.match(source, /type\s*=\s*'file'/);
   assert.match(source, /accept\s*=\s*['"]image\/png,image\/jpeg,image\/webp,image\/gif,image\/avif['"]/);
   assert.match(source, /type\s*=\s*'url'/);

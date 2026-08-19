@@ -86,12 +86,18 @@ test('avatar grows to 90px desktop and 60px narrow layout', () => {
   assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-avatar\s*\{[^}]*width:\s*60px/s);
 });
 
-test('top-left title logo is substantially larger on desktop and narrow layouts', () => {
+test('top-left title logo stays enlarged while its transparent canvas is cropped into a compact bar', () => {
   const css = read('narrative-next/styles.css');
+  const topbarRule = css.match(/\.re0v2-topbar\s*\{([^}]*)\}/s)?.[1] || '';
   const logoRule = css.match(/\.re0v2-logo\s*\{([^}]*)\}/s)?.[1] || '';
   assert.match(logoRule, /width:\s*clamp\(320px,\s*50vw,\s*540px\)/);
-  assert.match(logoRule, /min-height:\s*172px/);
-  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo\s*\{[^}]*width:\s*220px/s);
+  assert.match(logoRule, /height:\s*134px/);
+  assert.match(logoRule, /overflow:\s*hidden/);
+  assert.match(topbarRule, /min-height:\s*0/);
+  assert.match(topbarRule, /padding:\s*2px\s+clamp\(16px,\s*4vw,\s*38px\)/);
+  assert.match(css, /\.re0v2-logo img\s*\{[^}]*max-height:\s*184px[^}]*translateY\(-25px\)/s);
+  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo\s*\{[^}]*width:\s*220px[^}]*height:\s*84px/s);
+  assert.match(css, /@container\s*\(max-width:\s*420px\)[\s\S]*?\.re0v2-logo img\s*\{[^}]*max-height:\s*114px[^}]*translateY\(-16px\)/s);
 });
 
 test('model output guide follows customize_format and excludes UpdateVariable tags', () => {

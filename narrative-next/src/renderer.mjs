@@ -244,11 +244,6 @@ function renderAvatar(documentRef, character, storage, { interactive = true } = 
   } else {
     frame.dataset.fallback = 'initial';
   }
-  if (interactive) {
-    const edit = element(documentRef, 'span', 're0v2-avatar__edit', '✎');
-    edit.setAttribute('aria-hidden', 'true');
-    frame.append(edit);
-  }
   return frame;
 }
 
