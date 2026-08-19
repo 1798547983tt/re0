@@ -1,7 +1,7 @@
 # Re:Zero 变量更新回执：离线 QA 回执
 
 日期：2026-08-20
-候选源码 HEAD（本报告提交在其后）：`65720d468ce7f23766272dc9026becafc20987e1`
+候选源码 HEAD（本报告提交在其后）：`81f270605f87e6f0c1265ca5f04b7f29c4a98d28`
 
 ## 范围与运行时边界
 
@@ -31,6 +31,7 @@
 
 - 默认时两个 outer `<details>` 及 complete 内嵌 `<details>` 均为 closed。
 - 已以 pointer 展开 pending、complete 与 nested details。DOM 实测：`2` 个 root、`1` 个 patch summary、`1` 个 patch source、`2` 个 `<pre>`；没有重复 patch。单态 pending 只 fetch/render `1` 个 root。
+- 两态的八域轨道均实际显示规范标签“主角档案”。
 - `summary` 可成为 active element；其 computed focus outline 为 `rgb(185, 190, 193) solid 2px`，outline offset 为 `4px`。
 - In-app Browser automation 的 Enter/Space 没有触发 native summary 开合。因此真实键盘激活仍是 pending，不能写作通过。
 - 正常预览 console 为 `0` errors、`0` warnings。
@@ -39,7 +40,7 @@
 
 宽屏交互测量 viewport 为 `1440×1000`；当次视觉记录还包含 `1440×1800` 的截图设置。document `clientWidth/scrollWidth` 均为 `1440`，无页面横向溢出；root 宽 `768px` 且居中。`pre` 使用 `overflow: auto` 与 `pre-wrap`；本地正常素材可见。
 
-窄屏交互测量为 `360×900`，视觉记录包含 `360×1900` 的截图设置：document `clientWidth/scrollWidth` 都是 `345`（滚动条占用宽度），roots 约 `313px`。在 `320×640` 时 document `clientWidth/scrollWidth` 都是 `305`，roots 约 `273px`；summary 为两列（`57.6px + minmax`），domain rail 保持四列。`pre` 为 `overflow: auto`，无页面横向溢出。
+窄屏交互测量为 `360×900`，视觉记录包含 `360×1900` 的截图设置：document `clientWidth/scrollWidth` 都是 `345`（滚动条占用宽度），两根 roots 分别约 `313px` 与 `318px`。在 `320×640` 时 document `clientWidth/scrollWidth` 都是 `305`，两根 roots 分别约 `273px` 与 `278px`；summary 为两列（`57.6px + minmax`），domain rail 保持四列。`pre` 为 `overflow: auto`，无页面横向溢出。
 
 长 CJK/JSON 证据：`360px` 时两个 `<pre>` 的 `clientWidth/scrollWidth` 分别为 `271/271` 与 `255/255`；`320px` 时分别为 `231/231` 与 `215/215`；均保持 `overflow: auto` 与 `pre-wrap`，patch 允许纵向滚动而没有带来页面横向滚动。
 
@@ -47,8 +48,8 @@
 
 | 文件 | 用途 | 解码尺寸与格式 | PNG magic | bytes | SHA-256 |
 | --- | --- | --- | --- | ---: | --- |
-| [variable-update-wide.png](variable-update-wide.png) | 宽屏：两态、完整回执依据 | `1440×1007`, PNG/RGB | `89504e470d0a1a0a` | 530105 | `cd6942d2863e28ead4cad39e0dec18dc1ff5ae20a0dc214354b1485581fd3ec2` |
-| [variable-update-narrow.png](variable-update-narrow.png) | 窄屏：两态头部、重排与依据顶部 | `360×997`, PNG/RGB | `89504e470d0a1a0a` | 329824 | `ad2383dee4dbb68fcf529b2258e573912dc2bd97ae18ef539cc001b4531622d2` |
+| [variable-update-wide.png](variable-update-wide.png) | 宽屏：两态、完整回执依据 | `1440×1327`, PNG/RGB | `89504e470d0a1a0a` | 615993 | `b39eacaa83ae8691c7df26ce2df0e3bd3f7ffed1875b27b3e7e6a78f41632274` |
+| [variable-update-narrow.png](variable-update-narrow.png) | 窄屏：两态头部、重排与依据顶部 | `360×1327`, PNG/RGB | `89504e470d0a1a0a` | 410500 | `b7185a9792a9639a115e6dbc5ffb1ea103f4e45c7a008404e19aa853282fed1b` |
 
 最终截图均采用 single-viewport capture，以避开 In-app Browser fullPage compositor 对 transformed details layer 的拼接重复；宽图展示两态和依据，窄图展示两态头部/重排及依据顶部。DOM 计数已证明没有重复 patch：这是捕获工具行为，不是产物重复。
 
@@ -72,8 +73,8 @@ CDP emulate `prefers-reduced-motion: reduce` 后 media query 匹配为 true；ar
 
 | 项目 | bytes | SHA-256 | 状态 |
 | --- | ---: | --- | --- |
-| `dist/regex-Re0·变量更新中.json` | 24898 | `231b27b7861a4b5f01a7b8da9cc156c5330a0c0de0468ad710c9bde9b3b37bfb` | JSON parsed、current |
-| `dist/regex-Re0·完整变量更新.json` | 25866 | `6fcdf2dcf07cec9b45717b52b0753d3a5d0e870bcbfe47efcca918f0459d9847` | JSON parsed、current |
+| `dist/regex-Re0·变量更新中.json` | 24904 | `35f4f4c83f8a912d3463a717811ae5bbbaba0ca1c4ed1c7095713cd4e46c2330` | JSON parsed、current |
+| `dist/regex-Re0·完整变量更新.json` | 25872 | `7776298274ffe0c35975aed500f0845d5388934559d951d9e318ba6aa5e59600` | JSON parsed、current |
 | `variable-update/styles.css` | 20491 | `2d00c61f34eab21df27b54abfcd9307dc6299859f2cb8eca37b13dafec3c8e79` | LF |
 | `variable-update/assets/fate-ledger-seal.webp` | 1171138 | `4db0a415e558f4af4c466f8777d97a6d5481970a00701ffaba3fa0c8dc626962` | fixed production asset |
 
