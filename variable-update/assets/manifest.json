@@ -1,14 +1,16 @@
 {
   "schemaVersion": 1,
-  "assetId": "fate-ledger-seal",
   "releaseRevision": "f7bf19afb8a09240cd5da9f51cd91df570d486bc",
-  "releaseUrl": "https://cdn.jsdelivr.net/gh/1798547983tt/re0@f7bf19afb8a09240cd5da9f51cd91df570d486bc/variable-update/assets/fate-ledger-seal.webp",
-  "localPath": "assets/fate-ledger-seal.webp",
-  "mediaType": "image/webp",
-  "width": 1024,
-  "height": 1024,
-  "sha256": "4db0a415e558f4af4c466f8777d97a6d5481970a00701ffaba3fa0c8dc626962",
-  "description": "透明背景的变量更新回执命运账本纹章，以破碎钟盘、闭合世界线与暗红蜡封构成；无文字、无人物。",
-  "generatedWith": "OpenAI built-in ImageGen",
-  "sourcePromptSummary": "Dark fantasy fate-ledger seal with a broken clock dial, closed worldline, and fractured crimson wax."
+  "asset": {
+    "id": "fate-ledger-seal",
+    "releaseUrl": "https://cdn.jsdelivr.net/gh/1798547983tt/re0@f7bf19afb8a09240cd5da9f51cd91df570d486bc/variable-update/assets/fate-ledger-seal.webp",
+    "localPath": "assets/fate-ledger-seal.webp",
+    "mediaType": "image/webp",
+    "width": 1024,
+    "height": 1024,
+    "sha256": "4db0a415e558f4af4c466f8777d97a6d5481970a00701ffaba3fa0c8dc626962",
+    "description": "透明背景的变量更新回执命运账本纹章，以破碎钟盘、闭合世界线与暗红蜡封构成；无文字、无人物。",
+    "generatedWith": "OpenAI built-in ImageGen",
+    "sourcePromptSummary": "Dark fantasy fate-ledger seal with a broken clock dial, closed worldline, and fractured crimson wax."
+  }
 }
