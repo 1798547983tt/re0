@@ -31,7 +31,7 @@
 - `dist/regex-Re0·变量更新中.json`
 - `dist/regex-Re0·完整变量更新.json`
 
-普通模式按文件逐个写入；如果第二个文件写入失败，可能留下第一个已更新文件。重新运行命令会从源码恢复两个输出。`--check` 是只读字节比对：不写文件，两个文件均与当前源码生成的字节完全一致时 exit 0，否则返回失败状态。`validate-source` 的来源是未来 packager 源码与其 `tests/test_variable_update_*.mjs` 测试。
+普通模式按文件逐个写入；如果第二个文件写入失败，可能留下第一个已更新文件。重新运行命令会从源码恢复两个输出。`--check` 是只读字节比对：不写文件，两个文件均与当前源码生成的字节完全一致时 exit 0，否则返回失败状态。`validate-source` 的来源是现有 packager 源码与其 `tests/test_variable_update_*.mjs` 测试。
 
 ## 依赖分类与验收边界
 

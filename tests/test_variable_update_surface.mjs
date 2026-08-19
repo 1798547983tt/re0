@@ -22,7 +22,7 @@ const source = Object.freeze({
 });
 
 const FORBIDDEN_COPY = /NØRMA|CASSIOPEIA|龙族|NEW-Dragon-Raja|完整性已验证|校验通过|已执行|写入成功/u;
-const DOMAINS = ['世界', '主角', '轮回', '关系', '事件', '线索', '资产', '规则'];
+const DOMAINS = ['世界', '主角档案', '轮回', '关系', '事件', '线索', '资产', '规则'];
 
 function occurrences(value, pattern) {
   return [...value.matchAll(pattern)].length;

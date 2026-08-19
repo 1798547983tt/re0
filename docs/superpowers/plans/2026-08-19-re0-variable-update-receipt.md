@@ -195,7 +195,7 @@ Expected: all package tests pass.
 
 - [ ] **Step 1: Write the failing surface tests**
 
-Require both fragments to have logical summary heading order, distinct pending/complete state attributes, native details controls, visible Chinese titles and subtitles, and the eight protocol labels `世界、主角、轮回、关系、事件、线索、资产、规则`. Require the complete source to keep `$1` and `$2` inside focusable readonly `<pre>` elements.
+Require both fragments to have logical summary heading order, distinct pending/complete state attributes, native details controls, visible Chinese titles and subtitles, and the eight protocol labels `世界、主角档案、轮回、关系、事件、线索、资产、规则`. Require the complete source to keep `$1` and `$2` inside focusable readonly `<pre>` elements.
 
 Require CSS to contain namespaced tokens, asset token, focus-visible rules, `prefers-reduced-motion`, a maximum-width container, a narrow `@container` or media query at or below 360px, CJK wrapping, overflow handling, local font stacks, CSS-only asset fallback, and no `@import`, external font URL, unnamespaced keyframe, or global element selector.
 
