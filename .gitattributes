@@ -1,3 +1,5 @@
+/.gitattributes text eol=lf
+
 /narrative/**/*.mjs text eol=lf
 /narrative/**/*.json text eol=lf
 /narrative/**/*.md text eol=lf
@@ -9,3 +11,14 @@
 /tests/test_narrative_*.mjs text eol=lf
 /reports/narrative-*.md text eol=lf
 /docs/superpowers/plans/2026-08-15-re0-narrative-combat.md text eol=lf
+
+/variable-update/**/*.mjs text eol=lf
+/variable-update/**/*.json text eol=lf
+/variable-update/*.html text eol=lf
+/variable-update/*.css text eol=lf
+/dist/regex-Re0·变量更新中.json text eol=lf
+/dist/regex-Re0·完整变量更新.json text eol=lf
+/tools/package_variable_update_regex.mjs text eol=lf
+/tests/test_variable_update_*.mjs text eol=lf
+/reports/variable-update-*.md text eol=lf
+/docs/superpowers/plans/2026-08-19-re0-variable-update-receipt.md text eol=lf

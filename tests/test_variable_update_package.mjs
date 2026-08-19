@@ -2,12 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const PACKAGER_PATH = resolve(ROOT, 'tools/package_variable_update_regex.mjs');
 const MANIFEST_PATH = resolve(ROOT, 'variable-update/assets/manifest.json');
+const SOURCE_PATHS = Object.freeze({
+  pending: resolve(ROOT, 'variable-update/pending.html'),
+  complete: resolve(ROOT, 'variable-update/complete.html'),
+  css: resolve(ROOT, 'variable-update/styles.css'),
+});
 const EXPECTED_OUTPUTS = Object.freeze({
   pending: resolve(ROOT, 'dist/regex-Re0·变量更新中.json'),
   complete: resolve(ROOT, 'dist/regex-Re0·完整变量更新.json'),
@@ -37,9 +42,11 @@ const {
   PENDING_FIND_REGEX,
   COMPLETE_FIND_REGEX,
   OUTPUTS,
+  assertSafeProductionSource,
   buildArtifacts,
   serializeArtifacts,
   simulateReplacement,
+  validateAssetManifest,
 } = packager;
 
 function sha256(value) {
@@ -50,6 +57,10 @@ function occurrences(haystack, needle) {
   return haystack.split(needle).length - 1;
 }
 
+function replacementTokens(value) {
+  return String(value).match(/\$(?:\$|&|\x60|'|<[^>]+>|\d{1,2})/g) ?? [];
+}
+
 function snapshot(path) {
   const bytes = readFileSync(path);
   return {
@@ -58,18 +69,63 @@ function snapshot(path) {
   };
 }
 
+test('all variable-update maintained text paths and artifacts are pinned to LF', () => {
+  const paths = [
+    '.gitattributes',
+    'variable-update/pending.html',
+    'variable-update/complete.html',
+    'variable-update/styles.css',
+    'variable-update/preview.mjs',
+    'variable-update/assets/manifest.json',
+    'dist/regex-Re0·变量更新中.json',
+    'dist/regex-Re0·完整变量更新.json',
+    'tools/package_variable_update_regex.mjs',
+    'tests/test_variable_update_package.mjs',
+    'reports/variable-update-offline-qa.md',
+    'docs/superpowers/plans/2026-08-19-re0-variable-update-receipt.md',
+  ];
+  const attributes = spawnSync('git', ['check-attr', '-z', 'eol', '--', ...paths], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  });
+  assert.equal(attributes.status, 0, attributes.stderr || attributes.stdout);
+  const fields = attributes.stdout.split('\0');
+  const eolByPath = new Map();
+  for (let index = 0; index + 2 < fields.length; index += 3) {
+    eolByPath.set(fields[index], fields[index + 2]);
+  }
+  for (const path of paths) assert.equal(eolByPath.get(path), 'lf', `${path} must have eol=lf`);
+
+  for (const path of [
+    '.gitattributes',
+    'variable-update/pending.html',
+    'variable-update/complete.html',
+    'variable-update/styles.css',
+    'variable-update/assets/manifest.json',
+    'dist/regex-Re0·变量更新中.json',
+    'dist/regex-Re0·完整变量更新.json',
+    'tools/package_variable_update_regex.mjs',
+    'tests/test_variable_update_package.mjs',
+    'docs/superpowers/plans/2026-08-19-re0-variable-update-receipt.md',
+  ]) assert.doesNotMatch(readFileSync(resolve(ROOT, path), 'utf8'), /\r/, `${path} must not contain CR bytes`);
+});
+
 test('packager exports the complete variable-update package API', () => {
   for (const name of [
     'PENDING_FIND_REGEX',
     'COMPLETE_FIND_REGEX',
     'OUTPUTS',
+    'assertSafeProductionSource',
     'buildArtifacts',
     'serializeArtifacts',
     'simulateReplacement',
+    'validateAssetManifest',
   ]) assert.ok(name in packager, `${name} must be exported`);
+  assert.equal(typeof assertSafeProductionSource, 'function');
   assert.equal(typeof buildArtifacts, 'function');
   assert.equal(typeof serializeArtifacts, 'function');
   assert.equal(typeof simulateReplacement, 'function');
+  assert.equal(typeof validateAssetManifest, 'function');
 });
 
 test('findRegex constants remain byte-for-byte identical to the reference matchers', () => {
@@ -99,10 +155,24 @@ test('both artifacts expose exactly the SillyTavern 13-field display contract', 
   }
   assert.deepEqual(pending.placement, [2]);
   assert.deepEqual(complete.placement, [1, 2]);
+  assert.equal(pending.id, 'b3382080-9fb0-4c94-a16c-14d4fa7e8b67');
+  assert.equal(complete.id, '4f84f2b6-57e9-45a9-9b51-1ed99c6c53ce');
   assert.notEqual(pending.id, complete.id);
   assert.notEqual(pending.scriptName, complete.scriptName);
   assert.match(pending.scriptName, /变量更新中/);
   assert.match(complete.scriptName, /完整变量更新/);
+
+  const otherIds = readdirSync(resolve(ROOT, 'dist'), { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.json') && !Object.values(OUTPUTS).some((path) => path.endsWith(entry.name)))
+    .map((entry) => JSON.parse(readFileSync(resolve(ROOT, 'dist', entry.name), 'utf8')).id)
+    .filter(Boolean);
+  assert.ok(!otherIds.includes(pending.id), 'pending UUID must not collide with another dist artifact');
+  assert.ok(!otherIds.includes(complete.id), 'complete UUID must not collide with another dist artifact');
+});
+
+test('replacement-token scanner recognizes every JavaScript replacement token family', () => {
+  const fixtures = ['$10', '$$', '$&', `$${String.fromCharCode(96)}`, "$'", '$<name>', '$1'];
+  assert.deepEqual(replacementTokens(fixtures.join('|')), fixtures);
 });
 
 test('replacement payloads use only their declared capture tokens and fixed safe asset URL', () => {
@@ -118,14 +188,39 @@ test('replacement payloads use only their declared capture tokens and fixed safe
     assert.doesNotMatch(artifact.replaceString, /@font-face|fonts\.(?:googleapis|gstatic)|\.(?:woff2?|ttf|otf)(?:[?"')])/iu);
   }
 
-  for (const token of ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$&']) {
-    assert.equal(occurrences(pending.replaceString, token), 0, `pending must not contain ${token}`);
-  }
-  assert.equal(occurrences(complete.replaceString, '$1'), 1);
-  assert.equal(occurrences(complete.replaceString, '$2'), 1);
-  for (const token of ['$3', '$4', '$5', '$6', '$7', '$8', '$9', '$&']) {
-    assert.equal(occurrences(complete.replaceString, token), 0, `complete must not contain ${token}`);
-  }
+  assert.deepEqual(replacementTokens(pending.replaceString), []);
+  assert.deepEqual(replacementTokens(complete.replaceString), ['$1', '$2']);
+});
+
+test('production-source safety rejects event handlers and every external URL surface', () => {
+  assert.equal(typeof assertSafeProductionSource, 'function', 'assertSafeProductionSource must be exported');
+  const fragment = readFileSync(SOURCE_PATHS.pending, 'utf8');
+  const css = readFileSync(SOURCE_PATHS.css, 'utf8');
+  assert.doesNotThrow(() => assertSafeProductionSource(fragment, css));
+  assert.throws(() => assertSafeProductionSource('<svg/onload=alert(1)>', css), /script-free|unsafe/i);
+  assert.throws(() => assertSafeProductionSource(fragment, 'x { background: url(//evil.test/a.png) }'), /external|unsafe/i);
+  assert.throws(() => assertSafeProductionSource('<img src="//evil.test/a.png">', css), /external|unsafe/i);
+  assert.throws(() => assertSafeProductionSource('<img/src=//evil.test/a.png>', css), /external|unsafe/i);
+  assert.throws(() => assertSafeProductionSource('<a href="https://evil.test/">x</a>', css), /external|unsafe/i);
+  assert.throws(() => assertSafeProductionSource('<svg><use xlink:href="http://evil.test/a.svg#x"></use></svg>', css), /external|unsafe/i);
+});
+
+test('asset manifest validation pins the exact revision and jsDelivr release URL', () => {
+  assert.equal(typeof validateAssetManifest, 'function', 'validateAssetManifest must be exported');
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
+  assert.deepEqual(validateAssetManifest(manifest), { releaseUrl: manifest.asset.releaseUrl });
+
+  assert.throws(
+    () => validateAssetManifest({ ...manifest, releaseRevision: manifest.releaseRevision.toUpperCase() }),
+    /revision/i,
+  );
+  assert.throws(
+    () => validateAssetManifest({
+      ...manifest,
+      asset: { ...manifest.asset, releaseUrl: `https://evil.test/${manifest.releaseRevision}/fate-ledger-seal.webp` },
+    }),
+    /release URL/i,
+  );
 });
 
 test('pending replacement consumes the unfinished block without leaking partial model text', () => {

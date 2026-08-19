@@ -39,25 +39,29 @@ function read(path) {
     .replaceAll('\r\n', '\n');
 }
 
-function readManifest() {
-  const manifest = JSON.parse(read(MANIFEST_PATH));
+export function validateAssetManifest(manifest) {
   const releaseUrl = manifest?.asset?.releaseUrl;
   const revision = manifest?.releaseRevision;
-  if (typeof releaseUrl !== 'string' || !releaseUrl.startsWith('https://')) {
-    throw new Error('asset release URL must be HTTPS');
+  if (typeof revision !== 'string' || !/^[a-f0-9]{40}$/u.test(revision)) {
+    throw new Error('asset releaseRevision must be exactly 40 lowercase hexadecimal characters');
   }
-  if (typeof revision !== 'string' || revision.length === 0 || !releaseUrl.includes(revision)) {
-    throw new Error('asset release URL must include the top-level releaseRevision');
-  }
+  const expectedUrl = `https://cdn.jsdelivr.net/gh/1798547983tt/re0@${revision}/variable-update/assets/fate-ledger-seal.webp`;
+  if (releaseUrl !== expectedUrl) throw new Error('asset release URL must match the pinned jsDelivr path');
   return { releaseUrl };
 }
 
-function assertSafeProductionSource(fragment, css) {
+function readManifest() {
+  return validateAssetManifest(JSON.parse(read(MANIFEST_PATH)));
+}
+
+export function assertSafeProductionSource(fragment, css) {
   const source = `${fragment}\n${css}`;
-  if (/<script\b|\son[a-z]+\s*=|javascript\s*:/iu.test(source)) {
+  if (/<script\b|(?:[\s/<])on[a-z][\w:-]*\s*=|javascript\s*:/iu.test(source)) {
     throw new Error('production source must remain script-free');
   }
-  if (/@import\b|@font-face\b|url\(\s*['"]?https?:\/\//iu.test(source)) {
+  const externalCssUrl = /url\(\s*['"]?(?:https?:)?\/\//iu;
+  const externalHtmlUrl = /(?:[\s/<])(?:src|href|xlink:href)\s*=\s*['"]?\s*(?:https?:)?\/\//iu;
+  if (/@import\b|@font-face\b/iu.test(source) || externalCssUrl.test(source) || externalHtmlUrl.test(source)) {
     throw new Error('production source must not load external code or fonts');
   }
   if (css.toLowerCase().includes('</style')) {
