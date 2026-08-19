@@ -43,12 +43,12 @@
 
 长 CJK/JSON 证据：`360px` 时 `pre clientWidth/scrollWidth = 271/255`，`320px` 时为 `231/215`；均保持 `overflow: auto` 与 `pre-wrap`，patch 允许纵向滚动而没有带来页面横向滚动。
 
-截图（为避免对文件格式作假，以下为 Pillow 对最终文件的实际解码；文件扩展名为 `.png`，载荷为 JPEG/RGB）：
+浏览器原始截图先以 JPEG 返回；随后以 Pillow `save(format='PNG', optimize=True)` 无缩放、无裁切转为真实 PNG。转码保持解码后的 RGB 画面与尺寸不变；以下均为最终文件的 Pillow 解码与 8-byte magic 验证。
 
-| 文件 | 用途 | 解码尺寸与格式 | bytes | SHA-256 |
-| --- | --- | --- | ---: | --- |
-| [variable-update-wide.png](variable-update-wide.png) | 宽屏：两态、完整回执依据 | `1440×1007`, JPEG/RGB | 107129 | `1ccbd4e906e2636e496e659b9f7f9d7ae38e06fae06df391456376f8df930f00` |
-| [variable-update-narrow.png](variable-update-narrow.png) | 窄屏：两态头部、重排与依据顶部 | `360×997`, JPEG/RGB | 63784 | `81a78c78c62fb8157db3e00b69269a546e1b1bb87548e2b0d4d5dc14ba4e5fed` |
+| 文件 | 用途 | 解码尺寸与格式 | PNG magic | bytes | SHA-256 |
+| --- | --- | --- | --- | ---: | --- |
+| [variable-update-wide.png](variable-update-wide.png) | 宽屏：两态、完整回执依据 | `1440×1007`, PNG/RGB | `89504e470d0a1a0a` | 530105 | `cd6942d2863e28ead4cad39e0dec18dc1ff5ae20a0dc214354b1485581fd3ec2` |
+| [variable-update-narrow.png](variable-update-narrow.png) | 窄屏：两态头部、重排与依据顶部 | `360×997`, PNG/RGB | `89504e470d0a1a0a` | 329824 | `ad2383dee4dbb68fcf529b2258e573912dc2bd97ae18ef539cc001b4531622d2` |
 
 最终截图均采用 single-viewport capture，以避开 In-app Browser fullPage compositor 对 transformed details layer 的拼接重复；宽图展示两态和依据，窄图展示两态头部/重排及依据顶部。DOM 计数已证明没有重复 patch：这是捕获工具行为，不是产物重复。
 
