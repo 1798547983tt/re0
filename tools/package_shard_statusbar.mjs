@@ -139,7 +139,7 @@ function buildBundle() {
     ['startShardStatusBar', 'hostWindow', 'hostDocument', 'SINGLETON_KEY'],
   ));
   const cssLiteral = serialize(css);
-  parts.push(`(() => {\n'use strict';\nconst cssText = ${cssLiteral};\nconst scope = globalThis;\nconst start = globalThis.Re0Shard.startShardStatusBar;\nif (typeof start === 'function') start({ scope, cssText });\n})();`);
+  parts.push(`(() => {\n'use strict';\nconst cssText = ${cssLiteral};\nconst scope = globalThis;\nconst assetBase = globalThis.Re0ShardAssetBase || '';\nconst start = globalThis.Re0Shard.startShardStatusBar;\nif (typeof start === 'function') start({ scope, cssText, assetBase });\n})();`);
   return parts.join('\n\n');
 }
 
