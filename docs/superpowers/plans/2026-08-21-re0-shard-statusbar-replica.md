@@ -57,4 +57,4 @@
 - [x] Put each fragment's image, outline, and hit path in one animated outer SVG group; keep the detail transform in a separate inner group.
 - [x] Give the character rail a full-width runway and a higher stacking layer than the fragment SVG, including the narrow-aspect fallback.
 - [x] Verify main/detail interaction and phase-shifted motion in the local browser prototype.
-- [ ] Rebuild and publish the artifact only after the updated visual prototype is accepted.
+- [x] Rebuild and publish the artifact after the updated visual prototype was accepted; final release evidence is recorded separately.
