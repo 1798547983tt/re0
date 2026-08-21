@@ -3,10 +3,10 @@
 ## GitHub
 
 - 分支：[codex/re0-shard-statusbar](https://github.com/1798547983tt/re0/tree/codex/re0-shard-statusbar)
-- 复刻组件与脚本提交：`bc44e1c3b5026bb27e6bd49f54e5b70ceca863b2`
-- 导入脚本：[script-Re0·星屑碎片状态栏.json](https://raw.githubusercontent.com/1798547983tt/re0/bc44e1c3b5026bb27e6bd49f54e5b70ceca863b2/dist/script-Re0%C2%B7%E6%98%9F%E5%B1%91%E7%A2%8E%E7%89%87%E7%8A%B6%E6%80%81%E6%A0%8F.json)
-- 脚本大小：157717 bytes
-- SHA-256：`9e3d3654d7febf66bffe23a6b8e340743c3015ca49084f808c73537e8b1e389d`
+- 复刻组件与脚本提交：`adfef447692287948a2bfecbd0af00492d451aa9`
+- 导入脚本：[script-Re0·星屑碎片状态栏.json](https://raw.githubusercontent.com/1798547983tt/re0/adfef447692287948a2bfecbd0af00492d451aa9/dist/script-Re0%C2%B7%E6%98%9F%E5%B1%91%E7%A2%8E%E7%89%87%E7%8A%B6%E6%80%81%E6%A0%8F.json)
+- 脚本大小：158109 bytes
+- SHA-256：`42037c20abf27661b6d125289239037a3c083fdf6f33fc8a906f02eaa34d05ed`
 
 ## 素材引用
 
@@ -19,7 +19,7 @@
 - Node 全量：164/164 通过。
 - Python 全量：7/7 通过。
 - SVG 几何测试：1 个 `1924×1080` viewBox、6 个 clipPath、6 个 outline、6 个 hit path；5/6 无填充区域重叠，详情态标记使用同一矩阵。
-- 浏览器预览：主界面、通用素材、详情态和最终 bundle 均已观察；1920×1080、390×844、768×1024、740–1024 横向窄屏均能显示 10 个头像，头像层级高于碎片舞台，关闭按钮不遮挡头像。
+- 浏览器预览：主界面、通用素材、详情态和最终 bundle 均已观察；1920×1080、390×844、768×1024、740–1024 横向窄屏均能显示 10 个头像，头像层级高于碎片舞台，关闭按钮不遮挡头像；900px 以下横向窄屏隐藏装饰提示以保留头像跑道。
 - 交互回归：关闭态只显示悬浮球；头像覆盖/聊天头像回退可解析；详情态标记与 SVG 同矩阵；SVG 碎片支持 Tab、Enter 和 Space 激活。
 - 远程 scene/script URL 返回 200，发布后将再次核对远程脚本哈希与本地一致。
 - 未完成的门：真实 SillyTavern 安装组合、真实触控设备 pointer capture、远程资源失败后的宿主表现，仍需按 `shard-statusbar/RUNTIME.md` 验收。
