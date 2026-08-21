@@ -3,7 +3,8 @@
 ## GitHub
 
 - 分支：[codex/re0-shard-statusbar](https://github.com/1798547983tt/re0/tree/codex/re0-shard-statusbar)
-- 最终提交：`e567df0d6c9b141b3ddb0aaeb014f0f180464a0a`
+- 组件与脚本提交：`e567df0d6c9b141b3ddb0aaeb014f0f180464a0a`
+- 当前分支（含本记录）提交：`9c6f613`（报告更新不会改变脚本字节）
 - 导入脚本：[script-Re0·星屑碎片状态栏.json](https://raw.githubusercontent.com/1798547983tt/re0/e567df0d6c9b141b3ddb0aaeb014f0f180464a0a/dist/script-Re0%C2%B7%E6%98%9F%E5%B1%91%E7%A2%8E%E7%89%87%E7%8A%B6%E6%80%81%E6%A0%8F.json)
 - 脚本大小：158400 bytes
 - SHA-256：`362c3033bf25a3da44da07e9a4afa7bd16621f088577fd15d7d4ec406ae61b3b`
