@@ -1,4 +1,5 @@
 import { isSafeAssetUrl, resolveCharacterVisual } from './assets.mjs';
+import { REPLICA_ANCHORS, REPLICA_PATHS, REPLICA_VIEWBOX } from './replica-geometry.mjs';
 
 const SLOT_TONES = Object.freeze(['violet', 'cyan', 'gold', 'rose', 'mint', 'blue']);
 
@@ -103,28 +104,67 @@ function renderPersonRail(documentRef, model, state, options) {
   return rail;
 }
 
-function renderSlot(documentRef, slot, pageId, state, options) {
-  const item = button(documentRef, '', 'select-replica-slot', `re0-replica-fragment re0-replica-fragment--${slot.number}`);
-  item.dataset.replicaSlot = String(slot.number);
-  item.setAttribute('data-replica-slot', String(slot.number));
-  item.dataset.pageId = pageId;
-  item.setAttribute('aria-pressed', String(state.detailOpen && state.slotNumber === slot.number));
-  item.style.setProperty('--re0-slot-tone', slot.tone || SLOT_TONES[slot.number - 1]);
-  const marker = element(documentRef, 'span', 're0-replica-fragment__marker');
-  marker.append(
-    element(documentRef, 'span', 're0-replica-fragment__icon', slot.icon),
-    element(documentRef, 'strong', 're0-replica-fragment__number', String(slot.number)),
-  );
-  const copy = element(documentRef, 'span', 're0-replica-fragment__copy');
-  copy.append(element(documentRef, 'strong', '', slot.title), element(documentRef, 'small', '', compactText(slot.summary)));
-  item.append(marker, copy);
-  return item;
+function svgElement(documentRef, tagName) {
+  return documentRef.createElementNS('http://www.w3.org/2000/svg', tagName);
 }
 
 function renderStage(documentRef, page, state, options) {
   const stage = element(documentRef, 'main', 're0-replica-stage');
   stage.setAttribute('aria-label', `${page.label}六槽位碎片`);
-  for (const slot of page.slots) stage.append(renderSlot(documentRef, slot, page.id, state, options));
+  stage.dataset.replicaGeometry = 'svg';
+  const svg = svgElement(documentRef, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${REPLICA_VIEWBOX.width} ${REPLICA_VIEWBOX.height}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  const defs = svgElement(documentRef, 'defs');
+  for (const number of [1, 2, 3, 4, 5, 6]) {
+    const clip = svgElement(documentRef, 'clipPath');
+    clip.id = `re0-replica-clip-${number}`;
+    const path = svgElement(documentRef, 'path');
+    path.setAttribute('d', REPLICA_PATHS[number]);
+    clip.append(path);
+    defs.append(clip);
+  }
+  svg.append(defs);
+  for (const slot of page.slots) {
+    if (options.sceneUrl && isSafeAssetUrl(options.sceneUrl)) {
+      const image = svgElement(documentRef, 'image');
+      image.setAttribute('href', options.sceneUrl);
+      image.setAttribute('x', '0');
+      image.setAttribute('y', '0');
+      image.setAttribute('width', String(REPLICA_VIEWBOX.width));
+      image.setAttribute('height', String(REPLICA_VIEWBOX.height));
+      image.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+      image.setAttribute('clip-path', `url(#re0-replica-clip-${slot.number})`);
+      image.classList.add('re0-replica-image');
+      svg.append(image);
+    }
+    const outline = svgElement(documentRef, 'path');
+    outline.setAttribute('d', REPLICA_PATHS[slot.number]);
+    outline.classList.add('re0-replica-outline', `re0-replica-outline--${slot.number}`);
+    svg.append(outline);
+    const hit = svgElement(documentRef, 'path');
+    hit.setAttribute('d', REPLICA_PATHS[slot.number]);
+    hit.setAttribute('role', 'button');
+    hit.setAttribute('tabindex', '0');
+    hit.setAttribute('aria-label', `${slot.number} ${slot.title}`);
+    hit.setAttribute('aria-pressed', String(state.detailOpen && state.slotNumber === slot.number));
+    hit.setAttribute('data-action', 'select-replica-slot');
+    hit.setAttribute('data-replica-slot', String(slot.number));
+    hit.setAttribute('data-page-id', page.id);
+    hit.classList.add('re0-replica-hit', `re0-replica-hit--${slot.number}`);
+    svg.append(hit);
+    const anchor = REPLICA_ANCHORS[slot.number];
+    const marker = element(documentRef, 'div', `re0-replica-marker re0-replica-marker--${slot.number}`);
+    marker.style.left = `${(anchor.x / REPLICA_VIEWBOX.width) * 100}%`;
+    marker.style.top = `${(anchor.y / REPLICA_VIEWBOX.height) * 100}%`;
+    marker.append(
+      element(documentRef, 'span', 're0-replica-marker__icon', slot.icon),
+      element(documentRef, 'strong', 're0-replica-marker__number', String(slot.number)),
+      element(documentRef, 'span', 're0-replica-marker__title', compactText(slot.title, 18)),
+    );
+    stage.append(marker);
+  }
+  stage.prepend(svg);
   return stage;
 }
 

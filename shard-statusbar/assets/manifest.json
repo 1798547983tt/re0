@@ -41,40 +41,16 @@
       "prompt": "Original crystalline star-orb sigil with transparent background, no text or logo."
     },
     {
-      "id": "scene:emilia",
-      "kind": "six-grid-scene",
-      "localPath": "assets/scene-emilia.png",
-      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ad33f13b2f70bf3c2731d7502d6dc8fa56490e9f/shard-statusbar/assets/scene-emilia.png",
+      "id": "scene:universal",
+      "kind": "universal-scene",
+      "localPath": "assets/scene-universal.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ad33f13b2f70bf3c2731d7502d6dc8fa56490e9f/shard-statusbar/assets/scene-universal.png",
       "mime": "image/png",
       "dimensions": { "width": 1672, "height": 941 },
-      "sha256": "01a7cc1b11e8d64c29e5a595dffbfb803468d44ee7158f82f07d83cc3ab43d60",
-      "role": "艾米莉亚六格主视觉",
-      "sourceRole": "generated-six-grid",
-      "prompt": "Original silver-haired violet-eyed half-elf in six coherent glass-shard vignettes, no text."
-    },
-    {
-      "id": "scene:rem",
-      "kind": "six-grid-scene",
-      "localPath": "assets/scene-rem.png",
-      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ad33f13b2f70bf3c2731d7502d6dc8fa56490e9f/shard-statusbar/assets/scene-rem.png",
-      "mime": "image/png",
-      "dimensions": { "width": 1672, "height": 941 },
-      "sha256": "3afbfbaff8ea1d683907dd80e7541265034ac221c419a929c64deddbe2aabe8a",
-      "role": "蕾姆六格主视觉",
-      "sourceRole": "generated-six-grid",
-      "prompt": "Original blue-haired oni maid in six coherent glass-shard vignettes, no text."
-    },
-    {
-      "id": "scene:natsuki-subaru",
-      "kind": "six-grid-scene",
-      "localPath": "assets/scene-subaru.png",
-      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ad33f13b2f70bf3c2731d7502d6dc8fa56490e9f/shard-statusbar/assets/scene-subaru.png",
-      "mime": "image/png",
-      "dimensions": { "width": 1672, "height": 941 },
-      "sha256": "2905443f27fe1007ac0312330cac1c667be2376c67570f801c59d7ed9f5d20d2",
-      "role": "菜月昴六格主视觉",
-      "sourceRole": "generated-six-grid",
-      "prompt": "Original black-haired returner in six coherent glass-shard vignettes, no text."
+      "sha256": "8ca8d991d499971ebe298a6701040f74e13e5a1a3b8aa9ab11b788b11de48b67",
+      "role": "通用碎片舞台主视觉",
+      "sourceRole": "generated-universal",
+      "prompt": "Original universal indigo starfield and crystalline magic background with no baked shard borders, text, or character identity."
     },
     {
       "id": "portrait:emilia",

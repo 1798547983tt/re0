@@ -24,4 +24,4 @@ python -m http.server 4178 --directory .
 
 ## 资产
 
-`assets/scene-emilia.png`、`scene-rem.png` 和 `scene-subaru.png` 是无文字六格主视觉；日/夜背景和悬浮球徽记也由项目重新生成。NPC 头像继续复用正文正则的 `character-registry.json`、别名归一化和 `portraitKey`。生产 URL 固定到不可变提交，网络失败时仍保留暗色舞台和文字状态。
+`assets/scene-universal.png` 是唯一的无文字通用主视觉；六块可见边界、描边和点击区域全部由同一份 SVG 坐标生成。日/夜背景和悬浮球徽记仍作为降级素材。NPC 头像继续复用正文正则的 `character-registry.json`、别名归一化和 `portraitKey`。生产 URL 固定到不可变提交，网络失败时仍保留暗色舞台和文字状态。

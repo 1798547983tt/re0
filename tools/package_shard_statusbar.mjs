@@ -16,6 +16,7 @@ const MODULES = Object.freeze([
   ['replica-model', 'shard-statusbar/src/replica-model.mjs'],
   ['runtime', 'shard-statusbar/src/runtime.mjs'],
   ['orb', 'shard-statusbar/src/orb.mjs'],
+  ['geometry', 'shard-statusbar/src/replica-geometry.mjs'],
   ['ui', 'shard-statusbar/src/ui.mjs'],
   ['host', 'shard-statusbar/src/host.mjs'],
 ]);
@@ -114,10 +115,14 @@ function buildBundle() {
   ));
   parts.push(wrapper('shard-runtime', sources.runtime, '', ['createShardRuntime', 'discoverShardRuntimeScope']));
   parts.push(wrapper('orb-drag', sources.orb, '', ['DRAG_THRESHOLD', 'normalizeOrbPosition', 'createOrbDragController']));
+  parts.push(wrapper('replica-geometry', sources.geometry, '', ['REPLICA_VIEWBOX', 'REPLICA_PATHS', 'REPLICA_ANCHORS', 'replicaPathFor']));
   parts.push(wrapper(
     'shard-ui',
     sources.ui,
-    'const { isSafeAssetUrl, resolveCharacterVisual } = globalThis.Re0Shard;',
+    [
+      'const { isSafeAssetUrl, resolveCharacterVisual } = globalThis.Re0Shard;',
+      'const { REPLICA_ANCHORS, REPLICA_PATHS, REPLICA_VIEWBOX } = globalThis.Re0Shard;',
+    ].join('\n'),
     ['createReplicaSurface', 'renderReplicaSurface', 'setReplicaOpen', 'setReplicaDragging'],
   ));
   parts.push(wrapper(

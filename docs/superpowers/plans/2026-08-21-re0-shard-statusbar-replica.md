@@ -40,8 +40,8 @@
 
 **Files:** `shard-statusbar/assets/*`, `shard-statusbar/assets/manifest.json`, `shard-statusbar/src/assets.mjs`
 
-- [x] Generate original no-text six-grid scenes for the current protagonist and active NPC examples; inspect them against the reference composition without copying the supplied image.
-- [x] Add immutable asset metadata and lazy per-character resolution; keep shared registry portraits as the fallback for unknown scenes.
+- [x] Generate one original no-text universal scene; inspect it against the reference composition without copying the supplied image.
+- [x] Add immutable asset metadata and keep shared registry portraits independent from the universal scene.
 - [x] Add asset hash and pinned URL tests.
 
 ### Task 5: Rebuild, verify, and publish the replica artifact

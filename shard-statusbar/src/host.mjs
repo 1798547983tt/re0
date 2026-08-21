@@ -91,9 +91,7 @@ function imageUrl(cache, key, blob, URLApi) {
 }
 
 function resolveScene(model, search, base) {
-  const key = model.activePerson?.portrait?.portraitKey;
-  return resolveShardAsset(`scene:${key}`, { search, base })
-    || resolveShardAsset('scene:generic', { search, base })
+  return resolveShardAsset('scene:universal', { search, base })
     || resolveShardAsset('background:night', { search, base });
 }
 
