@@ -24,6 +24,21 @@ export const REPLICA_ANCHORS = Object.freeze({
   6: Object.freeze({ x: 445, y: 760 }),
 });
 
+export const REPLICA_DETAIL_SHIFT = Object.freeze({ x: -220, y: 0, scale: 0.97 });
+
+export function replicaDetailTransform(number, detailOpen = false) {
+  if (!detailOpen || Number(number) < 3) return '';
+  const { x, y, scale } = REPLICA_DETAIL_SHIFT;
+  return `matrix(${scale} 0 0 ${scale} ${x} ${y})`;
+}
+
+export function replicaAnchorFor(number, detailOpen = false) {
+  const anchor = REPLICA_ANCHORS[String(number)] || { x: 0, y: 0 };
+  if (!detailOpen || Number(number) < 3) return anchor;
+  const { x, y, scale } = REPLICA_DETAIL_SHIFT;
+  return Object.freeze({ x: anchor.x * scale + x, y: anchor.y * scale + y });
+}
+
 export function replicaPathFor(number) {
   return REPLICA_PATHS[String(number)] || '';
 }

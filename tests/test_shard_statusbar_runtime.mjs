@@ -2,6 +2,27 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createShardRuntime } from '../shard-statusbar/src/runtime.mjs';
+import { resolveCachedPortraitUrl } from '../shard-statusbar/src/host.mjs';
+import { portraitKeys } from '../statusbar/src/portraits.mjs';
+
+test('cached shared or chat-scoped portraits resolve before registry fallbacks', () => {
+  const chatId = 'chat/portrait';
+  const keys = portraitKeys({ namespace: 'protagonist', name: '主角', chatId });
+  const cache = new Map([
+    [keys.shared, { kind: 'blob' }],
+    [`${keys.shared}:url`, 'blob:https://local.test/shared'],
+    [keys.override, { kind: 'url', value: 'https://images.example.test/override.webp' }],
+  ]);
+  assert.equal(
+    resolveCachedPortraitUrl({ category: '主角', name: '主角' }, { cache, chatId }),
+    'https://images.example.test/override.webp',
+  );
+  cache.delete(keys.override);
+  assert.equal(
+    resolveCachedPortraitUrl({ category: '主角', name: '主角' }, { cache, chatId }),
+    'blob:https://local.test/shared',
+  );
+});
 
 test('script runtime reads the latest message floor without exposing writes', async () => {
   const calls = [];

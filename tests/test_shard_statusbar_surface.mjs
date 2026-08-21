@@ -28,6 +28,9 @@ test('replica surface exposes reference landmarks and removes the card HUD', () 
   assert.match(css, /re0-replica-detail/);
   assert.match(css, /aspect-ratio|aspect-ratio/);
   assert.match(`${ui}\n${host}`, /Escape/);
+  assert.match(ui, /portraitUrlFor/);
+  assert.match(ui, /startsWith\('blob:'\)/);
+  assert.match(host, /resolveCachedPortraitUrl/);
   assert.doesNotMatch(source, /re0-shard-panel|re0-shard-hero|re0-shard-stage/);
   assert.doesNotMatch(source, /\.innerHTML\s*=/);
   assert.doesNotMatch(`${ui}\n${host}`, /replaceVariables|updateVariablesWith|insertOrAssignVariables|replaceMvuData/);

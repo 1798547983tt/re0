@@ -45,6 +45,20 @@
   background: #050610 var(--re0-replica-art) 54% center / 108% 108% no-repeat;
   box-shadow: 0 0 0 1px rgb(255 255 255 / 12%), 0 25px 80px rgb(0 0 0 / 38%);
   transform: translate(-50%, -50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 220ms ease, visibility 220ms step-end;
+}
+
+#re0-shard-statusbar-root[data-open="true"] .re0-replica-scene {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-timing-function: ease, step-start;
+}
+
+#re0-shard-statusbar-root:not([data-open="true"]) .re0-replica-scene {
+  pointer-events: none;
 }
 
 .re0-replica-scene::before,
@@ -134,6 +148,16 @@
 .re0-replica-float--5 { --re0-float-x: 6px; --re0-float-y: 6px; --re0-float-rotate: .22deg; --re0-float-delay: -2.1s; }
 .re0-replica-float--6 { --re0-float-x: -7px; --re0-float-y: -4px; --re0-float-rotate: -.2deg; --re0-float-delay: -7.6s; }
 
+.re0-replica-float-state {
+  animation: re0-replica-shard-in 420ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.re0-replica-float--2 .re0-replica-float-state { animation-delay: 45ms; }
+.re0-replica-float--3 .re0-replica-float-state { animation-delay: 80ms; }
+.re0-replica-float--4 .re0-replica-float-state { animation-delay: 115ms; }
+.re0-replica-float--5 .re0-replica-float-state { animation-delay: 150ms; }
+.re0-replica-float--6 .re0-replica-float-state { animation-delay: 185ms; }
+
 .re0-replica-hit {
   fill: rgb(255 255 255 / 0%);
   stroke: transparent;
@@ -201,9 +225,8 @@
   white-space: nowrap;
 }
 
-.re0-replica-root[data-detail-open="true"] .re0-replica-marker--3,
-.re0-replica-root[data-detail-open="true"] .re0-replica-marker--4 {
-  transform: translate(calc(-22% - 14vw), -50%) scale(.96);
+.re0-replica-marker[data-detail-shift="true"] {
+  transform: translate(-12%, -50%) scale(.97);
 }
 
 .re0-replica-left-rail-mount {
@@ -761,6 +784,7 @@
 }
 
 @keyframes re0-replica-ring { to { transform: rotate(360deg); } }
+@keyframes re0-replica-shard-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes re0-replica-float {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   50% { transform: translate(var(--re0-float-x), var(--re0-float-y)) rotate(var(--re0-float-rotate)); }
@@ -775,17 +799,38 @@
 .re0-replica-fragment--6 { animation-delay: 210ms; }
 
 @media (max-aspect-ratio: 4 / 3) {
-  .re0-replica-scene { inline-size: 100vw; block-size: calc(100vw * 9 / 16); }
+  .re0-replica-scene { inline-size: 100vw; block-size: 100vh; }
+  .re0-replica-stage-mount {
+    inset: 50% 0 auto;
+    block-size: min(calc(100vw * 9 / 16), 100vh);
+    transform: translateY(-50%);
+  }
   .re0-replica-person-rail-mount { inset-inline-start: 19%; inset-inline-end: 0; }
-  .re0-replica-person-rail { padding-inline-end: clamp(132px, 14vw, 190px); }
-  .re0-replica-person { inline-size: clamp(42px, 3.8vw, 62px); block-size: clamp(42px, 3.8vw, 62px); }
+  .re0-replica-person-rail { padding-inline-end: 160px; }
+  .re0-replica-person-rail__list { gap: clamp(3px, .65vw, 8px); }
+  .re0-replica-person { inline-size: clamp(32px, 4.2vw, 52px); block-size: clamp(32px, 4.2vw, 52px); }
   .re0-replica-detail-mount { inline-size: 28%; }
   .re0-replica-nav__label { font-size: 17px; }
 }
 
+@media (max-width: 1024px) and (min-aspect-ratio: 4 / 3) {
+  .re0-replica-person-rail { padding-inline-end: 160px; }
+  .re0-replica-person-rail__list { gap: clamp(3px, .65vw, 8px); }
+  .re0-replica-person { inline-size: clamp(32px, 4.2vw, 52px); block-size: clamp(32px, 4.2vw, 52px); }
+}
+
+@media (max-width: 800px) and (min-aspect-ratio: 4 / 3) {
+  .re0-replica-person-rail-mount { inset-inline-start: 18%; }
+  .re0-replica-person-rail { padding-inline-end: 72px; }
+  .re0-replica-person-rail__list { gap: 3px; }
+  .re0-replica-person { inline-size: 28px; block-size: 28px; }
+  .re0-replica-guide { display: none; }
+  .re0-replica-close { inline-size: 44px; block-size: 44px; font-size: 40px; }
+}
+
 @media (max-width: 720px) {
-  .re0-replica-scene { inline-size: 170vw; block-size: calc(170vw * 9 / 16); }
-  .re0-replica-scene { transform: translate(-50%, -50%) scale(.92); transform-origin: center; }
+  .re0-replica-scene { inline-size: 100vw; block-size: 100vh; transform: translate(-50%, -50%); }
+  .re0-replica-stage-mount { block-size: min(calc(100vw * 9 / 16), 100vh); }
   .re0-replica-detail-mount { inline-size: 34%; }
   .re0-replica-guide { display: none; }
   .re0-replica-brand { transform: scale(.82); transform-origin: left top; }
@@ -793,10 +838,12 @@
   .re0-replica-nav__item { grid-template-columns: 32px 1fr; min-block-size: 42px; }
   .re0-replica-nav__label { font-size: 14px; }
   .re0-replica-nav__glyph { inline-size: 28px; block-size: 28px; font-size: 22px; }
-  .re0-replica-person-rail-mount { inset-inline-start: 21%; inset-inline-end: 0; }
-  .re0-replica-person-rail { padding-inline-end: 118px; }
-  .re0-replica-person-rail__list { gap: 7px; }
-  .re0-replica-person { inline-size: 52px; block-size: 52px; }
+  .re0-replica-person-rail-mount { inset-inline-start: 9%; inset-inline-end: 0; }
+  .re0-replica-person-rail { gap: 8px; padding-inline-end: 52px; }
+  .re0-replica-person-rail__list { gap: 3px; }
+  .re0-replica-person { inline-size: clamp(24px, 6vw, 28px); block-size: clamp(24px, 6vw, 28px); }
+  .re0-replica-alert { inline-size: 36px; block-size: 36px; font-size: 18px; }
+  .re0-replica-close { inline-size: 40px; block-size: 40px; font-size: 36px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

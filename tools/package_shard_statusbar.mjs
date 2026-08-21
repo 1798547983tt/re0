@@ -115,13 +115,21 @@ function buildBundle() {
   ));
   parts.push(wrapper('shard-runtime', sources.runtime, '', ['createShardRuntime', 'discoverShardRuntimeScope']));
   parts.push(wrapper('orb-drag', sources.orb, '', ['DRAG_THRESHOLD', 'normalizeOrbPosition', 'createOrbDragController']));
-  parts.push(wrapper('replica-geometry', sources.geometry, '', ['REPLICA_VIEWBOX', 'REPLICA_PATHS', 'REPLICA_ANCHORS', 'replicaPathFor']));
+  parts.push(wrapper('replica-geometry', sources.geometry, '', [
+    'REPLICA_VIEWBOX',
+    'REPLICA_PATHS',
+    'REPLICA_ANCHORS',
+    'REPLICA_DETAIL_SHIFT',
+    'replicaAnchorFor',
+    'replicaDetailTransform',
+    'replicaPathFor',
+  ]));
   parts.push(wrapper(
     'shard-ui',
     sources.ui,
     [
       'const { isSafeAssetUrl, resolveCharacterVisual } = globalThis.Re0Shard;',
-      'const { REPLICA_ANCHORS, REPLICA_PATHS, REPLICA_VIEWBOX } = globalThis.Re0Shard;',
+      'const { REPLICA_PATHS, REPLICA_VIEWBOX, replicaAnchorFor, replicaDetailTransform } = globalThis.Re0Shard;',
     ].join('\n'),
     ['createReplicaSurface', 'renderReplicaSurface', 'setReplicaOpen', 'setReplicaDragging'],
   ));
@@ -136,7 +144,7 @@ function buildBundle() {
       'const { createOrbDragController } = globalThis.Re0Shard;',
       'const { createReplicaSurface, renderReplicaSurface, setReplicaDragging, setReplicaOpen } = globalThis.Re0Shard;',
     ].join('\n'),
-    ['startShardStatusBar', 'hostWindow', 'hostDocument', 'SINGLETON_KEY'],
+    ['startShardStatusBar', 'hostWindow', 'hostDocument', 'SINGLETON_KEY', 'resolveCachedPortraitUrl'],
   ));
   const cssLiteral = serialize(css);
   parts.push(`(() => {\n'use strict';\nconst cssText = ${cssLiteral};\nconst scope = globalThis;\nconst assetBase = globalThis.Re0ShardAssetBase || '';\nconst start = globalThis.Re0Shard.startShardStatusBar;\nif (typeof start === 'function') start({ scope, cssText, assetBase });\n})();`);

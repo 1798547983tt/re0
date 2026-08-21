@@ -1,5 +1,10 @@
 import { isSafeAssetUrl, resolveCharacterVisual } from './assets.mjs';
-import { REPLICA_ANCHORS, REPLICA_PATHS, REPLICA_VIEWBOX } from './replica-geometry.mjs';
+import {
+  REPLICA_PATHS,
+  REPLICA_VIEWBOX,
+  replicaAnchorFor,
+  replicaDetailTransform,
+} from './replica-geometry.mjs';
 
 const SLOT_TONES = Object.freeze(['violet', 'cyan', 'gold', 'rose', 'mint', 'blue']);
 
@@ -22,14 +27,24 @@ function compactText(value, limit = 28) {
   return text.length > limit ? `${text.slice(0, limit - 1)}…` : text;
 }
 
-function setImage(node, url, alt = '') {
-  if (!url || !isSafeAssetUrl(url)) return false;
+function isSafeImageUrl(value) {
+  const text = String(value || '').trim();
+  return isSafeAssetUrl(text) || text.startsWith('blob:');
+}
+
+function setImage(node, url, alt = '', fallback = '?') {
+  if (!url || !isSafeImageUrl(url)) return false;
   const image = node.ownerDocument.createElement('img');
   image.src = url;
   image.alt = alt;
   image.loading = 'lazy';
   image.decoding = 'async';
-  image.addEventListener('error', () => image.remove(), { once: true });
+  image.addEventListener('error', () => {
+    image.remove();
+    if (!node.querySelector('.re0-replica-avatar__initial')) {
+      node.append(element(node.ownerDocument, 'span', 're0-replica-avatar__initial', fallback));
+    }
+  }, { once: true });
   node.append(image);
   return true;
 }
@@ -37,9 +52,11 @@ function setImage(node, url, alt = '') {
 function avatar(documentRef, person, options = {}) {
   const shell = element(documentRef, 'span', `re0-replica-avatar ${options.className || ''}`.trim());
   const portraitKey = person?.portrait?.portraitKey || '';
-  const url = options.url || (portraitKey ? resolveCharacterVisual(portraitKey, { search: options.search, base: options.assetBase }) : '');
-  if (!setImage(shell, url, `${person?.name || '人物'}头像`)) {
-    shell.append(element(documentRef, 'span', 're0-replica-avatar__initial', person?.portrait?.initial || String(person?.name || '?').trim().slice(0, 1) || '?'));
+  const cachedUrl = typeof options.portraitUrlFor === 'function' ? options.portraitUrlFor(person) : '';
+  const url = options.url || cachedUrl || (portraitKey ? resolveCharacterVisual(portraitKey, { search: options.search, base: options.assetBase }) : '');
+  const initial = person?.portrait?.initial || String(person?.name || '?').trim().slice(0, 1) || '?';
+  if (!setImage(shell, url, `${person?.name || '人物'}头像`, initial)) {
+    shell.append(element(documentRef, 'span', 're0-replica-avatar__initial', initial));
   }
   return shell;
 }
@@ -131,7 +148,7 @@ function renderStage(documentRef, page, state, options) {
     floatGroup.dataset.replicaFloat = String(slot.number);
     const floatState = svgElement(documentRef, 'g');
     floatState.classList.add('re0-replica-float-state');
-    const detailShift = state.detailOpen && slot.number >= 3 ? 'translate(-220 0) scale(.97)' : '';
+    const detailShift = replicaDetailTransform(slot.number, state.detailOpen);
     if (detailShift) floatState.setAttribute('transform', detailShift);
     if (options.sceneUrl && isSafeAssetUrl(options.sceneUrl)) {
       const image = svgElement(documentRef, 'image');
@@ -162,12 +179,13 @@ function renderStage(documentRef, page, state, options) {
     floatState.append(hit);
     floatGroup.append(floatState);
     svg.append(floatGroup);
-    const anchor = REPLICA_ANCHORS[slot.number];
+    const anchor = replicaAnchorFor(slot.number, state.detailOpen);
     const markerFloat = element(documentRef, 'div', `re0-replica-marker-float re0-replica-float re0-replica-float--${slot.number}`);
     markerFloat.dataset.replicaFloat = String(slot.number);
     markerFloat.style.left = `${(anchor.x / REPLICA_VIEWBOX.width) * 100}%`;
     markerFloat.style.top = `${(anchor.y / REPLICA_VIEWBOX.height) * 100}%`;
     const marker = element(documentRef, 'div', `re0-replica-marker re0-replica-marker--${slot.number}`);
+    marker.dataset.detailShift = String(Boolean(state.detailOpen && slot.number >= 3));
     marker.append(
       element(documentRef, 'span', 're0-replica-marker__icon', slot.icon),
       element(documentRef, 'strong', 're0-replica-marker__number', String(slot.number)),
@@ -207,6 +225,7 @@ export function createReplicaSurface(documentRef) {
   const root = element(documentRef, 'div', 're0-replica-root');
   root.id = 're0-shard-statusbar-root';
   root.dataset.re0ReplicaVersion = '1';
+  root.dataset.open = 'false';
   const scene = element(documentRef, 'section', 're0-replica-scene');
   scene.setAttribute('aria-label', 'Re:0 星屑碎片状态栏');
   const art = element(documentRef, 'div', 're0-replica-art');

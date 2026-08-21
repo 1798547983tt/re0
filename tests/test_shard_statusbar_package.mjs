@@ -23,6 +23,8 @@ test('artifact is an importable Tavern Helper script, not a regex package', () =
   assert.match(artifact.content, /universal-scene/);
   assert.match(artifact.content, /REPLICA_PATHS/);
   assert.match(artifact.content, /viewBox/);
+  assert.match(artifact.content, /resolveCachedPortraitUrl/);
+  assert.match(artifact.content, /re0-replica-float/);
   assert.doesNotMatch(artifact.content, /re0-shard-panel|re0-shard-hero|re0-shard-stage/);
   assert.match(artifact.content, /raw\.githubusercontent\.com\/1798547983tt\/re0\/[a-f0-9]{40}/);
   assert.doesNotMatch(artifact.content, /replaceVariables|updateVariablesWith|insertOrAssignVariables|replaceMvuData/);

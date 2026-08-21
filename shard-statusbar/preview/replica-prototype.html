@@ -77,6 +77,13 @@
         repaint();
       }
     });
+    surface.root.addEventListener('keydown', (event) => {
+      const node = event.target.closest?.('[data-action="select-replica-slot"]');
+      if (node && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+    });
   </script>
 </body>
 </html>

@@ -90,6 +90,18 @@ function imageUrl(cache, key, blob, URLApi) {
   }
 }
 
+export function resolveCachedPortraitUrl(person, { cache = new Map(), chatId = '' } = {}) {
+  const namespace = person?.category === '主角' ? 'protagonist' : 'person';
+  const keys = portraitKeys({ namespace, name: person?.name || '', chatId });
+  for (const key of [keys.override, keys.shared]) {
+    if (!key) continue;
+    const record = cache.get(key);
+    if (record?.kind === 'url') return String(record.value || '');
+    if (record?.kind === 'blob') return String(cache.get(`${key}:url`) || '');
+  }
+  return '';
+}
+
 function resolveScene(model, search, base) {
   return resolveShardAsset('scene:universal', { search, base })
     || resolveShardAsset('background:night', { search, base });
@@ -160,6 +172,7 @@ export function startShardStatusBar({
     renderReplicaSurface(surface, state.model, state, {
       sceneUrl,
       sigilUrl: resolveShardAsset('orb:sigil', { search: assetSearch, base: assetBase }),
+      portraitUrlFor: (person) => resolveCachedPortraitUrl(person, { cache, chatId }),
       search: assetSearch,
       assetBase,
       message: state.message,
@@ -252,6 +265,14 @@ export function startShardStatusBar({
     render();
   };
 
+  const selectSlot = (actionNode) => {
+    state.pageId = actionNode.dataset.pageId || state.pageId;
+    state.slotNumber = Number(actionNode.dataset.replicaSlot) || 1;
+    state.detailOpen = true;
+    render();
+    queueMicrotask(() => surface.back.focus());
+  };
+
   const handleClick = (event) => {
     const actionNode = event.target?.closest?.('[data-action]');
     if (!actionNode || !surface.root.contains(actionNode)) return;
@@ -270,18 +291,20 @@ export function startShardStatusBar({
       state.slotNumber = 1;
       state.detailOpen = false;
       rebuildModel();
-    } else if (action === 'select-replica-slot') {
-      state.pageId = actionNode.dataset.pageId || state.pageId;
-      state.slotNumber = Number(actionNode.dataset.replicaSlot) || 1;
-      state.detailOpen = true;
-      render();
-      queueMicrotask(() => surface.back.focus());
-    } else if (action === 'refresh-replica') refresh();
+      hydratePortraits();
+    } else if (action === 'select-replica-slot') selectSlot(actionNode);
+    else if (action === 'refresh-replica') refresh();
     else if (action === 'edit-replica-avatar') fileInput.click();
     else if (action === 'replica-grid') state.message = '当前界面为只读状态栏。';
   };
 
   const keydown = (event) => {
+    const actionNode = event.target?.closest?.('[data-action]');
+    if ((event.key === 'Enter' || event.key === ' ') && actionNode?.dataset.action === 'select-replica-slot') {
+      event.preventDefault();
+      selectSlot(actionNode);
+      return;
+    }
     if (event.key === 'Escape' && state.panelOpen) {
       event.preventDefault();
       if (state.detailOpen) { state.detailOpen = false; render(); }
@@ -289,7 +312,7 @@ export function startShardStatusBar({
       return;
     }
     if (event.key === 'Tab' && state.panelOpen) {
-      const focusable = [...surface.scene.querySelectorAll('button, input, select, textarea')]
+      const focusable = [...surface.scene.querySelectorAll('button, input, select, textarea, [role="button"][tabindex]')]
         .filter((node) => !node.disabled && !node.hidden && node.getClientRects().length > 0);
       if (!focusable.length) return;
       const first = focusable[0];

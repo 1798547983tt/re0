@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   REPLICA_ANCHORS,
+  REPLICA_DETAIL_SHIFT,
   REPLICA_PATHS,
   REPLICA_VIEWBOX,
+  replicaAnchorFor,
+  replicaDetailTransform,
   replicaPathFor,
 } from '../shard-statusbar/src/replica-geometry.mjs';
 
@@ -78,4 +81,14 @@ test('the lower-left slot 6 and center-lower slot 5 keep a visible separation', 
   const slotFive = parsePolygon(REPLICA_PATHS[5]);
   const slotSix = parsePolygon(REPLICA_PATHS[6]);
   assert.equal(polygonsOverlap(slotFive, slotSix), false, 'slot 5 and slot 6 must not share a filled area');
+});
+
+test('detail anchors use the same matrix as the moved SVG groups', () => {
+  assert.deepEqual(REPLICA_DETAIL_SHIFT, { x: -220, y: 0, scale: 0.97 });
+  assert.equal(replicaDetailTransform(2, true), '');
+  assert.equal(replicaDetailTransform(3, false), '');
+  assert.equal(replicaDetailTransform(3, true), 'matrix(0.97 0 0 0.97 -220 0)');
+  const transformed = replicaAnchorFor(3, true);
+  assert.ok(Math.abs(transformed.x - 1317.45) < 1e-9);
+  assert.ok(Math.abs(transformed.y - 370.54) < 1e-9);
 });

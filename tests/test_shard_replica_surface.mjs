@@ -24,8 +24,20 @@ test('replica UI owns the reference landmarks and removes the previous card surf
     're0-replica-person-rail',
   ]) assert.match(source, new RegExp(marker), marker);
   assert.match(css, /clip-path:\s*polygon/);
-  assert.match(ui, /translate\(-220 0\)/);
+  assert.match(ui, /replicaDetailTransform/);
+  assert.match(css, /data-detail-shift/);
   assert.match(css, /re0-replica-detail/);
+  assert.match(ui, /root\.dataset\.open = 'false'/);
+  assert.match(css, /data-open="true"[\s\S]*?\.re0-replica-scene/);
+  assert.match(css, /data-open="true"[\s\S]*?pointer-events:\s*auto/);
+  assert.match(css, /:not\(\[data-open="true"\]\)[\s\S]*?\.re0-replica-scene/);
+  assert.match(host, /event\.key === 'Enter'/);
+  assert.match(host, /event\.key === ' '/);
+  assert.match(host, /role="button"\]\[tabindex\]/);
+  assert.match(host, /resolveCachedPortraitUrl/);
+  assert.match(ui, /portraitUrlFor/);
+  assert.match(ui, /startsWith\('blob:'\)/);
+  assert.match(ui, /re0-replica-avatar__initial/);
   assert.match(css, /@media[^\{]*aspect-ratio|@media[^\{]*max-width/);
   assert.doesNotMatch(source, /re0-shard-panel|re0-shard-hero|re0-shard-stage/);
   assert.doesNotMatch(source, /\.innerHTML\s*=/);
@@ -52,4 +64,7 @@ test('the character rail has a full runway and stays above the fragment stage', 
   assert.match(css, /\.re0-replica-person-rail__list\s*\{[^}]*overflow:\s*visible/su);
   assert.match(css, /\.re0-replica-stage-mount\s*\{[^}]*z-index:\s*2/su);
   assert.match(css, /@media\s*\(max-aspect-ratio:\s*4\s*\/\s*3\)[\s\S]*?\.re0-replica-person-rail-mount\s*\{[^}]*inset-inline-start:\s*19%[^}]*inset-inline-end:\s*0/su);
+  assert.match(css, /@media\s*\(max-aspect-ratio:\s*4\s*\/\s*3\)[\s\S]*?\.re0-replica-scene\s*\{[^}]*block-size:\s*100vh/su);
+  assert.match(css, /@media\s*\(max-width:\s*720px\)[\s\S]*?\.re0-replica-scene\s*\{[^}]*inline-size:\s*100vw[^}]*block-size:\s*100vh/su);
+  assert.match(css, /@media\s*\(max-width:\s*720px\)[\s\S]*?\.re0-replica-person\s*\{[^}]*clamp\(24px/isu);
 });
