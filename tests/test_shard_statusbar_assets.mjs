@@ -16,6 +16,9 @@ test('shard asset manifest declares generated local assets and pinned production
   const assets = manifest.assets || [];
   assert.ok(assets.some((asset) => asset.id === 'background:night'));
   assert.ok(assets.some((asset) => asset.id === 'orb:sigil'));
+  assert.ok(assets.some((asset) => asset.id === 'scene:emilia'));
+  assert.ok(assets.some((asset) => asset.id === 'scene:rem'));
+  assert.ok(assets.some((asset) => asset.id === 'scene:natsuki-subaru'));
   for (const asset of assets) {
     const path = resolve(ROOT, 'shard-statusbar', asset.localPath);
     assert.equal(existsSync(path), true, asset.localPath);

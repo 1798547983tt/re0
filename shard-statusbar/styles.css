@@ -3,163 +3,605 @@
 }
 
 #re0-shard-statusbar-root {
-  --re0-ink: #f1f4ff;
-  --re0-muted: #aab4cf;
-  --re0-faint: #6d7897;
-  --re0-line: rgb(196 213 255 / 20%);
-  --re0-panel: rgb(8 13 31 / 93%);
-  --re0-panel-soft: rgb(19 27 55 / 76%);
-  --re0-panel-strong: rgb(27 35 70 / 92%);
-  --re0-cyan: #85e6ff;
-  --re0-violet: #b8a1ff;
-  --re0-gold: #f5d58b;
-  --re0-rose: #f49ab8;
-  --re0-shadow: 0 28px 90px rgb(0 0 0 / 45%);
+  --re0-white: #f9f8ff;
+  --re0-muted: rgb(232 229 249 / 74%);
+  --re0-line: rgb(255 255 255 / 73%);
+  --re0-dark: #060716;
+  --re0-gold: #e4bd55;
+  --re0-violet: #a58cff;
+  --re0-blue: #73dfff;
   position: fixed;
   inset: 0;
   z-index: 2147483000;
   isolation: isolate;
-  color: var(--re0-ink);
   pointer-events: none;
-  font-family: "Noto Serif SC", "Source Han Serif SC", "Iowan Old Style", Georgia, serif;
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-#re0-shard-statusbar-root[data-theme="day"] {
-  --re0-ink: #17233b;
-  --re0-muted: #53617b;
-  --re0-faint: #687897;
-  --re0-line: rgb(39 61 109 / 20%);
-  --re0-panel: rgb(242 246 255 / 94%);
-  --re0-panel-soft: rgb(231 238 255 / 82%);
-  --re0-panel-strong: rgb(255 255 255 / 96%);
-  --re0-shadow: 0 28px 90px rgb(39 54 86 / 28%);
-}
-
-#re0-shard-statusbar-root[data-theme="night"] {
-  --re0-shard-background: var(--re0-shard-background-image, none);
-}
-
-#re0-shard-statusbar-root::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  opacity: .34;
-  background:
-    radial-gradient(circle at 16% 20%, rgb(141 123 255 / 16%), transparent 26%),
-    radial-gradient(circle at 88% 72%, rgb(87 217 255 / 13%), transparent 30%);
-}
-
-#re0-shard-statusbar-root button,
-#re0-shard-statusbar-root input {
-  font: inherit;
+  color: var(--re0-white);
+  font-family: "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
 }
 
 #re0-shard-statusbar-root button {
+  font: inherit;
   -webkit-tap-highlight-color: transparent;
+}
+
+#re0-shard-statusbar-root button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
 }
 
 #re0-shard-statusbar-root [hidden] {
   display: none !important;
 }
 
+.re0-replica-scene {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  inline-size: min(100vw, calc(100vh * 16 / 9));
+  block-size: min(100vh, calc(100vw * 9 / 16));
+  overflow: hidden;
+  pointer-events: auto;
+  background: #050610 var(--re0-replica-art) 54% center / 108% 108% no-repeat;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%), 0 25px 80px rgb(0 0 0 / 38%);
+  transform: translate(-50%, -50%);
+}
+
+.re0-replica-scene::before,
+.re0-replica-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.re0-replica-scene::before {
+  background:
+    linear-gradient(90deg, rgb(2 4 16 / 66%) 0 16%, transparent 35% 76%, rgb(3 3 13 / 20%) 100%),
+    radial-gradient(circle at 52% 49%, transparent 0 32%, rgb(0 0 12 / 32%) 100%);
+}
+
+.re0-replica-scene::after {
+  background-image:
+    radial-gradient(circle, rgb(255 255 255 / 80%) 0 1px, transparent 1.6px),
+    radial-gradient(circle, rgb(128 171 255 / 55%) 0 1px, transparent 1.7px);
+  background-position: 0 0, 41px 56px;
+  background-size: 137px 121px, 181px 163px;
+  opacity: .23;
+  mix-blend-mode: screen;
+}
+
+.re0-replica-left-rail-mount,
+.re0-replica-person-rail-mount,
+.re0-replica-stage-mount,
+.re0-replica-detail-mount,
+.re0-replica-back,
+.re0-replica-active,
+.re0-replica-uid,
+.re0-replica-grid,
+.re0-replica-status {
+  position: absolute;
+  z-index: 5;
+}
+
+.re0-replica-left-rail-mount {
+  inset: 0 auto 0 0;
+  inline-size: 17.2%;
+}
+
+.re0-replica-left-rail {
+  position: absolute;
+  inset: 0;
+  padding: 3.8% 0 0 2.5%;
+}
+
+.re0-replica-brand {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  grid-template-rows: 20px 28px;
+  column-gap: 12px;
+  align-items: center;
+  inline-size: 220px;
+  color: var(--re0-white);
+}
+
+.re0-replica-brand__mark {
+  grid-row: 1 / -1;
+  display: grid;
+  place-items: center;
+  inline-size: 42px;
+  block-size: 56px;
+  color: var(--re0-gold);
+  font-size: 38px;
+  text-shadow: 0 0 18px rgb(228 189 85 / 52%);
+}
+
+.re0-replica-brand__copy {
+  align-self: end;
+  color: #e3c379;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: .08em;
+}
+
+.re0-replica-brand__title {
+  align-self: start;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: .06em;
+}
+
+.re0-replica-nav {
+  display: grid;
+  gap: 18px;
+  margin-top: 7.2vh;
+  inline-size: 168px;
+}
+
+.re0-replica-nav__item {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 12px;
+  min-block-size: 54px;
+  border: 0;
+  border-inline-start: 2px solid transparent;
+  padding: 0 10px 0 6px;
+  color: rgb(255 255 255 / 78%);
+  cursor: pointer;
+  text-align: start;
+  background: transparent;
+  transition: color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.re0-replica-nav__item:hover,
+.re0-replica-nav__item[aria-current="true"] {
+  border-inline-start-color: var(--re0-gold);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+.re0-replica-nav__item[aria-current="true"] .re0-replica-nav__glyph {
+  color: var(--re0-gold);
+  filter: drop-shadow(0 0 7px rgb(228 189 85 / 65%));
+}
+
+.re0-replica-nav__glyph {
+  display: grid;
+  place-items: center;
+  inline-size: 36px;
+  block-size: 36px;
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.re0-replica-nav__label {
+  font-size: 21px;
+  font-weight: 580;
+  letter-spacing: .08em;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 70%);
+}
+
+.re0-replica-person-rail-mount {
+  inset: 2.2% 20% auto 22.8%;
+  block-size: 92px;
+}
+
+.re0-replica-person-rail {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  block-size: 100%;
+}
+
+.re0-replica-person-rail__list {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.25vw, 26px);
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+.re0-replica-person {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: clamp(56px, 4.1vw, 82px);
+  block-size: clamp(56px, 4.1vw, 82px);
+  border: 3px solid rgb(132 74 255 / 92%);
+  border-radius: 50%;
+  padding: 3px;
+  cursor: pointer;
+  background: #090713;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 80%), 0 0 20px rgb(92 44 255 / 42%);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.re0-replica-person:hover,
+.re0-replica-person[data-active="true"] {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgb(155 123 255 / 80%), 0 0 24px rgb(160 103 255 / 65%);
+  transform: translateY(-4px) scale(1.08);
+}
+
+.re0-replica-person[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  border: 1px dotted rgb(255 255 255 / 75%);
+  border-radius: 50%;
+  animation: re0-replica-ring 7s linear infinite;
+}
+
+.re0-replica-avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  color: #fff;
+  background: radial-gradient(circle, #705bb5, #171225 70%);
+}
+
+.re0-replica-avatar img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.re0-replica-avatar__initial {
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.re0-replica-alert {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  background: rgb(113 23 28 / 92%);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 75%), 0 0 18px rgb(255 49 73 / 70%);
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.re0-replica-guide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: auto;
+  color: rgb(255 255 255 / 85%);
+  font-size: 20px;
+  text-shadow: 0 2px 8px #000;
+  white-space: nowrap;
+}
+
+.re0-replica-guide__badge {
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50%;
+  color: #fff;
+  background: #d79539;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.re0-replica-close {
+  inline-size: 60px;
+  block-size: 60px;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  background: transparent;
+  font-size: 54px;
+  font-weight: 200;
+  line-height: 1;
+  text-shadow: 0 2px 10px #000;
+}
+
+.re0-replica-stage-mount {
+  inset: 0;
+}
+
+.re0-replica-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.re0-replica-fragment {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  border: 1px solid var(--re0-line);
+  color: #fff;
+  cursor: pointer;
+  overflow: visible;
+  background: linear-gradient(180deg, transparent 30%, rgb(3 3 15 / 16%) 100%);
+  clip-path: polygon(4% 0, 91% 3%, 100% 17%, 94% 90%, 80% 100%, 18% 97%, 0 78%, 3% 19%);
+  filter: drop-shadow(0 0 8px rgb(255 255 255 / 38%));
+  transition: transform 220ms cubic-bezier(.2, .8, .2, 1), filter 220ms ease, background 220ms ease;
+}
+
+.re0-replica-fragment::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgb(255 255 255 / 70%);
+  clip-path: inherit;
+  pointer-events: none;
+}
+
+.re0-replica-fragment:hover,
+.re0-replica-fragment[aria-pressed="true"] {
+  z-index: 10;
+  filter: drop-shadow(0 0 13px var(--re0-slot-tone)) brightness(1.16);
+  transform: translateY(-7px) scale(1.012);
+}
+
+.re0-replica-fragment--1 { left: 29%; top: -4%; inline-size: 24%; block-size: 35%; clip-path: polygon(9% 0, 85% 0, 100% 18%, 93% 86%, 78% 100%, 16% 92%, 0 19%); }
+.re0-replica-fragment--2 { left: 48%; top: 7%; inline-size: 26%; block-size: 27%; clip-path: polygon(12% 0, 96% 5%, 100% 72%, 78% 100%, 14% 88%, 0 18%); }
+.re0-replica-fragment--3 { left: 67%; top: 0; inline-size: 33%; block-size: 48%; clip-path: polygon(12% 4%, 91% 0, 100% 17%, 95% 86%, 74% 100%, 12% 87%, 0 21%); }
+.re0-replica-fragment--4 { left: 63%; top: 49%; inline-size: 30%; block-size: 51%; clip-path: polygon(8% 4%, 93% 0, 100% 17%, 93% 84%, 72% 100%, 11% 90%, 0 18%); }
+.re0-replica-fragment--5 { left: 39%; top: 51%; inline-size: 27%; block-size: 51%; clip-path: polygon(17% 0, 95% 12%, 100% 86%, 80% 100%, 13% 90%, 0 16%); }
+.re0-replica-fragment--6 { left: 15%; top: 36%; inline-size: 32%; block-size: 48%; clip-path: polygon(9% 5%, 82% 0, 100% 21%, 91% 88%, 73% 100%, 12% 90%, 0 21%); }
+
+.re0-replica-fragment__marker {
+  position: absolute;
+  left: 6%;
+  bottom: 7%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  transform: translate(-8%, 0);
+}
+
+.re0-replica-fragment__icon {
+  display: grid;
+  place-items: center;
+  inline-size: clamp(42px, 4.4vw, 72px);
+  block-size: clamp(42px, 4.4vw, 72px);
+  border: 3px solid rgb(255 255 255 / 90%);
+  border-radius: 50%;
+  color: #e6d1a5;
+  background: radial-gradient(circle, #68635d 0 38%, #0c0b0c 42% 72%, #e5e0d7 74% 77%, #111 80%);
+  box-shadow: 0 2px 0 #000, 0 0 10px rgb(255 255 255 / 45%);
+  font-size: clamp(19px, 2vw, 31px);
+}
+
+.re0-replica-fragment__number {
+  color: #fff;
+  font-size: clamp(25px, 2.4vw, 43px);
+  font-weight: 650;
+  text-shadow: 0 2px 8px #000;
+}
+
+.re0-replica-fragment__copy {
+  position: absolute;
+  left: 22%;
+  bottom: 8%;
+  display: grid;
+  gap: 2px;
+  max-inline-size: 74%;
+  pointer-events: none;
+  text-align: start;
+  text-shadow: 0 2px 8px #000, 0 0 2px #000;
+}
+
+.re0-replica-fragment__copy strong {
+  font-size: clamp(17px, 1.65vw, 31px);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.re0-replica-fragment__copy small {
+  overflow: hidden;
+  color: rgb(255 255 255 / 85%);
+  font-size: clamp(10px, .85vw, 16px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: none;
+}
+
+.re0-replica-detail-mount {
+  inset: 11% 0 11% auto;
+  inline-size: 22.5%;
+  z-index: 20;
+  border: 1px solid rgb(255 255 255 / 12%);
+  background: linear-gradient(90deg, rgb(6 5 17 / 5%), rgb(5 4 13 / 78%) 16%, rgb(5 4 13 / 89%));
+  transition: transform 360ms cubic-bezier(.2, .8, .2, 1), opacity 260ms ease;
+}
+
+.re0-replica-detail {
+  display: grid;
+  align-content: start;
+  gap: 25px;
+  block-size: 100%;
+  padding: 20px 26px;
+  overflow: auto;
+  text-shadow: 0 2px 7px #000;
+}
+
+.re0-replica-detail__iconbox {
+  display: grid;
+  place-items: center;
+  min-block-size: 104px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  background: linear-gradient(135deg, rgb(255 255 255 / 3%), rgb(95 76 168 / 13%));
+}
+
+.re0-replica-detail__icon {
+  display: grid;
+  place-items: center;
+  inline-size: 76px;
+  block-size: 76px;
+  border: 2px solid rgb(238 228 202 / 86%);
+  color: #e4d0a4;
+  background: radial-gradient(circle, #5c5955 0 36%, #070708 40% 70%, #d5d0c4 73% 76%, #0b0b0c 79%);
+  border-radius: 50%;
+  font-size: 34px;
+}
+
+.re0-replica-detail__eyebrow {
+  color: var(--re0-gold);
+  font-size: 15px;
+  letter-spacing: .08em;
+}
+
+.re0-replica-detail__copy h2 {
+  margin: 10px 0 16px;
+  color: #fff;
+  font-size: clamp(22px, 1.8vw, 36px);
+  font-weight: 650;
+}
+
+.re0-replica-detail__copy p {
+  margin: 0;
+  color: rgb(255 255 255 / 91%);
+  font-size: clamp(15px, 1.05vw, 21px);
+  line-height: 1.62;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.re0-replica-detail__avatar-action {
+  align-self: start;
+  min-block-size: 42px;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  background: rgb(8 7 17 / 64%);
+}
+
+.re0-replica-back {
+  top: 3.4%;
+  right: 1.7%;
+  inline-size: 64px;
+  block-size: 56px;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  background: transparent;
+  font-size: 54px;
+  font-weight: 200;
+  line-height: 1;
+  text-shadow: 0 2px 8px #000;
+}
+
+.re0-replica-active {
+  right: 2.1%;
+  bottom: 5.2%;
+  display: grid;
+  place-items: center;
+  min-inline-size: 180px;
+  min-block-size: 48px;
+  border-radius: 999px;
+  color: var(--re0-blue);
+  background: rgb(2 5 16 / 74%);
+  box-shadow: 0 0 22px rgb(44 192 255 / 18%), inset 0 0 0 1px rgb(255 255 255 / 7%);
+  font-size: 20px;
+}
+
+.re0-replica-uid {
+  left: 2.1%;
+  bottom: 1.4%;
+  color: rgb(255 255 255 / 74%);
+  font-size: 17px;
+  letter-spacing: .04em;
+  text-shadow: 0 2px 8px #000;
+}
+
+.re0-replica-grid {
+  left: 2.1%;
+  bottom: 5.1%;
+  display: grid;
+  place-items: center;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 1px solid rgb(0 0 0 / 45%);
+  border-radius: 50%;
+  color: #33343b;
+  cursor: pointer;
+  background: rgb(246 246 245 / 92%);
+  font-size: 30px;
+}
+
+.re0-replica-status {
+  left: 50%;
+  bottom: 1.4%;
+  margin: 0;
+  color: rgb(255 255 255 / 42%);
+  font-size: 12px;
+  transform: translateX(-50%);
+}
+
+.re0-replica-root[data-detail-open="true"] .re0-replica-person-rail-mount,
+.re0-replica-root[data-detail-open="true"] .re0-replica-left-rail-mount {
+  opacity: .82;
+}
+
+.re0-replica-root[data-detail-open="true"] .re0-replica-nav {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.re0-replica-root[data-detail-open="true"] .re0-replica-fragment--3,
+.re0-replica-root[data-detail-open="true"] .re0-replica-fragment--4 {
+  transform: translateX(-6%) scale(.96);
+}
+
 .re0-shard-orb {
-  --re0-orb-size: clamp(58px, 7vw, 76px);
   position: fixed;
   left: 82%;
   top: 50%;
-  inline-size: var(--re0-orb-size);
-  block-size: var(--re0-orb-size);
-  padding: 0;
-  border: 1px solid rgb(218 231 255 / 68%);
+  inline-size: 72px;
+  block-size: 72px;
+  border: 1px solid rgb(224 235 255 / 80%);
   border-radius: 50%;
-  color: var(--re0-ink);
-  cursor: grab;
   pointer-events: auto;
+  cursor: grab;
   touch-action: none;
   transform: translate(-50%, -50%);
-  background:
-    radial-gradient(circle at 34% 26%, rgb(255 255 255 / 48%), transparent 16%),
-    radial-gradient(circle at 58% 62%, rgb(128 214 255 / 20%), transparent 48%),
-    rgb(16 22 50 / 92%);
-  box-shadow:
-    0 0 0 5px rgb(146 179 255 / 8%),
-    0 0 0 12px rgb(122 136 255 / 8%),
-    0 12px 36px rgb(0 0 0 / 38%),
-    inset 0 0 24px rgb(158 189 255 / 20%);
-  transition: box-shadow 220ms ease, filter 220ms ease;
-  z-index: 4;
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-orb {
-  border-color: rgb(255 255 255 / 86%);
-  background:
-    radial-gradient(circle at 34% 26%, rgb(255 255 255 / 92%), transparent 15%),
-    radial-gradient(circle at 58% 62%, rgb(115 190 255 / 23%), transparent 50%),
-    rgb(235 242 255 / 94%);
-  box-shadow:
-    0 0 0 5px rgb(127 157 235 / 12%),
-    0 0 0 12px rgb(127 157 235 / 8%),
-    0 12px 36px rgb(45 69 117 / 25%),
-    inset 0 0 24px rgb(126 179 255 / 28%);
-}
-
-.re0-shard-orb:hover,
-.re0-shard-orb:focus-visible {
-  filter: brightness(1.12) saturate(1.1);
-  box-shadow:
-    0 0 0 6px rgb(146 179 255 / 12%),
-    0 0 0 16px rgb(122 136 255 / 11%),
-    0 16px 44px rgb(0 0 0 / 44%),
-    inset 0 0 28px rgb(158 214 255 / 32%);
-}
-
-.re0-shard-orb:focus-visible,
-.re0-shard-button:focus-visible,
-.re0-shard-fragment:focus-visible,
-.re0-shard-person-chip:focus-visible,
-.re0-shard-hero__avatar:focus-visible,
-.re0-shard-record--button:focus-visible,
-.re0-shard-file-label:focus-within {
-  outline: 2px solid var(--re0-cyan);
-  outline-offset: 3px;
+  background: radial-gradient(circle at 38% 28%, #fff, #a6d9ff 22%, #5d55a5 64%, #08071c 100%);
+  box-shadow: 0 0 0 7px rgb(106 129 255 / 13%), 0 0 0 14px rgb(136 105 255 / 7%), 0 20px 40px rgb(0 0 0 / 48%);
+  transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
 }
 
 .re0-shard-orb__halo,
-.re0-shard-orb__halo::before,
 .re0-shard-orb__halo::after {
   position: absolute;
   inset: -10px;
-  border: 1px solid rgb(128 215 255 / 35%);
+  border: 1px solid rgb(150 221 255 / 48%);
   border-radius: 50%;
   pointer-events: none;
 }
 
-.re0-shard-orb__halo::before,
 .re0-shard-orb__halo::after {
   content: "";
-  inset: -7px;
-  border-color: rgb(183 159 255 / 24%);
-}
-
-.re0-shard-orb__halo::after {
-  inset: 3px;
+  inset: 2px;
   border-style: dashed;
-  border-color: rgb(255 255 255 / 26%);
-  animation: re0-shard-orbit 9s linear infinite;
+  animation: re0-replica-ring 8s linear infinite;
 }
 
 .re0-shard-orb__sigil {
   position: absolute;
-  inset: 12%;
-  display: block;
+  inset: 10%;
   border-radius: 50%;
-  background: var(--re0-orb-sigil, none) center / contain no-repeat;
-  filter: drop-shadow(0 0 12px rgb(138 213 255 / 58%));
-  pointer-events: none;
+  background: var(--re0-replica-orb-sigil, none) center / contain no-repeat;
 }
 
 .re0-shard-orb__sr {
@@ -168,805 +610,48 @@
   block-size: 1px;
   overflow: hidden;
   clip-path: inset(50%);
-  white-space: nowrap;
+}
+
+#re0-shard-statusbar-root[data-open="true"] .re0-shard-orb {
+  opacity: 0;
+  pointer-events: none;
 }
 
 #re0-shard-statusbar-root[data-dragging="true"] .re0-shard-orb {
   cursor: grabbing;
-  filter: brightness(1.22) saturate(1.22);
-  transform: translate(-50%, -50%) scale(1.08) rotate(4deg);
-  box-shadow:
-    0 0 0 7px rgb(141 219 255 / 16%),
-    0 0 0 18px rgb(178 135 255 / 11%),
-    0 24px 56px rgb(0 0 0 / 48%),
-    inset 0 0 34px rgb(158 214 255 / 42%);
-}
-
-#re0-shard-statusbar-root[data-dragging="true"] .re0-shard-orb::after {
-  content: "";
-  position: absolute;
-  inset: -22px;
-  border: 1px solid rgb(130 216 255 / 25%);
-  border-radius: 50%;
-  animation: re0-shard-drag-pulse 700ms ease-out infinite;
-  pointer-events: none;
-}
-
-.re0-shard-overlay {
-  position: fixed;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  border: 0;
-  padding: 0;
-  background: rgb(3 5 16 / 58%);
-  opacity: 1;
-  pointer-events: auto;
-  transition: opacity 220ms ease;
-  z-index: 8;
-}
-
-.re0-shard-panel {
-  position: fixed;
-  inset: clamp(18px, 4vh, 56px) clamp(18px, 4vw, 64px);
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-inline-size: 0;
-  max-inline-size: 1180px;
-  margin-inline: auto;
-  overflow: hidden;
-  border: 1px solid var(--re0-line);
-  border-radius: 28px 12px 28px 12px;
-  color: var(--re0-ink);
-  pointer-events: auto;
-  background:
-    linear-gradient(145deg, rgb(16 24 54 / 92%), var(--re0-panel) 42%),
-    var(--re0-shard-background, none) center / cover;
-  box-shadow: var(--re0-shadow), inset 0 0 0 1px rgb(255 255 255 / 5%);
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  transition: opacity 240ms ease, transform 320ms cubic-bezier(.2, .8, .2, 1);
-  z-index: 10;
-}
-
-#re0-shard-statusbar-root[data-open="true"] .re0-shard-orb {
-  pointer-events: none;
-  opacity: .18;
-  filter: saturate(.6);
-}
-
-.re0-shard-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(110deg, rgb(120 153 255 / 8%), transparent 32%, rgb(114 229 255 / 5%) 70%, transparent),
-    repeating-linear-gradient(135deg, transparent 0 22px, rgb(185 204 255 / 3%) 23px 24px);
-  mix-blend-mode: screen;
-}
-
-#re0-shard-statusbar-root[data-open="false"] .re0-shard-panel {
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(24px) scale(.97);
-}
-
-#re0-shard-statusbar-root[data-open="false"] .re0-shard-overlay {
-  pointer-events: none;
-  opacity: 0;
-}
-
-.re0-shard-panel__header {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  padding: clamp(18px, 3vw, 30px) clamp(20px, 4vw, 44px) 18px;
-  border-block-end: 1px solid var(--re0-line);
-  background: linear-gradient(90deg, rgb(13 18 43 / 76%), transparent 78%);
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-panel__header {
-  background: linear-gradient(90deg, rgb(255 255 255 / 74%), transparent 82%);
-}
-
-.re0-shard-panel__title h1,
-.re0-shard-panel__title p,
-.re0-shard-panel__title span,
-.re0-shard-panel__context {
-  margin: 0;
-}
-
-.re0-shard-panel__title h1 {
-  margin-top: 3px;
-  font-size: clamp(24px, 4vw, 42px);
-  font-weight: 640;
-  letter-spacing: .04em;
-  text-wrap: balance;
-}
-
-.re0-shard-panel__context {
-  margin-top: 8px;
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 12px;
-  letter-spacing: .04em;
-}
-
-.re0-shard-kicker {
-  display: block;
-  color: var(--re0-cyan);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 10px;
-  font-weight: 760;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-kicker {
-  color: #4c6fc1;
-}
-
-.re0-shard-panel__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.re0-shard-button {
-  min-block-size: 40px;
-  border: 1px solid rgb(173 206 255 / 26%);
-  border-radius: 999px;
-  padding: 8px 14px;
-  color: inherit;
-  cursor: pointer;
-  background: rgb(24 34 70 / 72%);
-  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-button {
-  border-color: rgb(53 78 131 / 22%);
-  background: rgb(255 255 255 / 72%);
-}
-
-.re0-shard-button:hover {
-  border-color: rgb(132 222 255 / 70%);
-  background: rgb(67 93 168 / 36%);
-  transform: translateY(-1px);
-}
-
-.re0-shard-button--quiet {
-  color: var(--re0-muted);
-  background: transparent;
-}
-
-.re0-shard-panel__body {
-  position: relative;
-  z-index: 1;
-  overflow: auto;
-  min-block-size: 0;
-  padding: 18px clamp(16px, 3vw, 44px) 32px;
-  scrollbar-color: rgb(131 176 255 / 42%) transparent;
-}
-
-.re0-shard-panel__hero-mount,
-.re0-shard-panel__people-mount,
-.re0-shard-panel__stage-mount,
-.re0-shard-panel__detail-mount {
-  min-inline-size: 0;
-}
-
-.re0-shard-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(220px, .7fr);
-  gap: 18px;
-  padding: 18px;
-  border: 1px solid var(--re0-line);
-  border-radius: 18px 6px 18px 6px;
-  background: linear-gradient(110deg, rgb(26 37 78 / 72%), rgb(16 22 48 / 45%));
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-hero {
-  background: linear-gradient(110deg, rgb(255 255 255 / 75%), rgb(225 236 255 / 68%));
-}
-
-.re0-shard-hero__identity,
-.re0-shard-hero__pulse {
-  min-inline-size: 0;
-}
-
-.re0-shard-hero__avatar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  inline-size: 100%;
-  min-block-size: 74px;
-  border: 0;
-  padding: 0;
-  color: inherit;
-  text-align: start;
-  cursor: pointer;
-  background: transparent;
-}
-
-.re0-shard-avatar {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  inline-size: 46px;
-  block-size: 46px;
-  overflow: hidden;
-  border: 1px solid rgb(203 220 255 / 56%);
-  border-radius: 50%;
-  color: var(--re0-cyan);
-  background: radial-gradient(circle, rgb(85 122 214 / 34%), rgb(13 19 43 / 88%));
-  box-shadow: 0 0 0 4px rgb(133 190 255 / 8%), 0 0 22px rgb(121 197 255 / 18%);
-}
-
-.re0-shard-avatar img {
-  inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
-}
-
-.re0-shard-avatar__initial {
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.re0-shard-avatar--hero {
-  inline-size: 68px;
-  block-size: 68px;
-  border-radius: 20px 5px 20px 5px;
-}
-
-.re0-shard-avatar--hero .re0-shard-avatar__initial {
-  font-size: 30px;
-}
-
-.re0-shard-hero__copy h2 {
-  margin: 3px 0 2px;
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 640;
-  letter-spacing: .04em;
-}
-
-.re0-shard-hero__copy p,
-.re0-shard-hero__pulse span,
-.re0-shard-hero__pulse strong {
-  display: block;
-  margin: 0;
-}
-
-.re0-shard-hero__copy p,
-.re0-shard-hero__pulse span:not(.re0-shard-kicker) {
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 12px;
-}
-
-.re0-shard-hero__pulse {
-  align-self: center;
-  padding: 6px 0 6px 18px;
-  border-inline-start: 1px solid var(--re0-line);
-}
-
-.re0-shard-hero__pulse strong {
-  margin: 6px 0 5px;
-  font-size: 15px;
-  font-weight: 620;
-}
-
-.re0-shard-hero__meters {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(90px, 1fr));
-  gap: 9px;
-}
-
-.re0-shard-meter {
-  min-inline-size: 0;
-  padding: 9px 10px;
-  border: 1px solid rgb(189 207 255 / 14%);
-  border-radius: 10px;
-  background: rgb(10 16 38 / 28%);
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-meter {
-  border-color: rgb(55 81 140 / 14%);
-  background: rgb(255 255 255 / 50%);
-}
-
-.re0-shard-meter__label {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 11px;
-}
-
-.re0-shard-meter__label strong {
-  color: var(--re0-ink);
-  font-weight: 700;
-}
-
-.re0-shard-meter__track {
-  position: relative;
-  block-size: 5px;
-  margin-top: 8px;
-  overflow: hidden;
-  border-radius: 99px;
-  background: rgb(184 207 255 / 14%);
-}
-
-.re0-shard-meter__fill {
-  display: block;
-  inline-size: var(--re0-meter-value);
-  block-size: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--re0-cyan), var(--re0-violet));
-  box-shadow: 0 0 10px rgb(134 216 255 / 45%);
-}
-
-.re0-shard-meter--vital .re0-shard-meter__fill { background: linear-gradient(90deg, #ff9eae, #ffc7a6); }
-.re0-shard-meter--mana .re0-shard-meter__fill { background: linear-gradient(90deg, #8aa5ff, #bca7ff); }
-.re0-shard-meter--risk .re0-shard-meter__fill,
-.re0-shard-meter--witch .re0-shard-meter__fill { background: linear-gradient(90deg, #f19bb9, #ce8df1); }
-
-.re0-shard-hero__target {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  margin: 0;
-  padding-top: 4px;
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 12px;
-}
-
-.re0-shard-hero__target > span:last-child {
-  color: var(--re0-ink);
-}
-
-.re0-shard-people {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-block-size: 74px;
-  overflow-x: auto;
-  padding: 12px 2px 8px;
-  scrollbar-width: none;
-}
-
-.re0-shard-people::-webkit-scrollbar { display: none; }
-
-.re0-shard-people__label {
-  flex: 0 0 auto;
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 11px;
-  letter-spacing: .08em;
-  writing-mode: vertical-rl;
-}
-
-.re0-shard-person-chip {
-  display: grid;
-  justify-items: center;
-  flex: 0 0 auto;
-  gap: 3px;
-  min-inline-size: 52px;
-  border: 0;
-  padding: 0;
-  color: var(--re0-muted);
-  cursor: pointer;
-  background: transparent;
-  transition: color 160ms ease, transform 160ms ease;
-}
-
-.re0-shard-person-chip:hover {
-  color: var(--re0-ink);
-  transform: translateY(-2px);
-}
-
-.re0-shard-person-chip__name {
-  max-inline-size: 72px;
-  overflow: hidden;
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.re0-shard-stage {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-rows: repeat(6, minmax(48px, 1fr));
-  gap: 8px;
-  min-block-size: 360px;
-  overflow: hidden;
-  border: 1px solid var(--re0-line);
-  border-radius: 24px 8px 24px 8px;
-  padding: 10px;
-  background:
-    linear-gradient(145deg, rgb(11 17 42 / 74%), rgb(26 33 72 / 42%)),
-    var(--re0-shard-background-image, none) center / cover;
-  isolation: isolate;
-}
-
-#re0-shard-statusbar-root[data-theme="day"] .re0-shard-stage {
-  background:
-    linear-gradient(145deg, rgb(238 245 255 / 62%), rgb(199 219 255 / 54%)),
-    var(--re0-shard-background-image, none) center / cover;
-}
-
-.re0-shard-stage__halo {
-  position: absolute;
-  inset: 18% 28%;
-  z-index: -1;
-  border: 1px solid rgb(149 208 255 / 28%);
-  border-radius: 50%;
-  box-shadow: 0 0 80px rgb(116 153 255 / 14%), inset 0 0 50px rgb(130 213 255 / 9%);
-}
-
-.re0-shard-fragment {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  min-inline-size: 0;
-  overflow: hidden;
-  border: 1px solid rgb(208 229 255 / 36%);
-  border-radius: 8px 24px 10px 18px;
-  padding: 16px;
-  color: var(--re0-ink);
-  cursor: pointer;
-  text-align: start;
-  background:
-    linear-gradient(150deg, rgb(16 26 61 / 28%), rgb(12 17 43 / 86%)),
-    var(--re0-shard-image, none) center / cover;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%), 0 10px 22px rgb(0 0 0 / 14%);
-  clip-path: polygon(6% 0, 94% 3%, 100% 17%, 93% 96%, 18% 100%, 0 82%, 4% 24%);
-  isolation: isolate;
-  transform: translateY(0) rotate(var(--re0-fragment-tilt, 0deg));
-  transition: transform 220ms cubic-bezier(.2, .8, .2, 1), border-color 180ms ease, filter 180ms ease;
-  animation: re0-shard-enter 520ms cubic-bezier(.2, .8, .2, 1) both;
-  animation-delay: calc(var(--re0-shard-index, 0) * 45ms);
-}
-
-.re0-shard-fragment::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(120deg, color-mix(in srgb, var(--re0-shard-accent) 24%, transparent), transparent 55%);
-  pointer-events: none;
-}
-
-.re0-shard-fragment::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent 22%, rgb(6 10 27 / 28%) 56%, rgb(5 8 23 / 78%) 100%);
-}
-
-.re0-shard-fragment > *:not(.re0-shard-fragment__edge) {
-  position: relative;
-  z-index: 1;
-}
-
-.re0-shard-fragment:hover,
-.re0-shard-fragment[aria-pressed="true"] {
-  z-index: 4;
-  border-color: color-mix(in srgb, var(--re0-shard-accent) 75%, white 15%);
-  filter: brightness(1.16) saturate(1.08);
-  transform: translateY(-5px) rotate(var(--re0-fragment-tilt, 0deg)) scale(1.015);
-}
-
-.re0-shard-fragment[data-index="0"] { grid-column: 1 / 6; grid-row: 1 / 4; --re0-fragment-tilt: -1.5deg; }
-.re0-shard-fragment[data-index="1"] { grid-column: 5 / 10; grid-row: 1 / 3; --re0-fragment-tilt: 1deg; }
-.re0-shard-fragment[data-index="2"] { grid-column: 9 / 13; grid-row: 1 / 4; --re0-fragment-tilt: 2.2deg; }
-.re0-shard-fragment[data-index="3"] { grid-column: 4 / 9; grid-row: 3 / 6; --re0-fragment-tilt: -1deg; }
-.re0-shard-fragment[data-index="4"] { grid-column: 8 / 13; grid-row: 3 / 6; --re0-fragment-tilt: 1.4deg; }
-.re0-shard-fragment[data-index="5"] { grid-column: 1 / 5; grid-row: 4 / 7; --re0-fragment-tilt: 1.6deg; }
-.re0-shard-fragment[data-index="6"] { grid-column: 5 / 9; grid-row: 5 / 7; --re0-fragment-tilt: -2deg; }
-.re0-shard-fragment[data-index="7"] { grid-column: 9 / 13; grid-row: 5 / 7; --re0-fragment-tilt: 2deg; }
-
-.re0-shard-fragment__edge {
-  position: absolute;
-  inset: 9px;
-  border: 1px solid color-mix(in srgb, var(--re0-shard-accent) 56%, transparent);
-  clip-path: inherit;
-  opacity: .75;
-  pointer-events: none;
-}
-
-.re0-shard-fragment__glyph {
-  position: absolute;
-  inset: 13px 13px auto auto;
-  display: grid;
-  place-items: center;
-  inline-size: 34px;
-  block-size: 34px;
-  border: 1px solid color-mix(in srgb, var(--re0-shard-accent) 70%, transparent);
-  border-radius: 50%;
-  color: var(--re0-shard-accent);
-  font-size: 20px;
-  background: rgb(7 11 31 / 62%);
-}
-
-.re0-shard-fragment__copy {
-  display: grid;
-  gap: 3px;
-  min-inline-size: 0;
-  max-inline-size: 86%;
-}
-
-.re0-shard-fragment__copy strong {
-  overflow: hidden;
-  font-size: clamp(16px, 2vw, 22px);
-  font-weight: 630;
-  letter-spacing: .04em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.re0-shard-fragment__copy small {
-  overflow: hidden;
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.re0-shard-fragment__count {
-  position: absolute;
-  right: 14px;
-  bottom: 12px;
-  color: var(--re0-shard-accent);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 22px;
-  font-weight: 720;
-  opacity: .82;
-}
-
-.re0-shard-detail {
-  margin-top: 16px;
-  border: 1px solid var(--re0-line);
-  border-radius: 18px 6px 18px 6px;
-  background: var(--re0-panel-soft);
-  overflow: hidden;
-}
-
-.re0-shard-detail__empty {
-  padding: 28px;
-  color: var(--re0-muted);
-  text-align: center;
-}
-
-.re0-shard-detail__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px 14px;
-  border-block-end: 1px solid var(--re0-line);
-}
-
-.re0-shard-detail__heading h2,
-.re0-shard-detail__heading p {
-  margin: 3px 0 0;
-}
-
-.re0-shard-detail__heading h2 {
-  font-size: 24px;
-  font-weight: 640;
-}
-
-.re0-shard-detail__heading p,
-.re0-shard-muted {
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 12px;
-}
-
-.re0-shard-detail__scroll {
-  max-block-size: 420px;
-  overflow: auto;
-  padding: 14px 20px 20px;
-}
-
-.re0-shard-detail__records h3,
-.re0-shard-diagnostics h3,
-.re0-shard-portrait-form h3 {
-  margin: 6px 0 10px;
-  color: var(--re0-cyan);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 12px;
-  letter-spacing: .08em;
-}
-
-.re0-shard-records,
-.re0-shard-detail__records {
-  display: grid;
-  gap: 8px;
-}
-
-.re0-shard-record {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 9px;
-  min-inline-size: 0;
-  border: 1px solid rgb(188 212 255 / 12%);
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: rgb(8 14 34 / 28%);
-}
-
-.re0-shard-record--button {
-  inline-size: 100%;
-  color: inherit;
-  cursor: pointer;
-  text-align: start;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
-}
-
-.re0-shard-record--button:hover {
-  border-color: rgb(133 230 255 / 55%);
-  background: rgb(67 96 168 / 26%);
-  transform: translateX(3px);
-}
-
-.re0-shard-record__title,
-.re0-shard-record__meta,
-.re0-shard-record__detail {
-  grid-column: 2;
-  min-inline-size: 0;
-}
-
-.re0-shard-record__title { font-weight: 650; }
-.re0-shard-record__meta { color: var(--re0-muted); font-family: "Noto Sans SC", "Segoe UI", sans-serif; font-size: 11px; }
-.re0-shard-record__detail { margin: 2px 0 0; color: var(--re0-muted); font-family: "Noto Sans SC", "Segoe UI", sans-serif; font-size: 12px; }
-
-.re0-shard-fields {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-}
-
-.re0-shard-field {
-  display: grid;
-  grid-template-columns: minmax(110px, .4fr) minmax(0, 1fr);
-  gap: 12px;
-  padding: 6px 0;
-  border-block-end: 1px dashed rgb(168 197 255 / 13%);
-}
-
-.re0-shard-field dt,
-.re0-shard-field dd {
-  min-inline-size: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.re0-shard-field dt { color: var(--re0-muted); font-family: "Noto Sans SC", "Segoe UI", sans-serif; font-size: 11px; }
-.re0-shard-field dd { color: var(--re0-ink); font-size: 12px; }
-
-.re0-shard-detail__group {
-  margin-top: 9px;
-  border: 1px solid rgb(181 209 255 / 14%);
-  border-radius: 10px;
-  background: rgb(9 15 35 / 22%);
-}
-
-.re0-shard-detail__group summary {
-  cursor: pointer;
-  padding: 10px 12px;
-  color: var(--re0-ink);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 12px;
-}
-
-.re0-shard-detail__group .re0-shard-fields { padding: 0 12px 10px; }
-
-.re0-shard-portrait-form {
-  display: grid;
-  gap: 9px;
-  margin-bottom: 14px;
-  padding: 12px;
-  border: 1px solid rgb(133 230 255 / 20%);
-  border-radius: 12px;
-  background: rgb(37 79 127 / 15%);
-}
-
-.re0-shard-portrait-form h3,
-.re0-shard-portrait-form p { margin: 0; }
-
-.re0-shard-file-label,
-.re0-shard-field-label {
-  display: grid;
-  gap: 6px;
-  color: var(--re0-muted);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 11px;
-}
-
-.re0-shard-file-label input,
-.re0-shard-field-label input,
-.re0-shard-field-label select {
-  min-block-size: 40px;
-  border: 1px solid rgb(177 211 255 / 22%);
-  border-radius: 8px;
-  padding: 7px 10px;
-  color: var(--re0-ink);
-  background: rgb(7 12 29 / 45%);
-}
-
-.re0-shard-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-
-.re0-shard-panel__status {
-  margin: 14px 2px 0;
-  color: var(--re0-faint);
-  font-family: "Noto Sans SC", "Segoe UI", sans-serif;
-  font-size: 11px;
-}
-
-@keyframes re0-shard-orbit { to { transform: rotate(360deg); } }
-@keyframes re0-shard-drag-pulse { 0% { opacity: .65; transform: scale(.8); } 100% { opacity: 0; transform: scale(1.35); } }
-@keyframes re0-shard-enter { from { opacity: 0; transform: translateY(16px) rotate(var(--re0-fragment-tilt, 0deg)) scale(.98); } to { opacity: 1; transform: translateY(0) rotate(var(--re0-fragment-tilt, 0deg)) scale(1); } }
-
-@media (max-width: 900px) {
-  .re0-shard-hero__meters { grid-template-columns: repeat(3, minmax(90px, 1fr)); }
-  .re0-shard-fragment { padding: 12px; }
-  .re0-shard-fragment__copy strong { font-size: 16px; }
+  filter: brightness(1.25) saturate(1.3);
+  transform: translate(-50%, -50%) scale(1.1) rotate(5deg);
+}
+
+@keyframes re0-replica-ring { to { transform: rotate(360deg); } }
+@keyframes re0-replica-fragment-in { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.re0-replica-fragment { animation: re0-replica-fragment-in 480ms cubic-bezier(.2, .8, .2, 1) both; }
+.re0-replica-fragment--2 { animation-delay: 50ms; }
+.re0-replica-fragment--3 { animation-delay: 90ms; }
+.re0-replica-fragment--4 { animation-delay: 130ms; }
+.re0-replica-fragment--5 { animation-delay: 170ms; }
+.re0-replica-fragment--6 { animation-delay: 210ms; }
+
+@media (max-aspect-ratio: 4 / 3) {
+  .re0-replica-scene { inline-size: 100vw; block-size: calc(100vw * 9 / 16); }
+  .re0-replica-person-rail-mount { inset-inline-start: 21%; inset-inline-end: 17%; }
+  .re0-replica-detail-mount { inline-size: 28%; }
+  .re0-replica-nav__label { font-size: 17px; }
 }
 
 @media (max-width: 720px) {
-  #re0-shard-statusbar-root { font-size: 13px; }
-  .re0-shard-panel {
-    inset: auto 0 0;
-    max-block-size: min(92dvh, 820px);
-    border-radius: 24px 24px 0 0;
-    transform: translateY(0);
-  }
-  #re0-shard-statusbar-root[data-open="false"] .re0-shard-panel { transform: translateY(22px); }
-  .re0-shard-panel__header { padding: 16px 16px 14px; }
-  .re0-shard-panel__title h1 { font-size: 26px; }
-  .re0-shard-panel__actions { gap: 5px; }
-  .re0-shard-button { min-block-size: 44px; padding-inline: 11px; }
-  .re0-shard-panel__body { padding: 12px 12px calc(22px + env(safe-area-inset-bottom)); }
-  .re0-shard-hero { grid-template-columns: 1fr; gap: 12px; padding: 14px; }
-  .re0-shard-hero__pulse { padding: 10px 0 0; border-block-start: 1px solid var(--re0-line); border-inline-start: 0; }
-  .re0-shard-hero__meters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .re0-shard-stage { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(44px, 1fr)); min-block-size: 440px; }
-  .re0-shard-fragment[data-index="0"] { grid-column: 1 / 4; grid-row: 1 / 3; }
-  .re0-shard-fragment[data-index="1"] { grid-column: 4 / 7; grid-row: 1 / 3; }
-  .re0-shard-fragment[data-index="2"] { grid-column: 1 / 4; grid-row: 3 / 5; }
-  .re0-shard-fragment[data-index="3"] { grid-column: 4 / 7; grid-row: 3 / 5; }
-  .re0-shard-fragment[data-index="4"] { grid-column: 1 / 4; grid-row: 5 / 7; }
-  .re0-shard-fragment[data-index="5"] { grid-column: 4 / 7; grid-row: 5 / 7; }
-  .re0-shard-fragment[data-index="6"] { grid-column: 1 / 4; grid-row: 7 / 9; }
-  .re0-shard-fragment[data-index="7"] { grid-column: 4 / 7; grid-row: 7 / 9; }
-  .re0-shard-detail__scroll { max-block-size: 340px; padding-inline: 14px; }
-  .re0-shard-detail__header { padding-inline: 14px; }
-  .re0-shard-detail__header .re0-shard-button { min-block-size: 40px; }
-}
-
-@media (max-width: 420px) {
-  .re0-shard-orb { --re0-orb-size: 56px; }
-  .re0-shard-fragment__glyph { inline-size: 28px; block-size: 28px; font-size: 16px; }
-  .re0-shard-fragment__copy small { display: none; }
-  .re0-shard-fragment__count { font-size: 17px; }
+  .re0-replica-scene { inline-size: 170vw; block-size: calc(170vw * 9 / 16); }
+  .re0-replica-scene { transform: translate(-50%, -50%) scale(.92); transform-origin: center; }
+  .re0-replica-detail-mount { inline-size: 34%; }
+  .re0-replica-guide { display: none; }
+  .re0-replica-brand { transform: scale(.82); transform-origin: left top; }
+  .re0-replica-nav { gap: 9px; margin-top: 5vh; }
+  .re0-replica-nav__item { grid-template-columns: 32px 1fr; min-block-size: 42px; }
+  .re0-replica-nav__label { font-size: 14px; }
+  .re0-replica-nav__glyph { inline-size: 28px; block-size: 28px; font-size: 22px; }
+  .re0-replica-person-rail-mount { inset-inline-start: 25%; inset-inline-end: 16%; }
+  .re0-replica-person { inline-size: 52px; block-size: 52px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -975,7 +660,6 @@
   #re0-shard-statusbar-root *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
     transition-duration: .01ms !important;
   }
 }

@@ -1,20 +1,9 @@
-import { asText, clampMeter } from '../../statusbar/src/status-core.mjs';
-import { portraitKeys, resolvePortrait } from '../../statusbar/src/portraits.mjs';
-import { isSafeAssetUrl, resolvePortraitAsset } from './assets.mjs';
+import { isSafeAssetUrl, resolveCharacterVisual } from './assets.mjs';
 
-const TONES = Object.freeze({
-  violet: '#b8a1ff',
-  cyan: '#85e6ff',
-  rose: '#f49ab8',
-  gold: '#f5d58b',
-  ember: '#ffb48a',
-  mint: '#9de8c9',
-  blue: '#9dbdff',
-  slate: '#b8c7d8',
-});
+const SLOT_TONES = Object.freeze(['violet', 'cyan', 'gold', 'rose', 'mint', 'blue']);
 
-function element(documentRef, tag, className = '', text = '') {
-  const node = documentRef.createElement(tag);
+function element(documentRef, tagName, className = '', text = '') {
+  const node = documentRef.createElement(tagName);
   if (className) node.className = className;
   if (text !== '') node.textContent = String(text);
   return node;
@@ -27,357 +16,202 @@ function button(documentRef, label, action, className = '') {
   return node;
 }
 
-function fieldList(documentRef, fields) {
-  const list = element(documentRef, 'dl', 're0-shard-fields');
-  for (const field of fields || []) {
-    const row = element(documentRef, 'div', 're0-shard-field');
-    row.append(
-      element(documentRef, 'dt', '', field.path || field.key || '字段'),
-      element(documentRef, 'dd', '', field.value ?? '未记录'),
-    );
-    list.append(row);
-  }
-  return list;
+function compactText(value, limit = 28) {
+  const text = String(value ?? '').replace(/\s+/gu, ' ').trim();
+  return text.length > limit ? `${text.slice(0, limit - 1)}…` : text;
 }
 
 function setImage(node, url, alt = '') {
   if (!url || !isSafeAssetUrl(url)) return false;
   const image = node.ownerDocument.createElement('img');
+  image.src = url;
+  image.alt = alt;
   image.loading = 'lazy';
   image.decoding = 'async';
-  image.alt = alt;
-  image.src = url;
   image.addEventListener('error', () => image.remove(), { once: true });
   node.append(image);
   return true;
 }
 
-function avatarNode(documentRef, { name, portrait, url = '', className = '' }) {
-  const shell = element(documentRef, 'span', `re0-shard-avatar ${className}`.trim());
-  shell.setAttribute('aria-hidden', 'true');
-  const resolved = url || (portrait?.portraitKey ? resolvePortraitAsset(portrait.portraitKey) : '');
-  if (!setImage(shell, resolved, `${name || '人物'}头像`)) {
-    shell.append(element(documentRef, 'span', 're0-shard-avatar__initial', portrait?.initial || String(name || '?').trim().slice(0, 1) || '?'));
+function avatar(documentRef, person, options = {}) {
+  const shell = element(documentRef, 'span', `re0-replica-avatar ${options.className || ''}`.trim());
+  const portraitKey = person?.portrait?.portraitKey || '';
+  const url = options.url || (portraitKey ? resolveCharacterVisual(portraitKey, { search: options.search, base: options.assetBase }) : '');
+  if (!setImage(shell, url, `${person?.name || '人物'}头像`)) {
+    shell.append(element(documentRef, 'span', 're0-replica-avatar__initial', person?.portrait?.initial || String(person?.name || '?').trim().slice(0, 1) || '?'));
   }
   return shell;
 }
 
-function meter(documentRef, instrument) {
-  const wrapper = element(documentRef, 'div', `re0-shard-meter re0-shard-meter--${instrument.tone || 'neutral'}`);
-  const label = element(documentRef, 'div', 're0-shard-meter__label');
-  label.append(element(documentRef, 'span', '', instrument.label), element(documentRef, 'strong', '', String(Math.round(clampMeter(instrument.value)))));
-  const track = element(documentRef, 'div', 're0-shard-meter__track');
-  track.setAttribute('role', 'meter');
-  track.setAttribute('aria-label', instrument.label);
-  track.setAttribute('aria-valuemin', '0');
-  track.setAttribute('aria-valuemax', '100');
-  track.setAttribute('aria-valuenow', String(clampMeter(instrument.value)));
-  const fill = element(documentRef, 'span', 're0-shard-meter__fill');
-  fill.style.setProperty('--re0-meter-value', `${clampMeter(instrument.value)}%`);
-  track.append(fill);
-  wrapper.append(label, track);
-  return wrapper;
-}
-
-function renderHero(documentRef, model, options) {
-  const hero = element(documentRef, 'section', 're0-shard-hero');
-  const identity = element(documentRef, 'div', 're0-shard-hero__identity');
-  const avatarButton = button(documentRef, '', 'edit-protagonist', 're0-shard-hero__avatar');
-  avatarButton.setAttribute('aria-label', `更换${model.overview.protagonist.name || '主角'}头像`);
-  const portrait = options.resolvePortrait?.({ namespace: 'protagonist', name: model.overview.protagonist.name });
-  avatarButton.append(avatarNode(documentRef, {
-    name: model.overview.protagonist.name,
-    portrait: portrait || { initial: model.initials.protagonist },
-    url: portrait?.url || '',
-    className: 're0-shard-avatar--hero',
-  }));
-  const copy = element(documentRef, 'div', 're0-shard-hero__copy');
-  copy.append(
-    element(documentRef, 'span', 're0-shard-kicker', 'CURRENT PROTAGONIST'),
-    element(documentRef, 'h2', '', model.overview.protagonist.name || '未命名主角'),
-    element(documentRef, 'p', '', `${model.overview.protagonist.identity || '身份未记录'} · ${model.overview.protagonist.status || '状态未知'}`),
+function renderBrand(documentRef) {
+  const brand = element(documentRef, 'div', 're0-replica-brand');
+  const mark = element(documentRef, 'span', 're0-replica-brand__mark', '✦');
+  mark.setAttribute('aria-hidden', 'true');
+  brand.append(
+    mark,
+    element(documentRef, 'div', 're0-replica-brand__copy', '星屑同调'),
+    element(documentRef, 'strong', 're0-replica-brand__title', 'Re:0 / 档案'),
   );
-  avatarButton.append(copy);
-  identity.append(avatarButton);
+  return brand;
+}
 
-  const pulse = element(documentRef, 'div', 're0-shard-hero__pulse');
-  pulse.append(
-    element(documentRef, 'span', 're0-shard-kicker', 'WORLD PULSE'),
-    element(documentRef, 'strong', '', `${model.overview.time.date} · ${model.overview.time.period}`),
-    element(documentRef, 'span', '', model.overview.location.filter(Boolean).join(' · ') || '地点未记录'),
+function renderLeftRail(documentRef, model, state) {
+  const rail = element(documentRef, 'aside', 're0-replica-left-rail');
+  rail.append(renderBrand(documentRef));
+  const nav = element(documentRef, 'nav', 're0-replica-nav');
+  nav.setAttribute('aria-label', '状态领域');
+  for (const page of model.navigation) {
+    const item = button(documentRef, '', 'select-replica-nav', 're0-replica-nav__item');
+    item.dataset.pageId = page.id;
+    item.setAttribute('aria-current', String(state.pageId === page.id));
+    item.append(
+      element(documentRef, 'span', 're0-replica-nav__glyph', page.glyph),
+      element(documentRef, 'span', 're0-replica-nav__label', page.label),
+    );
+    nav.append(item);
+  }
+  rail.append(nav);
+  return rail;
+}
+
+function renderPersonRail(documentRef, model, state, options) {
+  const rail = element(documentRef, 'header', 're0-replica-person-rail');
+  rail.setAttribute('aria-label', '人物轨道');
+  const alert = element(documentRef, 'button', 're0-replica-alert', '');
+  alert.type = 'button';
+  alert.dataset.action = 'refresh-replica';
+  alert.setAttribute('aria-label', '刷新当前状态');
+  alert.append(element(documentRef, 'span', '', '!'));
+  rail.append(alert);
+  const list = element(documentRef, 'div', 're0-replica-person-rail__list');
+  for (const person of model.people) {
+    const item = button(documentRef, '', 'select-replica-person', 're0-replica-person');
+    item.dataset.personName = person.name;
+    item.setAttribute('aria-label', `切换到${person.name}`);
+    item.setAttribute('aria-current', String(person.name === model.activePerson.name));
+    if (person.name === model.activePerson.name) item.dataset.active = 'true';
+    item.append(avatar(documentRef, person, options));
+    list.append(item);
+  }
+  rail.append(list);
+  const guide = element(documentRef, 'div', 're0-replica-guide');
+  guide.append(element(documentRef, 'span', 're0-replica-guide__badge', '新'), element(documentRef, 'span', '', '角色档案'));
+  rail.append(guide);
+  const close = button(documentRef, '×', 'close-replica', 're0-replica-close');
+  close.setAttribute('aria-label', '关闭状态栏');
+  rail.append(close);
+  return rail;
+}
+
+function renderSlot(documentRef, slot, pageId, state, options) {
+  const item = button(documentRef, '', 'select-replica-slot', `re0-replica-fragment re0-replica-fragment--${slot.number}`);
+  item.dataset.replicaSlot = String(slot.number);
+  item.setAttribute('data-replica-slot', String(slot.number));
+  item.dataset.pageId = pageId;
+  item.setAttribute('aria-pressed', String(state.detailOpen && state.slotNumber === slot.number));
+  item.style.setProperty('--re0-slot-tone', slot.tone || SLOT_TONES[slot.number - 1]);
+  const marker = element(documentRef, 'span', 're0-replica-fragment__marker');
+  marker.append(
+    element(documentRef, 'span', 're0-replica-fragment__icon', slot.icon),
+    element(documentRef, 'strong', 're0-replica-fragment__number', String(slot.number)),
   );
-  hero.append(identity, pulse);
-
-  const meters = element(documentRef, 'div', 're0-shard-hero__meters');
-  for (const instrument of model.overview.instruments) meters.append(meter(documentRef, instrument));
-  hero.append(meters);
-
-  const target = element(documentRef, 'p', 're0-shard-hero__target');
-  target.append(element(documentRef, 'span', 're0-shard-kicker', 'ACTIVE INTENT'), element(documentRef, 'span', '', model.overview.target || '当前目标未记录'));
-  hero.append(target);
-  return hero;
+  const copy = element(documentRef, 'span', 're0-replica-fragment__copy');
+  copy.append(element(documentRef, 'strong', '', slot.title), element(documentRef, 'small', '', compactText(slot.summary)));
+  item.append(marker, copy);
+  return item;
 }
 
-function renderPeople(documentRef, model) {
-  const strip = element(documentRef, 'nav', 're0-shard-people');
-  strip.setAttribute('aria-label', '当前关系人物');
-  strip.append(element(documentRef, 'span', 're0-shard-people__label', '关系人物'));
-  if (!model.people.length) {
-    strip.append(element(documentRef, 'span', 're0-shard-muted', '暂无当前关系记录'));
-    return strip;
-  }
-  for (const person of model.people.slice(0, 12)) {
-    const chip = button(documentRef, '', 'open-person', 're0-shard-person-chip');
-    chip.dataset.personName = person.name;
-    chip.dataset.personCategory = person.category;
-    chip.setAttribute('aria-label', `查看${person.name}的关系档案`);
-    chip.append(avatarNode(documentRef, { name: person.name, portrait: person.portrait }));
-    chip.append(element(documentRef, 'span', 're0-shard-person-chip__name', person.name));
-    strip.append(chip);
-  }
-  return strip;
-}
-
-function renderShardButton(documentRef, shard, selected, options) {
-  const node = button(documentRef, '', 'select-shard', `re0-shard-fragment re0-shard-fragment--${shard.tone}`);
-  node.dataset.shardId = shard.id;
-  node.dataset.index = String(options.index);
-  node.setAttribute('aria-pressed', String(selected));
-  node.style.setProperty('--re0-shard-accent', TONES[shard.tone] || TONES.slate);
-  if (options.backgroundUrl && isSafeAssetUrl(options.backgroundUrl)) node.style.setProperty('--re0-shard-image', `url(${JSON.stringify(options.backgroundUrl)})`);
-  const edge = element(documentRef, 'span', 're0-shard-fragment__edge');
-  const glyph = element(documentRef, 'span', 're0-shard-fragment__glyph', shard.glyph);
-  glyph.setAttribute('aria-hidden', 'true');
-  const copy = element(documentRef, 'span', 're0-shard-fragment__copy');
-  copy.append(
-    element(documentRef, 'span', 're0-shard-kicker', shard.eyebrow),
-    element(documentRef, 'strong', '', shard.title),
-    element(documentRef, 'small', '', shard.summary),
-  );
-  const count = element(documentRef, 'span', 're0-shard-fragment__count', String(shard.metric));
-  count.setAttribute('aria-label', `${shard.metric} 项`);
-  node.append(edge, glyph, copy, count);
-  return node;
-}
-
-function renderShardStage(documentRef, model, state, options) {
-  const stage = element(documentRef, 'section', 're0-shard-stage');
-  stage.setAttribute('aria-label', '状态碎片');
-  stage.append(element(documentRef, 'div', 're0-shard-stage__halo'));
-  for (const [index, shard] of model.shards.entries()) {
-    stage.append(renderShardButton(documentRef, shard, state.selectedShard === shard.id, {
-      index,
-      backgroundUrl: options.backgroundUrl,
-    }));
-  }
+function renderStage(documentRef, page, state, options) {
+  const stage = element(documentRef, 'main', 're0-replica-stage');
+  stage.setAttribute('aria-label', `${page.label}六槽位碎片`);
+  for (const slot of page.slots) stage.append(renderSlot(documentRef, slot, page.id, state, options));
   return stage;
 }
 
-function renderRecord(documentRef, record, options = {}) {
-  const card = options.interactive ? button(documentRef, '', options.action || 'open-record', 're0-shard-record re0-shard-record--button') : element(documentRef, 'article', 're0-shard-record');
-  if (options.interactive) {
-    card.dataset.recordId = record.id || '';
-    card.dataset.personName = record.name || '';
-    card.setAttribute('aria-label', `查看${record.name || record.标题 || record.名称 || record.id || '记录'}`);
+function renderDetail(documentRef, model, state) {
+  const detail = element(documentRef, 'aside', 're0-replica-detail');
+  detail.dataset.replicaDetail = 'true';
+  detail.setAttribute('data-replica-detail', 'true');
+  detail.setAttribute('aria-label', '碎片详情');
+  const page = model.navigation.find((entry) => entry.id === state.pageId) || model.navigation[0];
+  const slot = page.slots.find((entry) => entry.number === state.slotNumber) || page.slots[0];
+  const iconBox = element(documentRef, 'div', 're0-replica-detail__iconbox');
+  iconBox.append(element(documentRef, 'span', 're0-replica-detail__icon', slot.icon));
+  const copy = element(documentRef, 'div', 're0-replica-detail__copy');
+  copy.append(
+    element(documentRef, 'span', 're0-replica-detail__eyebrow', `${page.label} · ${slot.number}`),
+    element(documentRef, 'h2', '', slot.title),
+    element(documentRef, 'p', '', slot.detail),
+  );
+  detail.append(iconBox, copy);
+  if (page.id === 'details' && model.activePerson.category === '主角') {
+    const upload = button(documentRef, '编辑主角头像', 'edit-replica-avatar', 're0-replica-detail__avatar-action');
+    detail.append(upload);
   }
-  const title = record.name || record.标题 || record.名称 || record.id || '记录';
-  card.append(element(documentRef, 'strong', 're0-shard-record__title', title));
-  const meta = [record.category, record.阶段, record.状态, record.关系阶段, record.立场].filter(Boolean).join(' · ');
-  if (meta) card.append(element(documentRef, 'span', 're0-shard-record__meta', meta));
-  const detail = record.描述 || record.当前行动 || record.当前效果 || record.下一步 || record.结果 || record.直接原因;
-  if (detail) card.append(element(documentRef, 'p', 're0-shard-record__detail', detail));
-  if (record.portrait) card.prepend(avatarNode(documentRef, { name: record.name, portrait: record.portrait }));
-  return card;
-}
-
-function renderDetail(documentRef, model, state, options) {
-  const detail = element(documentRef, 'aside', 're0-shard-detail');
-  detail.dataset.open = state.selectedShard ? 'true' : 'false';
-  if (!state.selectedShard) {
-    detail.append(element(documentRef, 'div', 're0-shard-detail__empty', '点击任一碎片查看档案详情'));
-    return detail;
-  }
-  const shard = model.shards.find((entry) => entry.id === state.selectedShard) || model.shards[0];
-  const header = element(documentRef, 'header', 're0-shard-detail__header');
-  const heading = element(documentRef, 'div', 're0-shard-detail__heading');
-  heading.append(element(documentRef, 'span', 're0-shard-kicker', shard.eyebrow), element(documentRef, 'h2', '', shard.title), element(documentRef, 'p', '', shard.summary));
-  header.append(heading, button(documentRef, '关闭详情', 'close-detail', 're0-shard-button re0-shard-button--quiet'));
-  detail.append(header);
-
-  const scroll = element(documentRef, 'div', 're0-shard-detail__scroll');
-  if (shard.id === 'protagonist') {
-    const form = renderPortraitForm(documentRef, model, options);
-    if (form) scroll.append(form);
-  }
-  if (shard.id === 'relations' && state.selectedPerson) {
-    const person = model.people.find((entry) => entry.name === state.selectedPerson);
-    if (person) {
-      const focus = element(documentRef, 'section', 're0-shard-record re0-shard-record--focused');
-      focus.append(avatarNode(documentRef, { name: person.name, portrait: person.portrait }));
-      const copy = element(documentRef, 'div', 're0-shard-record__focus-copy');
-      copy.append(
-        element(documentRef, 'span', 're0-shard-kicker', person.category || '关系人物'),
-        element(documentRef, 'strong', 're0-shard-record__title', person.name),
-        element(documentRef, 'p', 're0-shard-record__detail', person.当前行动 || person.当前地点 || '当前行动未记录'),
-      );
-      focus.append(copy);
-      scroll.append(focus);
-    }
-  }
-  if (shard.records.length) {
-    const records = element(documentRef, 'section', 're0-shard-detail__records');
-    records.append(element(documentRef, 'h3', '', '动态记录'));
-    for (const record of shard.records.slice(0, 48)) {
-      const interactive = shard.id === 'relations' && Boolean(record.name);
-      records.append(renderRecord(documentRef, record, interactive ? { interactive: true, action: 'open-person' } : {}));
-    }
-    scroll.append(records);
-  }
-  for (const group of shard.groups) {
-    const disclosure = element(documentRef, 'details', 're0-shard-detail__group');
-    if (group.id === Object.keys(shard.raw || {})[0]) disclosure.open = true;
-    const summary = element(documentRef, 'summary', '', `${group.title} · ${group.summary}`);
-    disclosure.append(summary, fieldList(documentRef, group.fields));
-    scroll.append(disclosure);
-  }
-  if (shard.id === 'rules' && model.diagnostics.unknown.length) {
-    const diagnostics = element(documentRef, 'section', 're0-shard-diagnostics');
-    diagnostics.append(element(documentRef, 'h3', '', '未知字段（只读诊断）'), fieldList(documentRef, model.diagnostics.unknown));
-    scroll.append(diagnostics);
-  }
-  detail.append(scroll);
   return detail;
 }
 
-function renderPortraitForm(documentRef, model, options) {
-  const name = model.overview.protagonist.name || '主角';
-  const form = element(documentRef, 'form', 're0-shard-portrait-form');
-  form.dataset.action = 'save-protagonist-portrait';
-  form.append(element(documentRef, 'h3', '', '自定义主角头像'));
-  const note = element(documentRef, 'p', 're0-shard-muted', '头像仅保存在本机，不写入状态变量，也不会上传。');
-  form.append(note);
-  const fileLabel = element(documentRef, 'label', 're0-shard-file-label', '上传本地图片');
-  const file = documentRef.createElement('input');
-  file.type = 'file';
-  file.accept = 'image/png,image/jpeg,image/webp,image/gif';
-  file.dataset.portraitFile = 'protagonist';
-  fileLabel.append(file);
-  form.append(fileLabel);
-  const urlLabel = element(documentRef, 'label', 're0-shard-field-label', '或使用 HTTPS 图片 URL');
-  const url = documentRef.createElement('input');
-  url.type = 'url';
-  url.placeholder = 'https://example.com/portrait.webp';
-  url.dataset.portraitUrl = 'protagonist';
-  url.autocomplete = 'off';
-  urlLabel.append(url);
-  form.append(urlLabel);
-  const scopeLabel = element(documentRef, 'label', 're0-shard-field-label', '保存范围');
-  const scope = documentRef.createElement('select');
-  scope.dataset.portraitScope = 'protagonist';
-  const shared = element(documentRef, 'option', '', '跨聊天共享');
-  shared.value = 'shared';
-  const override = element(documentRef, 'option', '', '仅当前聊天');
-  override.value = 'override';
-  override.disabled = !String(options.chatId || '').trim();
-  scope.append(shared, override);
-  scopeLabel.append(scope);
-  form.append(scopeLabel);
-  const actions = element(documentRef, 'div', 're0-shard-form-actions');
-  actions.append(button(documentRef, `保存「${name}」头像`, 'save-protagonist-portrait', 're0-shard-button'));
-  actions.append(button(documentRef, '移除本地头像', 'remove-protagonist-portrait', 're0-shard-button re0-shard-button--quiet'));
-  form.append(actions);
-  return form;
-}
-
-export function createShardSurface(documentRef) {
-  const root = element(documentRef, 'div', 're0-shard-statusbar');
+export function createReplicaSurface(documentRef) {
+  const root = element(documentRef, 'div', 're0-replica-root');
   root.id = 're0-shard-statusbar-root';
-  root.dataset.re0ShardVersion = '1';
-  const orb = button(documentRef, '', 'toggle-panel', 're0-shard-orb');
-  orb.setAttribute('aria-label', '打开 Re:0 星屑状态栏');
-  orb.setAttribute('aria-expanded', 'false');
-  orb.setAttribute('aria-controls', 're0-shard-panel');
-  orb.dataset.role = 'orb';
-  orb.append(element(documentRef, 'span', 're0-shard-orb__halo'), element(documentRef, 'span', 're0-shard-orb__sigil'), element(documentRef, 'span', 're0-shard-orb__sr', '星屑状态栏'));
-
-  const overlay = button(documentRef, '', 'close-panel', 're0-shard-overlay');
-  overlay.setAttribute('aria-label', '关闭状态栏');
-  overlay.tabIndex = -1;
-  const panel = element(documentRef, 'section', 're0-shard-panel');
-  panel.id = 're0-shard-panel';
-  panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-modal', 'true');
-  panel.setAttribute('aria-labelledby', 're0-shard-title');
-  panel.hidden = true;
-  panel.setAttribute('aria-hidden', 'true');
-  const header = element(documentRef, 'header', 're0-shard-panel__header');
-  const title = element(documentRef, 'div', 're0-shard-panel__title');
-  title.append(element(documentRef, 'span', 're0-shard-kicker', 'RE:ZERO // STAR FRAGMENTS'), element(documentRef, 'h1', '', '星屑状态档案'));
-  title.querySelector('h1').id = 're0-shard-title';
-  title.append(element(documentRef, 'p', 're0-shard-panel__context', '等待状态读取…'));
-  const actions = element(documentRef, 'div', 're0-shard-panel__actions');
-  actions.append(button(documentRef, '日 / 夜', 'cycle-theme', 're0-shard-button re0-shard-button--quiet'), button(documentRef, '自动', 'theme-auto', 're0-shard-button re0-shard-button--quiet'), button(documentRef, '刷新', 'refresh', 're0-shard-button re0-shard-button--quiet'), button(documentRef, '关闭', 'close-panel', 're0-shard-button'));
-  header.append(title, actions);
-  const body = element(documentRef, 'div', 're0-shard-panel__body');
-  const heroMount = element(documentRef, 'div', 're0-shard-panel__hero-mount');
-  const peopleMount = element(documentRef, 'div', 're0-shard-panel__people-mount');
-  const stageMount = element(documentRef, 'div', 're0-shard-panel__stage-mount');
-  const detailMount = element(documentRef, 'div', 're0-shard-panel__detail-mount');
-  const status = element(documentRef, 'p', 're0-shard-panel__status');
+  root.dataset.re0ReplicaVersion = '1';
+  const scene = element(documentRef, 'section', 're0-replica-scene');
+  scene.setAttribute('aria-label', 'Re:0 星屑碎片状态栏');
+  const art = element(documentRef, 'div', 're0-replica-art');
+  art.setAttribute('aria-hidden', 'true');
+  const leftRailMount = element(documentRef, 'div', 're0-replica-left-rail-mount');
+  const personRailMount = element(documentRef, 'div', 're0-replica-person-rail-mount');
+  const stageMount = element(documentRef, 'div', 're0-replica-stage-mount');
+  const detailMount = element(documentRef, 'div', 're0-replica-detail-mount');
+  const back = button(documentRef, '↶', 'back-to-replica', 're0-replica-back');
+  back.setAttribute('aria-label', '返回碎片主界面');
+  const active = element(documentRef, 'div', 're0-replica-active');
+  active.dataset.replicaActive = 'true';
+  active.setAttribute('data-replica-active', 'true');
+  const uid = element(documentRef, 'div', 're0-replica-uid');
+  uid.dataset.replicaUid = 'true';
+  uid.setAttribute('data-replica-uid', 'true');
+  const grid = button(documentRef, '▦', 'replica-grid', 're0-replica-grid');
+  grid.setAttribute('aria-label', '状态栏菜单');
+  const status = element(documentRef, 'p', 're0-replica-status');
   status.setAttribute('aria-live', 'polite');
-  body.append(heroMount, peopleMount, stageMount, detailMount, status);
-  panel.append(header, body);
-  root.append(overlay, panel, orb);
-  return Object.freeze({ root, orb, overlay, panel, heroMount, peopleMount, stageMount, detailMount, status, context: title.querySelector('.re0-shard-panel__context') });
+  scene.append(art, leftRailMount, personRailMount, stageMount, detailMount, back, active, uid, grid, status);
+  const orb = button(documentRef, '', 'toggle-panel', 're0-shard-orb');
+  orb.dataset.role = 'orb';
+  orb.setAttribute('aria-label', '打开 Re:0 星屑状态栏');
+  orb.append(element(documentRef, 'span', 're0-shard-orb__halo'), element(documentRef, 'span', 're0-shard-orb__sigil'), element(documentRef, 'span', 're0-shard-orb__sr', '星屑状态栏'));
+  root.append(scene, orb);
+  return Object.freeze({ root, scene, art, leftRailMount, personRailMount, stageMount, detailMount, back, active, uid, grid, status, orb });
 }
 
-export function renderShardSurface(surface, model, state = {}, options = {}) {
-  const { root, panel, orb, heroMount, peopleMount, stageMount, detailMount, status, context } = surface;
-  root.dataset.theme = model.theme.mode;
-  root.dataset.transition = model.theme.transition;
-  root.dataset.status = options.status || 'ready';
-  if (options.backgroundUrl && isSafeAssetUrl(options.backgroundUrl)) {
-    root.style.setProperty('--re0-shard-background-image', `url(${JSON.stringify(options.backgroundUrl)})`);
-  } else {
-    root.style.removeProperty('--re0-shard-background-image');
-  }
-  if (options.sigilUrl && isSafeAssetUrl(options.sigilUrl)) {
-    root.style.setProperty('--re0-orb-sigil', `url(${JSON.stringify(options.sigilUrl)})`);
-  } else {
-    root.style.removeProperty('--re0-orb-sigil');
-  }
-  panel.dataset.selectedShard = state.selectedShard || '';
-  orb.setAttribute('aria-expanded', String(Boolean(state.panelOpen)));
-  orb.setAttribute('aria-label', state.panelOpen ? '关闭 Re:0 星屑状态栏' : '打开 Re:0 星屑状态栏');
-  context.textContent = `${model.overview.time.date} · ${model.overview.time.period} · ${model.overview.location.filter(Boolean).join(' / ') || '地点未记录'}`;
-  heroMount.replaceChildren(renderHero(surface.root.ownerDocument, model, options));
-  peopleMount.replaceChildren(renderPeople(surface.root.ownerDocument, model));
-  stageMount.replaceChildren(renderShardStage(surface.root.ownerDocument, model, state, options));
-  detailMount.replaceChildren(renderDetail(surface.root.ownerDocument, model, state, options));
-  status.textContent = options.message || `只读映射 · ${model.coverage.declaredLeafCount} 个声明叶路径 · ${model.people.length} 位关系人物`;
+export function renderReplicaSurface(surface, model, state = {}, options = {}) {
+  const documentRef = surface.root.ownerDocument;
+  surface.root.dataset.open = String(Boolean(state.panelOpen));
+  surface.root.dataset.detailOpen = String(Boolean(state.detailOpen));
+  surface.root.dataset.pageId = state.pageId || model.selectedPage;
+  surface.root.dataset.theme = 'night';
+  surface.root.style.setProperty('--re0-replica-art', options.sceneUrl && isSafeAssetUrl(options.sceneUrl) ? `url(${JSON.stringify(options.sceneUrl)})` : 'none');
+  surface.root.style.setProperty('--re0-replica-orb-sigil', options.sigilUrl && isSafeAssetUrl(options.sigilUrl) ? `url(${JSON.stringify(options.sigilUrl)})` : 'none');
+  const page = model.navigation.find((entry) => entry.id === (state.pageId || model.selectedPage)) || model.navigation[0];
+  surface.leftRailMount.replaceChildren(renderLeftRail(documentRef, model, state));
+  surface.personRailMount.replaceChildren(renderPersonRail(documentRef, model, state, options));
+  surface.personRailMount.hidden = Boolean(state.detailOpen);
+  surface.stageMount.replaceChildren(renderStage(documentRef, page, state, options));
+  surface.detailMount.replaceChildren(state.detailOpen ? renderDetail(documentRef, model, state) : element(documentRef, 'div'));
+  surface.detailMount.hidden = !state.detailOpen;
+  surface.back.hidden = !state.detailOpen;
+  surface.active.textContent = state.detailOpen ? (page.slots.find((slot) => slot.number === state.slotNumber)?.active ? model.activePill : '未记录') : '';
+  surface.active.hidden = !state.detailOpen;
+  surface.uid.textContent = `UID:${model.uid}`;
+  surface.status.textContent = options.message || `${model.coverage.declaredLeafCount || 172} 个变量映射 · ${model.activePerson.name}`;
 }
 
-export function setSurfaceOpen(surface, open) {
-  surface.panel.hidden = !open;
-  surface.panel.setAttribute('aria-hidden', String(!open));
-  surface.overlay.hidden = !open;
+export function setReplicaOpen(surface, open) {
   surface.root.dataset.open = String(Boolean(open));
   surface.orb.setAttribute('aria-expanded', String(Boolean(open)));
+  surface.orb.setAttribute('aria-label', open ? '关闭 Re:0 星屑状态栏' : '打开 Re:0 星屑状态栏');
 }
 
-export function setSurfaceDragging(surface, dragging) {
+export function setReplicaDragging(surface, dragging) {
   surface.root.dataset.dragging = String(Boolean(dragging));
 }
-
-export function updateSurfacePortrait(surface, identity, record) {
-  const buttonNode = surface.root.querySelector('[data-action="edit-protagonist"]');
-  if (!buttonNode) return;
-  const current = buttonNode.querySelector('.re0-shard-avatar');
-  if (!current) return;
-  current.replaceChildren(avatarNode(surface.root.ownerDocument, {
-    name: identity.name,
-    portrait: record || { initial: String(identity.name || '?').slice(0, 1) },
-  }).firstChild || element(surface.root.ownerDocument, 'span'));
-}
-
-export { TONES };

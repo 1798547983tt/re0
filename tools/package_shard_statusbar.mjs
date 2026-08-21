@@ -13,7 +13,7 @@ const MODULES = Object.freeze([
   ['registry', 'narrative/src/character-registry.mjs'],
   ['portraits', 'statusbar/src/portraits.mjs'],
   ['assets', 'shard-statusbar/src/assets.mjs'],
-  ['model', 'shard-statusbar/src/model.mjs'],
+  ['replica-model', 'shard-statusbar/src/replica-model.mjs'],
   ['runtime', 'shard-statusbar/src/runtime.mjs'],
   ['orb', 'shard-statusbar/src/orb.mjs'],
   ['ui', 'shard-statusbar/src/ui.mjs'],
@@ -101,40 +101,35 @@ function buildBundle() {
     'asset-manifest',
     sources.assets,
     `const shardManifest = ${serialize(shardManifest)};\nconst narrativeManifest = ${serialize(narrativeManifest)};`,
-    ['SHARD_ASSET_MANIFEST', 'NARRATIVE_ASSET_MANIFEST', 'NARRATIVE_ASSET_REVISION', 'isSafeAssetUrl', 'resolveShardAsset', 'resolvePortraitAsset', 'assetRevision'],
+    ['SHARD_ASSET_MANIFEST', 'NARRATIVE_ASSET_MANIFEST', 'NARRATIVE_ASSET_REVISION', 'isSafeAssetUrl', 'resolveShardAsset', 'resolvePortraitAsset', 'resolveCharacterVisual', 'assetRevision'],
   ));
   parts.push(wrapper(
-    'shard-model',
-    sources.model,
+    'replica-model',
+    sources['replica-model'],
     [
-      'const { asList, asRecord, asText, buildHudModel, firstGrapheme } = globalThis.Re0Shard;',
-      'const { DECLARED_DOMAIN_COUNTS, expandDeclaredPaths } = globalThis.Re0Shard;',
+      'const { asList, asRecord, asText, buildHudModel } = globalThis.Re0Shard;',
       'const { CHARACTER_REGISTRY, resolveSpeaker } = globalThis.Re0Shard;',
     ].join('\n'),
-    ['SHARD_IDS', 'resolvePersonPortrait', 'buildShardModel'],
+    ['REPLICA_NAV_IDS', 'buildReplicaModel'],
   ));
   parts.push(wrapper('shard-runtime', sources.runtime, '', ['createShardRuntime', 'discoverShardRuntimeScope']));
   parts.push(wrapper('orb-drag', sources.orb, '', ['DRAG_THRESHOLD', 'normalizeOrbPosition', 'createOrbDragController']));
   parts.push(wrapper(
     'shard-ui',
     sources.ui,
-    [
-      'const { asText, clampMeter } = globalThis.Re0Shard;',
-      'const { portraitKeys, resolvePortrait } = globalThis.Re0Shard;',
-      'const { isSafeAssetUrl, resolvePortraitAsset } = globalThis.Re0Shard;',
-    ].join('\n'),
-    ['createShardSurface', 'renderShardSurface', 'setSurfaceOpen', 'setSurfaceDragging', 'updateSurfacePortrait', 'TONES'],
+    'const { isSafeAssetUrl, resolveCharacterVisual } = globalThis.Re0Shard;',
+    ['createReplicaSurface', 'renderReplicaSurface', 'setReplicaOpen', 'setReplicaDragging'],
   ));
   parts.push(wrapper(
     'host-shell',
     sources.host,
     [
-      'const { buildShardModel } = globalThis.Re0Shard;',
+      'const { buildReplicaModel } = globalThis.Re0Shard;',
       'const { resolveShardAsset } = globalThis.Re0Shard;',
       'const { createPortraitRepository, cropPortrait, portraitKeys, resolvePortrait, validatePortraitUrl } = globalThis.Re0Shard;',
       'const { createShardRuntime, discoverShardRuntimeScope } = globalThis.Re0Shard;',
       'const { createOrbDragController } = globalThis.Re0Shard;',
-      'const { createShardSurface, renderShardSurface, setSurfaceDragging, setSurfaceOpen } = globalThis.Re0Shard;',
+      'const { createReplicaSurface, renderReplicaSurface, setReplicaDragging, setReplicaOpen } = globalThis.Re0Shard;',
     ].join('\n'),
     ['startShardStatusBar', 'hostWindow', 'hostDocument', 'SINGLETON_KEY'],
   ));

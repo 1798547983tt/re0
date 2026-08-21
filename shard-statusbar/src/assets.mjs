@@ -46,6 +46,11 @@ export function resolvePortraitAsset(portraitKey, { local = false } = {}) {
   return `https://raw.githubusercontent.com/1798547983tt/re0/${NARRATIVE_ASSET_REVISION}/narrative/assets/avatars/${key}.webp`;
 }
 
+export function resolveCharacterVisual(portraitKey, options = {}) {
+  const special = resolveShardAsset(`portrait:${String(portraitKey || '').trim()}`, options);
+  return special || resolvePortraitAsset(portraitKey, options);
+}
+
 export function assetRevision() {
   return String(SHARD_ASSET_MANIFEST.releaseRevision || '').trim();
 }

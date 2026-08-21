@@ -39,6 +39,54 @@
       "role": "悬浮球晶体徽记",
       "sourceRole": "generated-sigil",
       "prompt": "Original crystalline star-orb sigil with transparent background, no text or logo."
+    },
+    {
+      "id": "scene:emilia",
+      "kind": "six-grid-scene",
+      "localPath": "assets/scene-emilia.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ccbd9a2a9dd44b7ccae01935686258e97b5b7456/shard-statusbar/assets/scene-emilia.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1672, "height": 941 },
+      "sha256": "01a7cc1b11e8d64c29e5a595dffbfb803468d44ee7158f82f07d83cc3ab43d60",
+      "role": "艾米莉亚六格主视觉",
+      "sourceRole": "generated-six-grid",
+      "prompt": "Original silver-haired violet-eyed half-elf in six coherent glass-shard vignettes, no text."
+    },
+    {
+      "id": "scene:rem",
+      "kind": "six-grid-scene",
+      "localPath": "assets/scene-rem.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ccbd9a2a9dd44b7ccae01935686258e97b5b7456/shard-statusbar/assets/scene-rem.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1672, "height": 941 },
+      "sha256": "3afbfbaff8ea1d683907dd80e7541265034ac221c419a929c64deddbe2aabe8a",
+      "role": "蕾姆六格主视觉",
+      "sourceRole": "generated-six-grid",
+      "prompt": "Original blue-haired oni maid in six coherent glass-shard vignettes, no text."
+    },
+    {
+      "id": "scene:natsuki-subaru",
+      "kind": "six-grid-scene",
+      "localPath": "assets/scene-subaru.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ccbd9a2a9dd44b7ccae01935686258e97b5b7456/shard-statusbar/assets/scene-subaru.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1672, "height": 941 },
+      "sha256": "2905443f27fe1007ac0312330cac1c667be2376c67570f801c59d7ed9f5d20d2",
+      "role": "菜月昴六格主视觉",
+      "sourceRole": "generated-six-grid",
+      "prompt": "Original black-haired returner in six coherent glass-shard vignettes, no text."
+    },
+    {
+      "id": "portrait:emilia",
+      "kind": "portrait",
+      "localPath": "../frontend/assets/emilia-snow-tea.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/a6aeb9cca0f0066bd10aec2aba0fd4b220301788/frontend/assets/emilia-snow-tea.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1053, "height": 1494 },
+      "sha256": "be2ee3dcdb44d8edf35fa7bfc2101bbd02280951b4ba510d432537b35706da69",
+      "role": "艾米莉亚本地主角头像回退",
+      "sourceRole": "existing-project-generated",
+      "prompt": "Existing project-generated portrait asset; not copied from the supplied screenshot."
     }
   ],
   "portraitSource": {

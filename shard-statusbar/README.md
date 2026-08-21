@@ -1,18 +1,18 @@
-# Re:0 · 星屑碎片状态栏
+# Re:0 · 星屑碎片状态栏（参考图复刻版）
 
-这是一个独立于现有消息内正则状态栏的 Tavern Helper 脚本组件。导入 `dist/script-Re0·星屑碎片状态栏.json` 后，脚本会在 SillyTavern 宿主层创建一个悬浮球；点击悬浮球打开桌面浮窗，窄屏自动变为底部抽屉。
+这是按用户提供的全屏参考图复刻的 Tavern Helper 脚本组件。打开悬浮球后进入固定 16:9 碎片舞台：左侧导航、顶部人物轨道、中央六个不规则碎片、右上角入口和左下角 UID 都保持同一空间层级；点击碎片后保留舞台，在右侧滑入详情栏。
 
 ## 交互
 
-- 悬浮球可自由拖动，不自动吸边；拖动超过阈值后显示晶体放大、环形脉冲和拖拽反馈，短点击才打开/关闭面板。
-- 面板顶部保留主角、世界脉搏和六个状态仪表；关系人物头像芯片、八个状态碎片和详情面板均可点击/键盘操作。
-- 碎片只显示摘要，点击后在详情层渐进查看动态记录、折叠字段和诊断未知字段，不把 172 个字段一次性平铺。
-- NPC 头像复用 `narrative/data/character-registry.json` 的别名归一化与 `portraitKey` 逻辑，按需请求同仓库 `narrative/assets/avatars/`；未知姓名回退首字。
-- 主角头像可上传本地图片或填写 HTTPS URL，并选择跨聊天共享或仅当前聊天覆盖。图片在浏览器本地裁切并存入 IndexedDB；不会写入 `stat_data` 或上传 GitHub。
+- 悬浮球可自由拖动，不自动吸边；拖动超过阈值才进入拖拽态，短点击打开/关闭全屏舞台。
+- 左侧六个 Re:0 领域切换六槽位数据；顶部人物轨道切换当前人物；每个碎片固定编号 1–6，点击后右侧详情态显示图标、编号、标题和只读字段描述。
+- 详情态隐藏人物轨道和左侧领域按钮，右上角返回箭头只退出详情态；右下角激活胶囊保留为只读反馈。
+- 当前人物优先使用生成的六格主视觉图；没有专属图时回退到生成档案背景和共享 registry 头像。
+- 主角头像可通过详情态的本地上传入口保存到浏览器 IndexedDB，不写入状态变量、不上传 GitHub。
 
 ## 数据边界
 
-脚本只读取当前消息楼层的 `stat_data`：优先 `getVariables({ type: 'message', message_id: 'latest' })`，再退回 `Mvu.getMvuData`。它不包含任何变量写入接口；读取失败时保留上次成功状态并显示旧数据提示。
+脚本只读取当前消息楼层 `stat_data`：优先 `getVariables({ type: 'message', message_id: 'latest' })`，再退回 `Mvu.getMvuData`。六槽位描述来自状态字段格式化值，不生成额外剧情文案，也不包含变量写入 API。
 
 ## 本地预览
 
@@ -20,8 +20,8 @@
 python -m http.server 4178 --directory .
 ```
 
-打开 `http://127.0.0.1:4178/shard-statusbar/preview/index.html?assets=local`。`preview/bundle.html` 会直接执行最终脚本 JSON，用于验证打包产物而不是开发模块。
+打开 `http://127.0.0.1:4178/shard-statusbar/preview/index.html?assets=local`。`preview/bundle.html` 会直接执行最终脚本 JSON，检查发布包而不是开发模块。
 
-## 素材与发布
+## 资产
 
-`assets/` 中的日/夜背景与悬浮球徽记由本项目重新生成；NPC 头像沿用正文正则的已生成资源。生产 URL 必须锁定到不可变 Git commit，`manifest.json` 的 `releaseRevision` 与脚本包会在发布前同步更新。网络素材失败时，面板仍保留渐变背景和文字状态。
+`assets/scene-emilia.png`、`scene-rem.png` 和 `scene-subaru.png` 是无文字六格主视觉；日/夜背景和悬浮球徽记也由项目重新生成。NPC 头像继续复用正文正则的 `character-registry.json`、别名归一化和 `portraitKey`。生产 URL 固定到不可变提交，网络失败时仍保留暗色舞台和文字状态。
