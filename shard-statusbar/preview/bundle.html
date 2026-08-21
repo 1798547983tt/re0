@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Re:0 · 星屑碎片脚本包预览</title>
+</head>
+<body>
+  <script type="module">
+    const [artifact, fixture] = await Promise.all([
+      fetch('../../dist/script-Re0·星屑碎片状态栏.json').then((response) => response.json()),
+      fetch('../../statusbar/data/sample-state.json').then((response) => response.json()),
+    ]);
+    globalThis.getVariables = () => fixture;
+    globalThis.getTavernVersion = () => 'offline-bundle-preview';
+    globalThis.getTavernHelperVersion = () => 'offline-bundle-preview';
+    new Function(artifact.content)();
+  </script>
+</body>
+</html>

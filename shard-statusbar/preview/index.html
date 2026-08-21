@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Re:0 · 星屑碎片状态栏预览</title>
+</head>
+<body>
+  <main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#090d1c;color:#dbe5ff;font-family:system-ui,sans-serif">
+    <div style="max-width:560px;text-align:center;opacity:.78">
+      <p>离线预览：点击右侧悬浮球打开状态面板。</p>
+      <p style="font-size:12px">此页面使用仓库里的 sample-state.json，不连接 SillyTavern。</p>
+    </div>
+  </main>
+  <script type="module">
+    const [cssText, fixture] = await Promise.all([
+      fetch('../styles.css').then((response) => response.text()),
+      fetch('../../statusbar/data/sample-state.json').then((response) => response.json()),
+    ]);
+    const { startShardStatusBar } = await import('../src/host.mjs');
+    const assetBase = new URL('../', import.meta.url).href;
+    const scope = {
+      getVariables: () => fixture,
+      getTavernVersion: () => 'offline-preview',
+      getTavernHelperVersion: () => 'offline-preview',
+    };
+    const api = startShardStatusBar({ scope, host: window, documentRef: document, cssText, assetBase });
+    window.re0ShardPreview = api;
+    api.open();
+  </script>
+</body>
+</html>

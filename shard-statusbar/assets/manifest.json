@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "Re:0 星屑碎片状态栏 ImageGen asset pass",
+  "releaseRevision": "ab97ee2e4e2b892bd1e35ee34a5c4f707e533a3a",
+  "notes": "Generated assets are original project-owned visuals. The revision is replaced with the immutable asset commit before release.",
+  "assets": [
+    {
+      "id": "background:night",
+      "kind": "background",
+      "localPath": "assets/orb-night.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ab97ee2e4e2b892bd1e35ee34a5c4f707e533a3a/shard-statusbar/assets/orb-night.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1536, "height": 1024 },
+      "sha256": "6fbed93bd6bc10f0dcdb4574649935d84f72a5ce13aef704e5741f046ce5161e",
+      "role": "夜间碎片舞台",
+      "sourceRole": "generated-background",
+      "prompt": "Original moonlit astral archive with translucent fractured glass, no text or characters."
+    },
+    {
+      "id": "background:day",
+      "kind": "background",
+      "localPath": "assets/orb-day.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ab97ee2e4e2b892bd1e35ee34a5c4f707e533a3a/shard-statusbar/assets/orb-day.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1536, "height": 1024 },
+      "sha256": "d3b8c6557f9650216e8577f723c77dbbc63f828e5da67615b15cf804aff8cf4b",
+      "role": "日间碎片舞台",
+      "sourceRole": "generated-background",
+      "prompt": "Original dawn winter conservatory with frosted glass and pale gold light, no text or characters."
+    },
+    {
+      "id": "orb:sigil",
+      "kind": "orb-sigil",
+      "localPath": "assets/orb-sigil-transparent.png",
+      "production": "https://raw.githubusercontent.com/1798547983tt/re0/ab97ee2e4e2b892bd1e35ee34a5c4f707e533a3a/shard-statusbar/assets/orb-sigil-transparent.png",
+      "mime": "image/png",
+      "dimensions": { "width": 1254, "height": 1254 },
+      "sha256": "7768e239747a8839d3f4f2db34a7377cdfcb448ef77f79b800517aee818b9248",
+      "role": "悬浮球晶体徽记",
+      "sourceRole": "generated-sigil",
+      "prompt": "Original crystalline star-orb sigil with transparent background, no text or logo."
+    }
+  ],
+  "portraitSource": {
+    "registry": "narrative/data/character-registry.json",
+    "assetRoot": "narrative/assets/avatars",
+    "resolver": "narrative/src/character-registry.mjs",
+    "policy": "lazy-load active NPCs by portraitKey; unknown names use initials"
+  }
+}
