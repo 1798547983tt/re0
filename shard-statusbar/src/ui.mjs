@@ -126,6 +126,13 @@ function renderStage(documentRef, page, state, options) {
   }
   svg.append(defs);
   for (const slot of page.slots) {
+    const floatGroup = svgElement(documentRef, 'g');
+    floatGroup.classList.add('re0-replica-float', `re0-replica-float--${slot.number}`);
+    floatGroup.dataset.replicaFloat = String(slot.number);
+    const floatState = svgElement(documentRef, 'g');
+    floatState.classList.add('re0-replica-float-state');
+    const detailShift = state.detailOpen && slot.number >= 3 ? 'translate(-220 0) scale(.97)' : '';
+    if (detailShift) floatState.setAttribute('transform', detailShift);
     if (options.sceneUrl && isSafeAssetUrl(options.sceneUrl)) {
       const image = svgElement(documentRef, 'image');
       image.setAttribute('href', options.sceneUrl);
@@ -136,12 +143,12 @@ function renderStage(documentRef, page, state, options) {
       image.setAttribute('preserveAspectRatio', 'xMidYMid slice');
       image.setAttribute('clip-path', `url(#re0-replica-clip-${slot.number})`);
       image.classList.add('re0-replica-image');
-      svg.append(image);
+      floatState.append(image);
     }
     const outline = svgElement(documentRef, 'path');
     outline.setAttribute('d', REPLICA_PATHS[slot.number]);
     outline.classList.add('re0-replica-outline', `re0-replica-outline--${slot.number}`);
-    svg.append(outline);
+    floatState.append(outline);
     const hit = svgElement(documentRef, 'path');
     hit.setAttribute('d', REPLICA_PATHS[slot.number]);
     hit.setAttribute('role', 'button');
@@ -152,17 +159,22 @@ function renderStage(documentRef, page, state, options) {
     hit.setAttribute('data-replica-slot', String(slot.number));
     hit.setAttribute('data-page-id', page.id);
     hit.classList.add('re0-replica-hit', `re0-replica-hit--${slot.number}`);
-    svg.append(hit);
+    floatState.append(hit);
+    floatGroup.append(floatState);
+    svg.append(floatGroup);
     const anchor = REPLICA_ANCHORS[slot.number];
+    const markerFloat = element(documentRef, 'div', `re0-replica-marker-float re0-replica-float re0-replica-float--${slot.number}`);
+    markerFloat.dataset.replicaFloat = String(slot.number);
+    markerFloat.style.left = `${(anchor.x / REPLICA_VIEWBOX.width) * 100}%`;
+    markerFloat.style.top = `${(anchor.y / REPLICA_VIEWBOX.height) * 100}%`;
     const marker = element(documentRef, 'div', `re0-replica-marker re0-replica-marker--${slot.number}`);
-    marker.style.left = `${(anchor.x / REPLICA_VIEWBOX.width) * 100}%`;
-    marker.style.top = `${(anchor.y / REPLICA_VIEWBOX.height) * 100}%`;
     marker.append(
       element(documentRef, 'span', 're0-replica-marker__icon', slot.icon),
       element(documentRef, 'strong', 're0-replica-marker__number', String(slot.number)),
       element(documentRef, 'span', 're0-replica-marker__title', compactText(slot.title, 18)),
     );
-    stage.append(marker);
+    markerFloat.append(marker);
+    stage.append(markerFloat);
   }
   stage.prepend(svg);
   return stage;

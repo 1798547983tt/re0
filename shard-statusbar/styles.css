@@ -113,6 +113,27 @@
   filter: drop-shadow(0 0 4px rgb(255 255 255 / 58%));
 }
 
+/* The outer motion group contains the image, outline, and hit path together.
+   The inner state group owns the detail-panel shift, so the hit region cannot
+   drift away from the visible shard while it floats. */
+.re0-replica-float {
+  --re0-float-x: 5px;
+  --re0-float-y: -6px;
+  --re0-float-rotate: .25deg;
+  --re0-float-delay: 0s;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: re0-replica-float 8.5s ease-in-out var(--re0-float-delay) infinite;
+  will-change: transform;
+}
+
+.re0-replica-float--1 { --re0-float-x: 5px; --re0-float-y: -7px; --re0-float-rotate: .25deg; --re0-float-delay: -1.2s; }
+.re0-replica-float--2 { --re0-float-x: -6px; --re0-float-y: 4px; --re0-float-rotate: -.22deg; --re0-float-delay: -3.4s; }
+.re0-replica-float--3 { --re0-float-x: 7px; --re0-float-y: 5px; --re0-float-rotate: .18deg; --re0-float-delay: -5.1s; }
+.re0-replica-float--4 { --re0-float-x: -5px; --re0-float-y: -5px; --re0-float-rotate: -.28deg; --re0-float-delay: -6.8s; }
+.re0-replica-float--5 { --re0-float-x: 6px; --re0-float-y: 6px; --re0-float-rotate: .22deg; --re0-float-delay: -2.1s; }
+.re0-replica-float--6 { --re0-float-x: -7px; --re0-float-y: -4px; --re0-float-rotate: -.2deg; --re0-float-delay: -7.6s; }
+
 .re0-replica-hit {
   fill: rgb(255 255 255 / 0%);
   stroke: transparent;
@@ -137,7 +158,7 @@
 }
 
 .re0-replica-marker {
-  position: absolute;
+  position: relative;
   z-index: 6;
   display: flex;
   align-items: center;
@@ -145,6 +166,12 @@
   pointer-events: none;
   transform: translate(-12%, -50%);
   text-shadow: 0 2px 8px #000;
+}
+
+.re0-replica-marker-float {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
 }
 
 .re0-replica-marker__icon {
@@ -176,12 +203,17 @@
 
 .re0-replica-root[data-detail-open="true"] .re0-replica-marker--3,
 .re0-replica-root[data-detail-open="true"] .re0-replica-marker--4 {
-  transform: translate(-22%, -50%) scale(.96);
+  transform: translate(calc(-22% - 14vw), -50%) scale(.96);
 }
 
 .re0-replica-left-rail-mount {
   inset: 0 auto 0 0;
   inline-size: 17.2%;
+  z-index: 10;
+}
+
+.re0-replica-stage-mount {
+  z-index: 2;
 }
 
 .re0-replica-left-rail {
@@ -279,23 +311,27 @@
 }
 
 .re0-replica-person-rail-mount {
-  inset: 2.2% 20% auto 22.8%;
+  inset: 2.2% 1.7% auto 21.5%;
   block-size: 92px;
+  z-index: 12;
 }
 
 .re0-replica-person-rail {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 18px;
   block-size: 100%;
+  padding-inline-end: clamp(150px, 14vw, 230px);
 }
 
 .re0-replica-person-rail__list {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
-  gap: clamp(12px, 1.25vw, 26px);
+  gap: clamp(8px, .9vw, 18px);
   min-inline-size: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .re0-replica-person {
@@ -303,8 +339,8 @@
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  inline-size: clamp(56px, 4.1vw, 82px);
-  block-size: clamp(56px, 4.1vw, 82px);
+  inline-size: clamp(44px, 3.6vw, 72px);
+  block-size: clamp(44px, 3.6vw, 72px);
   border: 3px solid rgb(132 74 255 / 92%);
   border-radius: 50%;
   padding: 3px;
@@ -370,13 +406,16 @@
 }
 
 .re0-replica-guide {
+  position: absolute;
+  right: 66px;
+  top: 50%;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-inline-start: auto;
   color: rgb(255 255 255 / 85%);
   font-size: 20px;
   text-shadow: 0 2px 8px #000;
+  transform: translateY(-50%);
   white-space: nowrap;
 }
 
@@ -393,6 +432,9 @@
 }
 
 .re0-replica-close {
+  position: absolute;
+  right: 0;
+  top: 50%;
   inline-size: 60px;
   block-size: 60px;
   border: 0;
@@ -402,6 +444,7 @@
   font-size: 54px;
   font-weight: 200;
   line-height: 1;
+  transform: translateY(-50%);
   text-shadow: 0 2px 10px #000;
 }
 
@@ -718,6 +761,10 @@
 }
 
 @keyframes re0-replica-ring { to { transform: rotate(360deg); } }
+@keyframes re0-replica-float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(var(--re0-float-x), var(--re0-float-y)) rotate(var(--re0-float-rotate)); }
+}
 @keyframes re0-replica-fragment-in { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 .re0-replica-fragment { animation: re0-replica-fragment-in 480ms cubic-bezier(.2, .8, .2, 1) both; }
@@ -729,7 +776,9 @@
 
 @media (max-aspect-ratio: 4 / 3) {
   .re0-replica-scene { inline-size: 100vw; block-size: calc(100vw * 9 / 16); }
-  .re0-replica-person-rail-mount { inset-inline-start: 21%; inset-inline-end: 17%; }
+  .re0-replica-person-rail-mount { inset-inline-start: 19%; inset-inline-end: 0; }
+  .re0-replica-person-rail { padding-inline-end: clamp(132px, 14vw, 190px); }
+  .re0-replica-person { inline-size: clamp(42px, 3.8vw, 62px); block-size: clamp(42px, 3.8vw, 62px); }
   .re0-replica-detail-mount { inline-size: 28%; }
   .re0-replica-nav__label { font-size: 17px; }
 }
@@ -744,7 +793,9 @@
   .re0-replica-nav__item { grid-template-columns: 32px 1fr; min-block-size: 42px; }
   .re0-replica-nav__label { font-size: 14px; }
   .re0-replica-nav__glyph { inline-size: 28px; block-size: 28px; font-size: 22px; }
-  .re0-replica-person-rail-mount { inset-inline-start: 25%; inset-inline-end: 16%; }
+  .re0-replica-person-rail-mount { inset-inline-start: 21%; inset-inline-end: 0; }
+  .re0-replica-person-rail { padding-inline-end: 118px; }
+  .re0-replica-person-rail__list { gap: 7px; }
   .re0-replica-person { inline-size: 52px; block-size: 52px; }
 }
 

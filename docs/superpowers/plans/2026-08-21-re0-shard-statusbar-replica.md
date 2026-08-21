@@ -4,9 +4,9 @@
 
 **Goal:** Replace the current card-like shard HUD with a faithful full-screen 16:9 reconstruction of the supplied reference surface, including its six fixed polygon fragments, left navigation, character rail, and right-side click detail state.
 
-**Architecture:** Preserve the existing pure state model, read-only runtime bridge, NPC registry resolver, portrait repository, and package contract. Replace only the host surface/UI/CSS and add a data-driven six-slot mapper plus generated six-grid scene assets; the production artifact remains one self-contained Tavern Helper script with pinned remote assets and a local preview.
+**Architecture:** Preserve the existing pure state model, read-only runtime bridge, NPC registry resolver, portrait repository, and package contract. Replace only the host surface/UI/CSS and add a data-driven six-slot mapper plus one generated universal scene asset; the production artifact remains one self-contained Tavern Helper script with pinned remote assets and a local preview.
 
-**Tech Stack:** Framework-neutral DOM/CSS/ES modules, Node built-in tests, existing IndexedDB portrait repository, ImageGen-generated six-grid PNG/WebP scenes, GitHub raw URLs pinned to immutable commits.
+**Tech Stack:** Framework-neutral DOM/CSS/ES modules, Node built-in tests, existing IndexedDB portrait repository, one ImageGen-generated universal PNG/WebP scene, GitHub raw URLs pinned to immutable commits.
 
 ---
 
@@ -33,10 +33,11 @@
 
 - [x] Replace card/hero styles with the screenshot-derived full-screen 16:9 stage, six explicit polygon clip paths, left navigation spacing, avatar rail, icon badges, and right detail panel.
 - [x] Preserve composition by scaling/cropping on narrow viewports instead of switching to a different drawer layout.
-- [x] Add staged entrance, fragment hover/press lift, detail slide, back transition, reduced-motion fallback, and keyboard focus treatment.
+- [x] Add staged entrance, fragment hover/press lift, phase-shifted floating fragments, detail slide, back transition, reduced-motion fallback, and keyboard focus treatment.
+- [x] Keep slots 5 and 6 separated by a tested negative-space seam so their filled hit regions do not overlap.
 - [x] Verify the preview at 1924×1080 and a narrow viewport with a screenshot and DOM snapshot.
 
-### Task 4: Generate and register six-grid character scenes
+### Task 4: Generate and register the universal scene
 
 **Files:** `shard-statusbar/assets/*`, `shard-statusbar/assets/manifest.json`, `shard-statusbar/src/assets.mjs`
 
@@ -49,3 +50,11 @@
 - [x] Rebuild `dist/script-Re0·星屑碎片状态栏.json` and remove all legacy card/hero UI selectors from the production bundle.
 - [x] Run all Node/Python tests, package check, `git diff --check`, local browser visual checks, and remote raw URL checks.
 - [x] Commit and push the replacement artifact to `codex/re0-shard-statusbar`; record the final artifact hash and real-SillyTavern pending gates.
+
+### Task 6: Follow-up geometry and motion correction
+
+- [x] Add a regression test for the slot 5/6 filled-area overlap and correct the canonical SVG paths.
+- [x] Put each fragment's image, outline, and hit path in one animated outer SVG group; keep the detail transform in a separate inner group.
+- [x] Give the character rail a full-width runway and a higher stacking layer than the fragment SVG, including the narrow-aspect fallback.
+- [x] Verify main/detail interaction and phase-shifted motion in the local browser prototype.
+- [ ] Rebuild and publish the artifact only after the updated visual prototype is accepted.

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Re:0 · 参考图复刻视觉原型</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <script type="module">
+    import { createReplicaSurface, renderReplicaSurface, setReplicaOpen } from '../src/ui.mjs';
+
+    const pageIds = ['details', 'world', 'events', 'assets', 'loop', 'info'];
+    const titles = ['档案', '世界', '事件', '资产', '轮回', '信息'];
+    const slotTitles = ['当前身份', '生存状态', '当前目标', '关键记录', '能力与线索', '状态摘要'];
+    const model = {
+      selectedPage: 'details',
+      activePill: '已激活',
+      uid: 'PROTOTYPE-1924',
+      activePerson: { name: '当前人物', category: '主角', portrait: { initial: '人', portraitKey: 'generic' } },
+      people: [
+        { name: '当前人物', active: true, portrait: { initial: '人', portraitKey: 'generic' } },
+        { name: '人物 A', portrait: { initial: 'A', portraitKey: 'generic' } },
+        { name: '人物 B', portrait: { initial: 'B', portraitKey: 'generic' } },
+        { name: '人物 C', portrait: { initial: 'C', portraitKey: 'generic' } },
+        { name: '人物 D', portrait: { initial: 'D', portraitKey: 'generic' } },
+        { name: '人物 E', portrait: { initial: 'E', portraitKey: 'generic' } },
+        { name: '人物 F', portrait: { initial: 'F', portraitKey: 'generic' } },
+        { name: '人物 G', portrait: { initial: 'G', portraitKey: 'generic' } },
+        { name: '人物 H', portrait: { initial: 'H', portraitKey: 'generic' } },
+        { name: '人物 I', portrait: { initial: 'I', portraitKey: 'generic' } },
+      ],
+      coverage: { declaredLeafCount: 172 },
+      navigation: pageIds.map((id, pageIndex) => ({
+        id,
+        label: titles[pageIndex],
+        glyph: ['✦', '▽', '◌', '♧', '✣', '▣'][pageIndex],
+        slots: slotTitles.map((title, index) => ({
+          number: index + 1,
+          icon: ['✦', '◈', '◇', '◌', '✣', '▣'][index],
+          title: `${title} ${index + 1}`,
+          summary: '原型占位文字',
+          detail: '这是静态视觉原型详情，不连接 stat_data。',
+          active: true,
+          tone: ['violet', 'cyan', 'gold', 'rose', 'mint', 'blue'][index],
+        })),
+      })),
+    };
+    const state = { panelOpen: true, detailOpen: false, pageId: 'details', slotNumber: 1 };
+    const surface = createReplicaSurface(document);
+    document.body.append(surface.root);
+    const repaint = () => renderReplicaSurface(surface, model, state, {
+      sceneUrl: new URL('../assets/scene-universal.png', import.meta.url).href,
+      message: '静态视觉原型 · 不连接变量',
+    });
+    repaint();
+    setReplicaOpen(surface, true);
+    surface.root.addEventListener('click', (event) => {
+      const node = event.target.closest?.('[data-action]');
+      if (!node) return;
+      if (node.dataset.action === 'select-replica-slot') {
+        state.pageId = node.dataset.pageId;
+        state.slotNumber = Number(node.dataset.replicaSlot) || 1;
+        state.detailOpen = true;
+        repaint();
+      } else if (node.dataset.action === 'back-to-replica') {
+        state.detailOpen = false;
+        repaint();
+      } else if (node.dataset.action === 'select-replica-nav') {
+        state.pageId = node.dataset.pageId;
+        state.detailOpen = false;
+        repaint();
+      } else if (node.dataset.action === 'select-replica-person') {
+        model.activePerson = model.people.find((person) => person.name === node.dataset.personName) || model.activePerson;
+        state.pageId = 'details';
+        state.detailOpen = false;
+        repaint();
+      }
+    });
+  </script>
+</body>
+</html>
