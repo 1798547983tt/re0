@@ -828,6 +828,14 @@
   .re0-replica-close { inline-size: 44px; block-size: 44px; font-size: 40px; }
 }
 
+@media (min-width: 721px) and (max-width: 900px) {
+  .re0-replica-person-rail { padding-inline-end: 72px; }
+  .re0-replica-person-rail__list { gap: 3px; }
+  .re0-replica-person { inline-size: clamp(28px, 4vw, 36px); block-size: clamp(28px, 4vw, 36px); }
+  .re0-replica-guide { display: none; }
+  .re0-replica-close { inline-size: 44px; block-size: 44px; font-size: 40px; }
+}
+
 @media (max-width: 720px) {
   .re0-replica-scene { inline-size: 100vw; block-size: 100vh; transform: translate(-50%, -50%); }
   .re0-replica-stage-mount { block-size: min(calc(100vw * 9 / 16), 100vh); }

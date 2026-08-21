@@ -67,4 +67,5 @@ test('the character rail has a full runway and stays above the fragment stage', 
   assert.match(css, /@media\s*\(max-aspect-ratio:\s*4\s*\/\s*3\)[\s\S]*?\.re0-replica-scene\s*\{[^}]*block-size:\s*100vh/su);
   assert.match(css, /@media\s*\(max-width:\s*720px\)[\s\S]*?\.re0-replica-scene\s*\{[^}]*inline-size:\s*100vw[^}]*block-size:\s*100vh/su);
   assert.match(css, /@media\s*\(max-width:\s*720px\)[\s\S]*?\.re0-replica-person\s*\{[^}]*clamp\(24px/isu);
+  assert.match(css, /@media\s*\(min-width:\s*721px\)\s+and\s+\(max-width:\s*900px\)[\s\S]*?\.re0-replica-guide\s*\{[^}]*display:\s*none/su);
 });
