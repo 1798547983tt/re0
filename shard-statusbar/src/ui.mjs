@@ -271,6 +271,17 @@ function renderPortraitForm(documentRef, model, options) {
   url.autocomplete = 'off';
   urlLabel.append(url);
   form.append(urlLabel);
+  const scopeLabel = element(documentRef, 'label', 're0-shard-field-label', '保存范围');
+  const scope = documentRef.createElement('select');
+  scope.dataset.portraitScope = 'protagonist';
+  const shared = element(documentRef, 'option', '', '跨聊天共享');
+  shared.value = 'shared';
+  const override = element(documentRef, 'option', '', '仅当前聊天');
+  override.value = 'override';
+  override.disabled = !String(options.chatId || '').trim();
+  scope.append(shared, override);
+  scopeLabel.append(scope);
+  form.append(scopeLabel);
   const actions = element(documentRef, 'div', 're0-shard-form-actions');
   actions.append(button(documentRef, `保存「${name}」头像`, 'save-protagonist-portrait', 're0-shard-button'));
   actions.append(button(documentRef, '移除本地头像', 'remove-protagonist-portrait', 're0-shard-button re0-shard-button--quiet'));

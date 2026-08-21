@@ -902,7 +902,8 @@
 }
 
 .re0-shard-file-label input,
-.re0-shard-field-label input {
+.re0-shard-field-label input,
+.re0-shard-field-label select {
   min-block-size: 40px;
   border: 1px solid rgb(177 211 255 / 22%);
   border-radius: 8px;

@@ -177,6 +177,7 @@ export function startShardStatusBar({
       message: state.message,
       backgroundUrl: backgroundUrl(),
       sigilUrl: resolveShardAsset('orb:sigil', { search: assetSearch, base: assetBase }),
+      chatId,
       resolvePortrait: resolvePortraitFor,
     });
     setSurfaceOpen(surface, state.panelOpen);
@@ -267,7 +268,6 @@ export function startShardStatusBar({
     if (!portraitRepository || !state.model) throw new Error('当前环境不支持本地头像库');
     const name = state.model.overview.protagonist.name || '主角';
     const chatId = getChatId(scope);
-    const scopeName = 'shared';
     const keys = portraitKeys({ namespace: 'protagonist', name, chatId });
     const file = form.querySelector('[data-portrait-file]')?.files?.[0] || null;
     const urlValue = form.querySelector('[data-portrait-url]')?.value || '';
@@ -282,6 +282,8 @@ export function startShardStatusBar({
     } else {
       throw new Error('请选择图片文件或填写 HTTPS 图片 URL');
     }
+    const scopeName = form.querySelector('[data-portrait-scope]')?.value === 'override' ? 'override' : 'shared';
+    if (scopeName === 'override' && !keys.override) throw new Error('当前聊天没有可用的覆盖范围');
     const key = scopeName === 'shared' ? keys.shared : keys.override;
     await portraitRepository.put(key, record);
     cache.set(key, record);
@@ -293,13 +295,17 @@ export function startShardStatusBar({
     render();
   };
 
-  const removePortrait = async () => {
+  const removePortrait = async (form = null) => {
     if (!portraitRepository || !state.model) return;
     const name = state.model.overview.protagonist.name || '主角';
-    const keys = portraitKeys({ namespace: 'protagonist', name, chatId: getChatId(scope) });
-    await portraitRepository.remove(keys.shared);
-    cache.delete(keys.shared);
-    state.message = '已移除主角的本地头像。';
+    const currentChatId = getChatId(scope);
+    const keys = portraitKeys({ namespace: 'protagonist', name, chatId: currentChatId });
+    const scopeName = form?.querySelector('[data-portrait-scope]')?.value === 'override' ? 'override' : 'shared';
+    if (scopeName === 'override' && !keys.override) throw new Error('当前聊天没有可用的覆盖范围');
+    const key = scopeName === 'shared' ? keys.shared : keys.override;
+    await portraitRepository.remove(key);
+    cache.delete(key);
+    state.message = scopeName === 'shared' ? '已移除主角的共享头像。' : '已移除当前聊天的主角头像覆盖。';
     render();
   };
 
@@ -332,7 +338,7 @@ export function startShardStatusBar({
       if (state.statData) state.model = buildShardModel(state.statData, { themePreference: state.themePreference });
       render();
     } else if (action === 'remove-protagonist-portrait') {
-      removePortrait().catch((error) => { state.message = error.message; render(); });
+      removePortrait(actionNode.closest('form')).catch((error) => { state.message = error.message; render(); });
     } else if (action === 'save-protagonist-portrait') {
       const form = actionNode.closest('form');
       if (form) {

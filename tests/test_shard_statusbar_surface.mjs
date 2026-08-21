@@ -15,6 +15,8 @@ test('host surface is namespaced, accessible, and safe by construction', () => {
   assert.match(ui, /aria-modal/);
   assert.match(`${ui}\n${host}`, /Escape/);
   assert.match(ui, /\.type\s*=\s*['"]file['"]|setAttribute\(['"]type['"],\s*['"]file['"]\)/);
+  assert.match(ui, /dataset\.portraitScope/);
+  assert.match(host, /scopeName === 'override'/);
   assert.match(`${ui}\n${host}`, /re0-shard-statusbar-root/);
   assert.match(`${ui}\n${host}`, /dataset\.dragging|data-dragging/);
   assert.doesNotMatch(ui, /\.innerHTML\s*=/);
